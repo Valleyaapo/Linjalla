@@ -8,6 +8,20 @@
 import SwiftUI
 import MapKit
 
+// Wrapper for handling render state (including exit animations)
+fileprivate struct RenderVehicle: Identifiable, Equatable {
+    let item: MapItem
+    var isExiting: Bool = false
+    
+    var id: String {
+        switch item {
+        case .bus(let bus): return "bus_\(bus.id)"
+        case .tram(let tram): return "tram_\(tram.id)"
+        case .stop(let stop): return "stop_\(stop.id)"
+        }
+    }
+}
+
 struct BusMapView: View {
     @Binding var position: MapCameraPosition
     let vehicles: [MapItem]
@@ -24,6 +38,9 @@ struct BusMapView: View {
 
     /// Track visible region for culling
     @State private var visibleRegion: MKCoordinateRegion?
+    
+    /// Local state for rendering, including "ghost" vehicles exiting
+    @State private var renderVehicles: [RenderVehicle] = []
 
     // MARK: - Viewport Culling
 
@@ -41,15 +58,16 @@ struct BusMapView: View {
     }
 
     /// Filter vehicles to only those within the visible viewport + buffer
-    private var visibleVehicles: [MapItem] {
-        guard let region = visibleRegion else { return vehicles }
+    /// Uses renderVehicles which includes exiting ghosts
+    private var visibleRenderVehicles: [RenderVehicle] {
+        guard let region = visibleRegion else { return renderVehicles }
 
         let halfLatSpan = region.span.latitudeDelta * viewportBuffer / 2
         let halfLonSpan = region.span.longitudeDelta * viewportBuffer / 2
 
-        return vehicles.filter { item in
+        return renderVehicles.filter { wrapper in
             let coord: CLLocationCoordinate2D
-            switch item {
+            switch wrapper.item {
             case .bus(let bus): coord = bus.coordinate
             case .tram(let tram): coord = tram.coordinate
             case .stop: return false
@@ -64,7 +82,7 @@ struct BusMapView: View {
 
     var body: some View {
         Map(position: $position, interactionModes: .all) {
-            // 1. STOPS - Using MapCircle so they render BELOW vehicle Annotations
+            // 1. STOPS
             if showStops {
                 ForEach(visibleStops) { stop in
                     MapCircle(center: stop.coordinate, radius: stopRadius)
@@ -73,19 +91,29 @@ struct BusMapView: View {
                 }
             }
 
-            // 2. VEHICLES - Using Annotation so they render ABOVE MapCircles
-            ForEach(visibleVehicles) { item in
-                switch item {
+            // 2. VEHICLES (from local render state)
+            ForEach(visibleRenderVehicles) { wrapper in
+                switch wrapper.item {
                 case .bus(let bus):
                     Annotation("", coordinate: bus.coordinate) {
                         BusAnnotationView(lineName: bus.lineName, heading: bus.heading, color: .hslBlue)
                             .accessibilityLabel("Bus \(bus.lineName)")
+                            .opacity(wrapper.isExiting ? 0 : 1)
+                            .scaleEffect(wrapper.isExiting ? 0.5 : 1)
+                            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: wrapper.isExiting)
+                            .animateEntry() // Handles entry
+                            .id(bus.id)
                     }
                     .annotationTitles(.hidden)
                 case .tram(let tram):
                     Annotation("", coordinate: tram.coordinate) {
                         BusAnnotationView(lineName: tram.lineName, heading: tram.heading, color: .hslGreen)
                             .accessibilityLabel("Tram \(tram.lineName)")
+                            .opacity(wrapper.isExiting ? 0 : 1)
+                            .scaleEffect(wrapper.isExiting ? 0.5 : 1)
+                            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: wrapper.isExiting)
+                            .animateEntry() // Handles entry
+                            .id(tram.id)
                     }
                     .annotationTitles(.hidden)
                 case .stop:
@@ -93,7 +121,7 @@ struct BusMapView: View {
                 }
             }
 
-            // 3. Stop Names (when zoomed in close enough)
+            // 3. Stop Names
             if showStopNames {
                 ForEach(visibleStops) { stop in
                     Annotation("", coordinate: stop.coordinate, anchor: .top) {
@@ -117,6 +145,42 @@ struct BusMapView: View {
         .onMapCameraChange { context in
             visibleRegion = context.region
             onCameraChange(context.region.span.latitudeDelta)
+        }
+        .onChange(of: vehicles) { oldVehicles, newVehicles in
+            updateRenderVehicles(old: oldVehicles, new: newVehicles)
+        }
+        .onAppear {
+            // Initial load
+            renderVehicles = vehicles.map { RenderVehicle(item: $0) }
+        }
+    }
+    
+    private func updateRenderVehicles(old: [MapItem], new: [MapItem]) {
+        // 1. Identify removed vehicles (present in old but not in new)
+        let newIds = Set(new.map { $0.id })
+        let removedItems = old.filter { !newIds.contains($0.id) }
+        
+        // 2. Identify fresh vehicles (directly from new)
+        var nextRenderList = new.map { RenderVehicle(item: $0) }
+        
+        // 3. Add "ghosts" for removed items, marked as exiting
+        if !removedItems.isEmpty {
+            let ghosts = removedItems.map { RenderVehicle(item: $0, isExiting: true) }
+            nextRenderList.append(contentsOf: ghosts)
+            
+            // 4. Update immediately so new items appear ASAP (allowing animateEntry to handle fade-in)
+            // We do NOT use withAnimation here because it delays the view insertion/layout
+            renderVehicles = nextRenderList
+            
+            // 5. Schedule cleanup of ghosts
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                // Remove ghosts that are stuck in exiting state
+                // This removal CAN be animated if needed, or just silent since they are invisible (opacity 0)
+                self.renderVehicles.removeAll { $0.isExiting }
+            }
+        } else {
+            // Just update directly if no removals
+            renderVehicles = nextRenderList
         }
     }
 }

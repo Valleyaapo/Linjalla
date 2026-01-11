@@ -6,20 +6,69 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		08A82AFF2F0131CA00C2B3E8 /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = 08A82AFE2F0131CA00C2B3E8 /* MQTTNIO */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		08348A792F06708F007E8299 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08A82ADE2F01297E00C2B3E8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 08A82AE52F01297E00C2B3E8;
+			remoteInfo = "RT Bus";
+		};
+		08A82B332F042AE300C2B3E8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08A82ADE2F01297E00C2B3E8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 08A82AE52F01297E00C2B3E8;
+			remoteInfo = "RT Bus";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		08348A752F06708F007E8299 /* RT BusTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RT BusTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		08A82AE62F01297E00C2B3E8 /* RT Bus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RT Bus.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		08A82B2D2F042AE300C2B3E8 /* RT BusUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RT BusUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		08B9CBD62F042E260075AF1B /* RT Bus.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "RT Bus.xctestplan"; path = "../RT Bus.xctestplan"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		08348A762F06708F007E8299 /* RT BusTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "RT BusTests";
+			sourceTree = "<group>";
+		};
 		08A82AE82F01297E00C2B3E8 /* RT Bus */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "RT Bus";
 			sourceTree = "<group>";
 		};
+		08A82B2E2F042AE300C2B3E8 /* RT BusUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "RT BusUITests";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		08348A722F06708F007E8299 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		08A82AE32F01297E00C2B3E8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				08A82AFF2F0131CA00C2B3E8 /* MQTTNIO in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		08A82B2A2F042AE300C2B3E8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -32,7 +81,10 @@
 		08A82ADD2F01297E00C2B3E8 = {
 			isa = PBXGroup;
 			children = (
+				08B9CBD62F042E260075AF1B /* RT Bus.xctestplan */,
+				08A82B2E2F042AE300C2B3E8 /* RT BusUITests */,
 				08A82AE82F01297E00C2B3E8 /* RT Bus */,
+				08348A762F06708F007E8299 /* RT BusTests */,
 				08A82AE72F01297E00C2B3E8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +93,8 @@
 			isa = PBXGroup;
 			children = (
 				08A82AE62F01297E00C2B3E8 /* RT Bus.app */,
+				08A82B2D2F042AE300C2B3E8 /* RT BusUITests.xctest */,
+				08348A752F06708F007E8299 /* RT BusTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +102,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		08348A742F06708F007E8299 /* RT BusTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 08348A7B2F06708F007E8299 /* Build configuration list for PBXNativeTarget "RT BusTests" */;
+			buildPhases = (
+				08348A712F06708F007E8299 /* Sources */,
+				08348A722F06708F007E8299 /* Frameworks */,
+				08348A732F06708F007E8299 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				08348A7A2F06708F007E8299 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				08348A762F06708F007E8299 /* RT BusTests */,
+			);
+			name = "RT BusTests";
+			packageProductDependencies = (
+			);
+			productName = "RT BusTests";
+			productReference = 08348A752F06708F007E8299 /* RT BusTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		08A82AE52F01297E00C2B3E8 /* RT Bus */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 08A82AF12F01297E00C2B3E8 /* Build configuration list for PBXNativeTarget "RT Bus" */;
@@ -65,10 +142,34 @@
 			);
 			name = "RT Bus";
 			packageProductDependencies = (
+				08A82AFE2F0131CA00C2B3E8 /* MQTTNIO */,
 			);
 			productName = "RT Bus";
 			productReference = 08A82AE62F01297E00C2B3E8 /* RT Bus.app */;
 			productType = "com.apple.product-type.application";
+		};
+		08A82B2C2F042AE300C2B3E8 /* RT BusUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 08A82B352F042AE300C2B3E8 /* Build configuration list for PBXNativeTarget "RT BusUITests" */;
+			buildPhases = (
+				08A82B292F042AE300C2B3E8 /* Sources */,
+				08A82B2A2F042AE300C2B3E8 /* Frameworks */,
+				08A82B2B2F042AE300C2B3E8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				08A82B342F042AE300C2B3E8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				08A82B2E2F042AE300C2B3E8 /* RT BusUITests */,
+			);
+			name = "RT BusUITests";
+			packageProductDependencies = (
+			);
+			productName = "RT BusUITests";
+			productReference = 08A82B2D2F042AE300C2B3E8 /* RT BusUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -80,8 +181,16 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					08348A742F06708F007E8299 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 08A82AE52F01297E00C2B3E8;
+					};
 					08A82AE52F01297E00C2B3E8 = {
 						CreatedOnToolsVersion = 26.2;
+					};
+					08A82B2C2F042AE300C2B3E8 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 08A82AE52F01297E00C2B3E8;
 					};
 				};
 			};
@@ -91,21 +200,41 @@
 			knownRegions = (
 				en,
 				Base,
+				fi,
 			);
 			mainGroup = 08A82ADD2F01297E00C2B3E8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				08A82AFD2F0131CA00C2B3E8 /* XCRemoteSwiftPackageReference "mqtt-nio" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 08A82AE72F01297E00C2B3E8 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				08A82AE52F01297E00C2B3E8 /* RT Bus */,
+				08A82B2C2F042AE300C2B3E8 /* RT BusUITests */,
+				08348A742F06708F007E8299 /* RT BusTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		08348A732F06708F007E8299 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		08A82AE42F01297E00C2B3E8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		08A82B2B2F042AE300C2B3E8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -115,7 +244,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		08348A712F06708F007E8299 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		08A82AE22F01297E00C2B3E8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		08A82B292F042AE300C2B3E8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -124,7 +267,75 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		08348A7A2F06708F007E8299 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 08A82AE52F01297E00C2B3E8 /* RT Bus */;
+			targetProxy = 08348A792F06708F007E8299 /* PBXContainerItemProxy */;
+		};
+		08A82B342F042AE300C2B3E8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 08A82AE52F01297E00C2B3E8 /* RT Bus */;
+			targetProxy = 08A82B332F042AE300C2B3E8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		08348A7C2F06708F007E8299 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X944PUC69J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "va-production.RT-BusTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RT Bus.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RT Bus";
+			};
+			name = Debug;
+		};
+		08348A7D2F06708F007E8299 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X944PUC69J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "va-production.RT-BusTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RT Bus.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RT Bus";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		08A82AEF2F01297E00C2B3E8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -177,6 +388,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -232,6 +444,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -242,14 +455,31 @@
 		08A82AF22F01297E00C2B3E8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = bussit_icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X944PUC69J;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "RT-Bus-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Linjalla;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Center location at startup to show nearby busses";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -258,25 +488,26 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "va-production.RT-Bus";
+				PRODUCT_BUNDLE_IDENTIFIER = fi.helsinki.transittracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = 1;
 				XROS_DEPLOYMENT_TARGET = 26.2;
 			};
 			name = Debug;
@@ -284,14 +515,31 @@
 		08A82AF32F01297E00C2B3E8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = bussit_icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X944PUC69J;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "RT-Bus-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Linjalla;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Center location at startup to show nearby busses";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -300,32 +548,86 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "va-production.RT-Bus";
+				PRODUCT_BUNDLE_IDENTIFIER = fi.helsinki.transittracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = 1;
 				XROS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
+		08A82B362F042AE300C2B3E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "va-production.RT-BusUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "RT Bus";
+			};
+			name = Debug;
+		};
+		08A82B372F042AE300C2B3E8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X944PUC69J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "va-production.RT-BusUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "RT Bus";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		08348A7B2F06708F007E8299 /* Build configuration list for PBXNativeTarget "RT BusTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08348A7C2F06708F007E8299 /* Debug */,
+				08348A7D2F06708F007E8299 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		08A82AE12F01297E00C2B3E8 /* Build configuration list for PBXProject "RT Bus" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -344,7 +646,35 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		08A82B352F042AE300C2B3E8 /* Build configuration list for PBXNativeTarget "RT BusUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08A82B362F042AE300C2B3E8 /* Debug */,
+				08A82B372F042AE300C2B3E8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		08A82AFD2F0131CA00C2B3E8 /* XCRemoteSwiftPackageReference "mqtt-nio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swift-server-community/mqtt-nio";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.12.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		08A82AFE2F0131CA00C2B3E8 /* MQTTNIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 08A82AFD2F0131CA00C2B3E8 /* XCRemoteSwiftPackageReference "mqtt-nio" */;
+			productName = MQTTNIO;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 08A82ADE2F01297E00C2B3E8 /* Project object */;
 }
