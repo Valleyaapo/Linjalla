@@ -2,319 +2,193 @@
 //  ContentView.swift
 //  RT Bus
 //
-//  Created by Aapo Laakso on 28.12.2025.
+//  Updated on 13.01.2026.
 //
 
 import SwiftUI
 import MapKit
-import CoreLocation
-import Combine
-import OSLog
 
 struct ContentView: View {
     @Bindable var busManager: BusManager
-    @Bindable var tramManager: TramManager
-    @State private var stopManager: StopManager = { StopManager() }()
-    @State private var mapStateManager = MapStateManager()
-    @StateObject private var trainManager = TrainManager()
-    @StateObject private var locationManager = LocationManager()
-    
-    /// HSL station ID for Rautatientori bus terminal
-    private let rautatientoriStationId = "HSL:1000003"
-    
-    // Initial center: user location with fallback
-    @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
-    
+
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 60.1699, longitude: 24.9384),
+        span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.12)
+    )
     @State private var selectedLines: Set<BusLine> = []
-    @State private var isSearchPresented = false
-    @State private var isDeparturesPresented = false
-    @State private var isTrainDeparturesPresented = false
-    @State private var showStops = true
-    @State private var showStopNames = false
-    @State private var isHSLErrorPresented = false
-    
+    @State private var isLinePickerPresented = false
+
+    private var sortedSelection: [BusLine] {
+        selectedLines.sorted { $0.shortName < $1.shortName }
+    }
+
     var body: some View {
-        mainContent
-            .task(startupTask)
-            .onChange(of: busManager.vehicleList, busListChanged)
-            .onChange(of: tramManager.vehicleList, tramListChanged)
-            .onChange(of: busManager.favoriteLines, busFavoritesChanged)
-            .onChange(of: tramManager.favoriteLines, tramFavoritesChanged)
-            .alert("ui.alert.busError", isPresented: busErrorBinding, actions: busErrorActions, message: busErrorMessage)
-            .alert("ui.alert.tramError", isPresented: tramErrorBinding, actions: tramErrorActions, message: tramErrorMessage)
-            .alert("ui.alert.stopError", isPresented: stopErrorBinding, actions: stopErrorActions, message: stopErrorMessage)
-            .alert("ui.alert.hslAppMissing", isPresented: $isHSLErrorPresented, actions: hslErrorActions, message: hslErrorMessage)
-    }
-    
-    // MARK: - Task and onChange Handlers
-    
-    private func startupTask() async {
-        locationManager.requestAuthorization()
-        Logger.ui.info("App started, requesting location")
-        loadSelectedLines()
-    }
-    
-    private func busListChanged(_ oldList: [BusModel], _ newList: [BusModel]) {
-        mapStateManager.updateBuses(newList)
-    }
-    
-    private func tramListChanged(_ oldList: [BusModel], _ newList: [BusModel]) {
-        mapStateManager.updateTrams(newList)
-    }
-    
-    private func busFavoritesChanged(_ oldFavorites: [BusLine], _ newFavorites: [BusLine]) {
-        updateSelectionFromFavorites(old: oldFavorites, new: newFavorites)
-    }
-    
-    private func tramFavoritesChanged(_ oldFavorites: [BusLine], _ newFavorites: [BusLine]) {
-        updateSelectionFromFavorites(old: oldFavorites, new: newFavorites)
-    }
-    
-    // MARK: - Alert Bindings and Views
-    
-    private var busErrorBinding: Binding<Bool> {
-        Binding(
-            get: { busManager.error != nil },
-            set: { if !$0 { busManager.error = nil } }
-        )
-    }
-    
-    @ViewBuilder
-    private func busErrorActions() -> some View {
-        Button("ui.button.ok", role: .cancel) { busManager.error = nil }
-    }
-    
-    @ViewBuilder
-    private func busErrorMessage() -> some View {
-        Text(busManager.error?.localizedDescription ?? "")
-    }
-    
-    private var tramErrorBinding: Binding<Bool> {
-        Binding(
-            get: { tramManager.error != nil },
-            set: { if !$0 { tramManager.error = nil } }
-        )
-    }
-    
-    @ViewBuilder
-    private func tramErrorActions() -> some View {
-        Button("ui.button.ok", role: .cancel) { tramManager.error = nil }
-    }
-    
-    @ViewBuilder
-    private func tramErrorMessage() -> some View {
-        Text(tramManager.error?.localizedDescription ?? "")
-    }
-    
-    private var stopErrorBinding: Binding<Bool> {
-        Binding(
-            get: { stopManager.error != nil },
-            set: { if !$0 { stopManager.error = nil } }
-        )
-    }
-    
-    @ViewBuilder
-    private func stopErrorActions() -> some View {
-        Button("ui.button.ok", role: .cancel) { stopManager.error = nil }
-    }
-    
-    @ViewBuilder
-    private func stopErrorMessage() -> some View {
-        Text(stopManager.error?.localizedDescription ?? "")
-    }
-    
-    @ViewBuilder
-    private func hslErrorActions() -> some View {
-        Button("ui.button.ok", role: .cancel) {}
-    }
-    
-    @ViewBuilder
-    private func hslErrorMessage() -> some View {
-        Text("ui.error.hslNotInstalled")
-    }
-    
-    // MARK: - Main Content
-    
-    @ViewBuilder
-    private var mainContent: some View {
         ZStack {
-            BusMapView(
-                position: $position,
-                vehicles: mapStateManager.vehicles,
-                stops: stopManager.allStops,
-                showStops: showStops,
-                showStopNames: showStopNames,
-                onCameraChange: handleCameraChange
-            )
-            
-            SelectionOverlay(
-                busLines: busManager.favoriteLines,
-                tramLines: tramManager.favoriteLines,
-                selectedLines: selectedLines,
-                isLoading: stopManager.isLoading,
-                onToggle: { toggleSelection(for: $0) },
-                onSelectAll: { selectAllFavorites() },
-                onAdd: { isSearchPresented = true },
-                onDepartures: { isDeparturesPresented = true },
-                onTrainDepartures: { isTrainDeparturesPresented = true },
-                onCenter: { centerOnHelsinkiCentral() },
-                onCenterUser: { centerOnUser() },
-                onTickets: { openTickets() }
-            )
-        }
-        .sheet(isPresented: $isSearchPresented) {
-            LineSearchSheet(busManager: busManager, tramManager: tramManager)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $isDeparturesPresented) {
-            DeparturesView(
-                title: NSLocalizedString("ui.location.rautatientori", comment: ""),
-                selectedLines: selectedLines
-            ) {
-                try await stopManager.fetchDepartures(for: rautatientoriStationId)
+            Map(coordinateRegion: $region, annotationItems: busManager.vehicleList) { vehicle in
+                MapAnnotation(coordinate: vehicle.coordinate) {
+                    BusMarker(lineName: vehicle.lineName)
+                        .animation(.easeInOut(duration: 0.35), value: vehicle.latitude)
+                        .animation(.easeInOut(duration: 0.35), value: vehicle.longitude)
+                }
             }
-            .presentationDetents([.medium, .large])
-        }
-        .sheet(isPresented: $isTrainDeparturesPresented) {
-            DeparturesView(
-                title: NSLocalizedString("ui.location.helsinkiCentral", comment: ""),
-                selectedLines: nil
-            ) {
-                try await trainManager.fetchDepartures(stationCode: "HKI")
+            .ignoresSafeArea()
+
+            VStack {
+                header
+                Spacer()
+                if !sortedSelection.isEmpty {
+                    lineChips
+                }
             }
-            .presentationDetents([.medium, .large])
+            .padding()
         }
-    }
-    
-    private func updateSelectionFromFavorites(old: [BusLine], new: [BusLine]) {
-        let oldSet = Set(old)
-        let newSet = Set(new)
-        
-        let addedLines = newSet.subtracting(oldSet)
-        let removedLines = oldSet.subtracting(newSet)
-        
-        var selectionChanged = false
-        
-        if !addedLines.isEmpty {
-            selectedLines.formUnion(addedLines)
-            selectionChanged = true
+        .sheet(isPresented: $isLinePickerPresented) {
+            LineSelectionView(lines: busManager.favoriteLines, selectedLines: $selectedLines)
         }
-        
-        if !removedLines.isEmpty {
-            selectedLines.subtract(removedLines)
-            selectionChanged = true
+        .onAppear {
+            guard selectedLines.isEmpty else { return }
+            selectedLines = Set(busManager.favoriteLines)
         }
-        
-        if selectionChanged {
-            saveSelectedLines()
-            updateManagers()
-        }
-    }
-    
-    private func toggleSelection(for line: BusLine) {
-        if selectedLines.contains(line) {
-            selectedLines.remove(line)
-        } else {
-            selectedLines.insert(line)
-        }
-        saveSelectedLines()
-        updateManagers()
-    }
-    
-    private func saveSelectedLines() {
-        if let encoded = try? JSONEncoder().encode(Array(selectedLines)) {
-            UserDefaults.standard.set(encoded, forKey: "SelectedLinesState")
-        }
-    }
-    
-    private func loadSelectedLines() {
-        if let data = UserDefaults.standard.data(forKey: "SelectedLinesState"),
-           let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
-            selectedLines = Set(decoded)
-            updateManagers()
-        }
-    }
-    
-    private func updateManagers() {
-        let selectedArray = Array(selectedLines)
-
-        // Filter lines by type - each manager only gets its relevant lines
-        let busLineIds = Set(busManager.favoriteLines.map { $0.id })
-        let tramLineIds = Set(tramManager.favoriteLines.map { $0.id })
-
-        let selectedBusLines = selectedArray.filter { busLineIds.contains($0.id) }
-        let selectedTramLines = selectedArray.filter { tramLineIds.contains($0.id) }
-
-        busManager.updateSubscriptions(selectedLines: selectedBusLines)
-        tramManager.updateSubscriptions(selectedLines: selectedTramLines)
-        stopManager.updateStops(for: selectedArray)
-    }
-    
-    private func centerOnHelsinkiCentral() {
-        let helsinkiCentral = CLLocationCoordinate2D(latitude: 60.1710, longitude: 24.9410)
-        let region = MKCoordinateRegion(
-            center: helsinkiCentral,
-            span: MKCoordinateSpan(latitudeDelta: MapConstants.defaultSpanDelta, longitudeDelta: MapConstants.defaultSpanDelta)
-        )
-        withAnimation(.easeInOut(duration: 0.35)) {
-            position = .region(region)
+        .onChange(of: selectedLines) { newSelection in
+            busManager.updateSubscriptions(selectedLines: Array(newSelection))
         }
     }
 
-    private func centerOnUser() {
-        if let location = locationManager.lastLocation {
-            let region = MKCoordinateRegion(
-                center: location.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: MapConstants.defaultSpanDelta, longitudeDelta: MapConstants.defaultSpanDelta)
-            )
-            withAnimation(.easeInOut(duration: 0.35)) {
-                position = .region(region)
+    private var header: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("HSL Bus Tracker")
+                    .font(.headline)
+                Text("\(busManager.busDictionary.count) vehicles on the map")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
-        } else {
-            locationManager.requestAuthorization()
+            Spacer()
+            Button {
+                isLinePickerPresented = true
+            } label: {
+                Label("Lines", systemImage: "bus")
+                    .font(.callout)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+            }
+            .buttonStyle(.borderedProminent)
         }
-    }
-    
-    private func selectAllFavorites() {
-        let allFavorites = busManager.favoriteLines + tramManager.favoriteLines
-        
-        if selectedLines.count == allFavorites.count && !allFavorites.isEmpty {
-            selectedLines.removeAll()
-        } else {
-            selectedLines = Set(allFavorites)
-        }
-        saveSelectedLines()
-        updateManagers()
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(radius: 6)
     }
 
-    private func openTickets() {
-        guard let url = URL(string: "hslapp://tickets") else { return }
-        UIApplication.shared.open(url, options: [:]) { success in
-            if !success {
-                 Logger.ui.warning("Could not open HSL tickets URL or app not installed")
-                 isHSLErrorPresented = true
+    private var lineChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(sortedSelection) { line in
+                    Text(line.shortName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 12)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.8), lineWidth: 2)
+                        )
+                }
+            }
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 4)
+        .background(Color.black.opacity(0.18))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private struct BusMarker: View {
+        let lineName: String
+
+        var body: some View {
+            ZStack {
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 34, height: 34)
+                    .shadow(radius: 4)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: 3)
+                    )
+                Text(lineName)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.white)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
             }
         }
     }
-    
-    private func handleCameraChange(_ zoomLevel: Double) {
-        let shouldShowStops = zoomLevel < MapConstants.showStopsThreshold
-        let shouldShowStopNames = zoomLevel < MapConstants.showStopNamesThreshold
-        
-        if showStops != shouldShowStops {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                showStops = shouldShowStops
+
+    private struct LineSelectionView: View {
+        let lines: [BusLine]
+        @Binding var selectedLines: Set<BusLine>
+        @Environment(\.dismiss) private var dismiss
+        @State private var searchText = ""
+
+        private var filteredLines: [BusLine] {
+            guard !searchText.isEmpty else { return lines }
+            return lines.filter { line in
+                line.shortName.localizedCaseInsensitiveContains(searchText) ||
+                line.longName.localizedCaseInsensitiveContains(searchText)
             }
         }
-        if showStopNames != shouldShowStopNames {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                showStopNames = shouldShowStopNames
+
+        var body: some View {
+            NavigationStack {
+                List(filteredLines) { line in
+                    Button {
+                        toggle(line)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(line.shortName)
+                                    .font(.headline)
+                                Text(line.longName)
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if selectedLines.contains(line) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.blue)
+                            } else {
+                                Image(systemName: "circle")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+                .searchable(text: $searchText, prompt: "Filter lines")
+                .navigationTitle("Select lines")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            dismiss()
+                        }
+                    }
+                }
+            }
+        }
+
+        private func toggle(_ line: BusLine) {
+            if selectedLines.contains(line) {
+                selectedLines.remove(line)
+            } else {
+                selectedLines.insert(line)
             }
         }
     }
 }
 
 #Preview {
-    ContentView(busManager: BusManager(), tramManager: TramManager())
+    ContentView(busManager: BusManager())
 }
