@@ -2,12 +2,13 @@
 //  MapStateManager.swift
 //  RT Bus
 //
-//  Created by Refactor on 07.01.2026.
+//  Created by Aapo Laakso on 07.01.2026.
 //
 
 import Foundation
 import Observation
 import OSLog
+import QuartzCore
 
 /// Central state manager that aggregates data from BusManager, TramManager, and StopManager
 /// into a single, atomically-updated mapItems array. This eliminates race conditions
@@ -16,7 +17,7 @@ import OSLog
 @Observable
 final class MapStateManager {
     /// The source of truth for dynamic vehicle annotations (Buses & Trams).
-    /// Updated via coalescing timer to ensure atomic rendering.
+    /// Updated via CADisplayLink to ensure atomic rendering synced with display.
     /// The atomically-updated list of all items (Stops, then Vehicles)
     /// This ensures they are rendered in the correct order every frame.
     private(set) var mapItems: [MapItem] = []
@@ -36,12 +37,9 @@ final class MapStateManager {
     private var trams: [Int: BusModel] = [:]
     private var stops: [String: BusStop] = [:]
     
-    // Coalescing mechanism
-    private var coalescingTimer: Timer?
+    // CADisplayLink for display-synced coalescing
+    private var displayLink: CADisplayLink?
     private var needsRebuild: Bool = false
-    
-    /// Coalescing interval in seconds (~30fps = 33ms, using 32ms)
-    private let coalescingInterval: TimeInterval = 0.032
     
     init() {}
     
@@ -86,22 +84,26 @@ final class MapStateManager {
         }
     }
     
-    // MARK: - Coalescing Logic
+    // MARK: - CADisplayLink Coalescing
     
     private func scheduleRebuild() {
         needsRebuild = true
-        guard coalescingTimer == nil else { return }
         
-        coalescingTimer = Timer.scheduledTimer(withTimeInterval: coalescingInterval, repeats: false) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.flushRebuild()
-            }
-        }
+        guard displayLink == nil else { return }
+        
+        // Create display link synced with screen refresh
+        displayLink = CADisplayLink(target: self, selector: #selector(displayLinkFired))
+        displayLink?.add(to: .main, forMode: .common)
+    }
+    
+    @objc private func displayLinkFired() {
+        // Process on next display refresh
+        flushRebuild()
     }
     
     private func flushRebuild() {
-        coalescingTimer?.invalidate()
-        coalescingTimer = nil
+        displayLink?.invalidate()
+        displayLink = nil
         
         guard needsRebuild else { return }
         needsRebuild = false
@@ -112,9 +114,7 @@ final class MapStateManager {
     private func rebuildItems() {
         var items: [MapItem] = []
         
-        // 1. BUSES (Rendered first = Current User Preference for "Underneath" vs "Top" check)
-        // If the user says stops are on top now, and I had stops first, then the Map engine 
-        // renders elements in the ForEach from FRONT TO BACK (Top to Bottom).
+        // 1. BUSES
         let sortedBuses = buses.values.sorted { $0.id < $1.id }
         items.append(contentsOf: sortedBuses.map { .bus($0) })
         
@@ -122,7 +122,7 @@ final class MapStateManager {
         let sortedTrams = trams.values.sorted { $0.id < $1.id }
         items.append(contentsOf: sortedTrams.map { .tram($0) })
         
-        // 3. STOPS (Rendered last = Should be at the bottom now)
+        // 3. STOPS (Rendered last = at the bottom visually)
         let sortedStops = stops.values.sorted { $0.id < $1.id }
         items.append(contentsOf: sortedStops.map { .stop($0) })
         

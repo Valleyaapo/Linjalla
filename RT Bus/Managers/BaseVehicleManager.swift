@@ -33,7 +33,7 @@ enum MapConstants {
     /// Default map span delta
     static let defaultSpanDelta: Double = 0.02
     /// Number of departures to fetch
-    static let departuresFetchCount = 60
+    static let departuresFetchCount = 10
 }
 
 // MARK: - Base Vehicle Manager

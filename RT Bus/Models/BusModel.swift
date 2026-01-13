@@ -18,6 +18,7 @@ struct BusModel: Identifiable, Codable, Equatable, Sendable {
     let id: Int
     let lineName: String
     let routeId: String?
+    let headsign: String?
     let latitude: Double
     let longitude: Double
     let heading: Int?
@@ -25,10 +26,11 @@ struct BusModel: Identifiable, Codable, Equatable, Sendable {
     let type: VehicleType
     
     // Default config for older initializers if needed, though we should update them
-    nonisolated init(id: Int, lineName: String, routeId: String?, latitude: Double, longitude: Double, heading: Int?, timestamp: TimeInterval, type: VehicleType = .bus) {
+    nonisolated init(id: Int, lineName: String, routeId: String?, headsign: String? = nil, latitude: Double, longitude: Double, heading: Int?, timestamp: TimeInterval, type: VehicleType = .bus) {
         self.id = id
         self.lineName = lineName
         self.routeId = routeId
+        self.headsign = headsign
         self.latitude = latitude
         self.longitude = longitude
         self.heading = heading
@@ -45,6 +47,7 @@ struct BusModel: Identifiable, Codable, Equatable, Sendable {
         // Skip timestamp to avoid UI jitter for stationary vehicles.
         lhs.id == rhs.id &&
         lhs.lineName == rhs.lineName &&
+        lhs.headsign == rhs.headsign &&
         lhs.latitude == rhs.latitude &&
         lhs.longitude == rhs.longitude &&
         lhs.heading == rhs.heading &&
@@ -75,12 +78,13 @@ struct VehiclePosition: Codable, Sendable {
         case tsi
     }
 
-    func toBusModel(routeId: String? = nil, type: BusModel.VehicleType = .bus) -> BusModel? {
+    func toBusModel(routeId: String? = nil, headsign: String? = nil, type: BusModel.VehicleType = .bus) -> BusModel? {
         guard let lat, let long, let desi else { return nil }
         return BusModel(
             id: veh,
             lineName: desi,
             routeId: routeId,
+            headsign: headsign,
             latitude: lat,
             longitude: long,
             heading: hdg,
