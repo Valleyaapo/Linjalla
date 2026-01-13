@@ -18,7 +18,6 @@ DerivedData/
 *.hmap
 *.ipa
 *.xcuserstate
-
 # Swift PM
 .build/
 
@@ -37,6 +36,8 @@ testing.png
 rt-test-general.png
 gemini.md
 capture_screenshots.sh
+docs/app_store_metadata.txt
+docs/metadata.md
 
 # Xcode
 DerivedData/
