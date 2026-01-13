@@ -115,7 +115,7 @@ class StopManager {
         
         let graphqlQuery = """
         query GetDepartures($stationId: String!) {
-          station(id: $stationId) {
+          stop(id: $stationId) {
             stoptimesWithoutPatterns(numberOfDepartures: \(MapConstants.departuresFetchCount)) {
               scheduledDeparture
               realtimeDeparture
@@ -147,9 +147,9 @@ class StopManager {
                 throw AppError.networkError("Fetch Departures Failed")
             }
             
-            let result = try JSONDecoder().decode(GraphQLStationResponse.self, from: data)
+            let result = try JSONDecoder().decode(GraphQLStopDeparturesResponse.self, from: data)
             
-            guard let stoptimes = result.data.station?.stoptimesWithoutPatterns else { return [] }
+            guard let stoptimes = result.data.stop?.stoptimesWithoutPatterns else { return [] }
             
             return stoptimes.compactMap { stoptime in
                 guard stoptime.pickupType != "NONE" else { return nil }
@@ -186,12 +186,13 @@ class StopManager {
 
 // MARK: - API Response Models
 
-struct GraphQLStationResponse: Codable, Sendable {
-    let data: GraphQLStationData
+struct GraphQLStopDeparturesResponse: Codable, Sendable {
+    let data: GraphQLStopDeparturesData
 }
-struct GraphQLStationData: Codable, Sendable {
-    let station: GraphQLStation?
+struct GraphQLStopDeparturesData: Codable, Sendable {
+    let stop: GraphQLStation?
 }
+// Recycling GraphQLStation structure but mapped to 'stop' field now
 struct GraphQLStation: Codable, Sendable {
     let stoptimesWithoutPatterns: [GraphQLStoptime]
 }

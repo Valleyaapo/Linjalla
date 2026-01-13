@@ -2,7 +2,7 @@
 //  NetworkService.swift
 //  RT Bus
 //
-//  Created by Refactor on 01.01.2026.
+//  Created by Aapo Laakso on 01.01.2026.
 //
 
 import Foundation

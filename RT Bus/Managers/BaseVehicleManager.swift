@@ -33,7 +33,7 @@ enum MapConstants {
     /// Default map span delta
     static let defaultSpanDelta: Double = 0.02
     /// Number of departures to fetch
-    static let departuresFetchCount = 60
+    static let departuresFetchCount = 10
 }
 
 // MARK: - Base Vehicle Manager
@@ -69,8 +69,14 @@ class BaseVehicleManager {
     }
 
     // MARK: - Internal State
-
+    
     var vehicles: [Int: BusModel] = [:]
+    var busDictionary: [String: BusModel] {
+        vehicles.reduce(into: [String: BusModel]()) { partial, entry in
+            let key = "\(entry.value.routeId ?? entry.value.lineName)-\(entry.key)"
+            partial[key] = entry.value
+        }
+    }
     var activeLines: [BusLine] = []
     var currentSubscriptions: Set<String> = []
 
@@ -207,7 +213,7 @@ class BaseVehicleManager {
         subscriptionTask?.cancel()
 
         subscriptionTask = Task {
-            let newTopics = Set(selectedLines.map { "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/\($0.routeId)/#" })
+            let newTopics = Set(selectedLines.map { "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/+/+/\($0.routeId)/#" })
             let toSubscribe = newTopics.subtracting(currentSubscriptions)
             let toUnsubscribe = currentSubscriptions.subtracting(newTopics)
 
@@ -265,7 +271,7 @@ class BaseVehicleManager {
 
         // Extract routeId from topic: /hfp/v2/journey/ongoing/vp/{type}/{op}/{veh}/{routeId}/...
         let parts = info.topicName.split(separator: "/")
-        let routeId = parts.count > 8 ? String(parts[8]) : nil
+        let routeId = parts.dropLast().last.map(String.init)
 
         do {
             let response = try JSONDecoder().decode(LocalResponse.self, from: data)

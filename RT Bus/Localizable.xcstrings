@@ -128,6 +128,7 @@
       }
     },
     "Bus %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fi" : {
           "stringUnit" : {
@@ -280,6 +281,7 @@
       "shouldTranslate" : false
     },
     "Tram %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fi" : {
           "stringUnit" : {
