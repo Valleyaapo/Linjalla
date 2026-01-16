@@ -38,8 +38,13 @@ struct UIKitMapView: UIViewRepresentable {
         mapView.pointOfInterestFilter = .excludingAll
         mapView.mapType = .standard
         
-        // Start centered on user location
-        mapView.userTrackingMode = .follow
+        // Start centered on Helsinki; user can recenter on their location manually.
+        let helsinkiCentral = CLLocationCoordinate2D(latitude: 60.1710, longitude: 24.9410)
+        let region = MKCoordinateRegion(
+            center: helsinkiCentral,
+            span: MKCoordinateSpan(latitudeDelta: MapConstants.defaultSpanDelta, longitudeDelta: MapConstants.defaultSpanDelta)
+        )
+        mapView.setRegion(region, animated: false)
         
         // Register annotation views
         mapView.register(
