@@ -71,19 +71,13 @@ class BaseVehicleManager {
     // MARK: - Internal State
     
     var vehicles: [Int: BusModel] = [:]
-    var busDictionary: [String: BusModel] {
-        vehicles.reduce(into: [String: BusModel]()) { partial, entry in
-            let key = "\(entry.value.routeId ?? entry.value.lineName)-\(entry.key)"
-            partial[key] = entry.value
-        }
-    }
     var activeLines: [BusLine] = []
     var currentSubscriptions: Set<String> = []
 
     // MARK: - Dependencies
 
-    var urlSession: URLSession
-    private var connectOnStart: Bool
+    let urlSession: URLSession
+    private let connectOnStart: Bool
 
     private var _clientContainer: MQTTClientContainer?
     var client: MQTTClient? {

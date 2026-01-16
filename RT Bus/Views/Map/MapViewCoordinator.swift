@@ -6,8 +6,6 @@
 //
 
 import MapKit
-import Combine
-import SwiftUI
 
 /// Coordinates between SwiftUI and MKMapView
 final class MapViewCoordinator: NSObject {
@@ -24,7 +22,6 @@ final class MapViewCoordinator: NSObject {
     private var currentZoomLevel: Double = 0.05
     
     // Debouncing for stop updates
-    private var lastZoomChangeTime: TimeInterval = 0
     private var lastStopRefreshZoom: Double = 0.05
     
     // Centralized animation state management
@@ -265,9 +262,6 @@ extension MapViewCoordinator: MKMapViewDelegate {
             currentZoomLevel = zoomLevel
             onCameraChange(zoomLevel)
         }
-        
-        let now = Date.timeIntervalSinceReferenceDate
-        lastZoomChangeTime = now
         
         if abs(lastStopRefreshZoom - zoomLevel) > 0.005 {
             lastStopRefreshZoom = zoomLevel

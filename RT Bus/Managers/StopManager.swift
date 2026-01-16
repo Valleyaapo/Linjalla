@@ -13,10 +13,10 @@ import SwiftUI
 
 @MainActor
 @Observable
-class StopManager {
-    var allStops: [BusStop] = [] // Flattened, sorted list for View
-    var error: AppError? // User-facing error
-    var isLoading: Bool = false
+final class StopManager {
+    private(set) var allStops: [BusStop] = [] // Flattened, sorted list for View
+    private(set) var error: AppError? // User-facing error
+    private(set) var isLoading: Bool = false
     
     private var activeFetchCount = 0 {
         didSet { isLoading = activeFetchCount > 0 }
@@ -25,10 +25,14 @@ class StopManager {
     // Internal cache
     private var stops: [String: [BusStop]] = [:]
     private var fetchTasks: [String: Task<Void, Never>] = [:]
-    private var urlSession: URLSession
+    private let urlSession: URLSession
     
     init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession
+    }
+
+    func clearError() {
+        error = nil
     }
     
     // MARK: - API

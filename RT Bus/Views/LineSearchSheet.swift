@@ -9,10 +9,10 @@ import SwiftUI
 import OSLog
 
 struct LineSearchSheet: View {
-    var busManager: BusManager
-    var tramManager: TramManager
+    let busManager: BusManager
+    let tramManager: TramManager
     
-    enum SearchMode: String, CaseIterable {
+    private enum SearchMode: String, CaseIterable {
         case bus = "Buses"
         case tram = "Trams"
         
@@ -31,8 +31,6 @@ struct LineSearchSheet: View {
     @State private var errorMessage: String?
     @State private var searchTask: Task<Void, Never>?
     @State private var isSearchPresented = false
-    
-    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         VStack(spacing: 0) {

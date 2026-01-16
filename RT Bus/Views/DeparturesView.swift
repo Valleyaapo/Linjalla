@@ -26,9 +26,9 @@ struct DeparturesView: View {
     }()
     
     // Auto-refresh every 30 seconds
-    let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
+    private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
     
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {

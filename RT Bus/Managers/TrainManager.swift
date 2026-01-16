@@ -10,7 +10,7 @@ import Combine
 import OSLog
 
 @MainActor
-class TrainManager: ObservableObject {
+final class TrainManager: ObservableObject {
     private var stationNames: [String: String] = [:]
     
     private let decoder: JSONDecoder = {
