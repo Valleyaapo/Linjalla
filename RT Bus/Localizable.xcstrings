@@ -128,7 +128,6 @@
       }
     },
     "Bus %@" : {
-      "extractionState" : "stale",
       "localizations" : {
         "fi" : {
           "stringUnit" : {
@@ -281,7 +280,6 @@
       "shouldTranslate" : false
     },
     "Tram %@" : {
-      "extractionState" : "stale",
       "localizations" : {
         "fi" : {
           "stringUnit" : {
@@ -511,6 +509,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Asenna HSL-sovellus ostaaksesi lippuja."
+          }
+        }
+      }
+    },
+    "ui.error.offline" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No network connection."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ei verkkoyhteyttä."
+          }
+        }
+      }
+    },
+    "ui.error.fetchFailed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load data. Pull to retry."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tietojen haku epäonnistui. Vedä alas yrittääksesi uudelleen."
+          }
+        }
+      }
+    },
+    "ui.error.searchFailed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search failed. Try again."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haku epäonnistui. Yritä uudelleen."
           }
         }
       }

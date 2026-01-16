@@ -28,6 +28,7 @@ struct LineSearchSheet: View {
     @State private var searchText = ""
     @State private var searchResults: [BusLine] = []
     @State private var isFetching = false
+    @State private var errorMessage: String?
     @State private var searchTask: Task<Void, Never>?
     @State private var isSearchPresented = false
     
@@ -52,6 +53,12 @@ struct LineSearchSheet: View {
                     .padding()
                     
                     List {
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .foregroundStyle(.secondary)
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                        }
                         if isFetching {
                             HStack {
                                 Spacer()
@@ -153,10 +160,12 @@ struct LineSearchSheet: View {
         guard !query.isEmpty else {
             searchResults = []
             isFetching = false
+            errorMessage = nil
             return
         }
         
         isFetching = true
+        errorMessage = nil
         searchTask = Task {
             // Debounce: wait 300ms before searching
             try? await Task.sleep(for: .milliseconds(300))
@@ -176,15 +185,29 @@ struct LineSearchSheet: View {
                 await MainActor.run {
                     self.searchResults = lines
                     self.isFetching = false
+                    self.errorMessage = nil
                 }
             } catch {
                 guard !Task.isCancelled else { return }
                 Logger.network.error("Search error: \(error)")
                 await MainActor.run {
                     self.isFetching = false
+                    self.errorMessage = errorMessageKey(for: error)
                 }
             }
         }
+    }
+
+    private func errorMessageKey(for error: Error) -> String {
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost:
+                return NSLocalizedString("ui.error.offline", comment: "")
+            default:
+                break
+            }
+        }
+        return NSLocalizedString("ui.error.searchFailed", comment: "")
     }
 }
 

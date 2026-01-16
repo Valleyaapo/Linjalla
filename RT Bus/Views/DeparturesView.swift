@@ -16,6 +16,7 @@ struct DeparturesView: View {
     
     @State private var departures: [Departure] = []
     @State private var isLoading = false
+    @State private var errorMessage: String?
     
     // TD-002: Static formatter to avoid recreation per cell
     private static let timeFormatter: DateFormatter = {
@@ -32,7 +33,11 @@ struct DeparturesView: View {
     var body: some View {
         NavigationStack {
             List {
-                if let selected = selectedLines, selected.isEmpty {
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(.secondary)
+                        .listRowBackground(Color.clear)
+                } else if let selected = selectedLines, selected.isEmpty {
                     ContentUnavailableView(
                         NSLocalizedString("ui.departures.noLines", comment: ""),
                         systemImage: "bus.fill",
@@ -129,6 +134,7 @@ struct DeparturesView: View {
         }
         
         isLoading = true
+        errorMessage = nil
         do {
             let fetched = try await fetchAction()
             
@@ -148,8 +154,21 @@ struct DeparturesView: View {
             }
         } catch {
             Logger.ui.error("Error loading departures: \(error)")
+            errorMessage = errorMessageKey(for: error)
             self.isLoading = false
         }
+    }
+
+    private func errorMessageKey(for error: Error) -> String {
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost:
+                return NSLocalizedString("ui.error.offline", comment: "")
+            default:
+                break
+            }
+        }
+        return NSLocalizedString("ui.error.fetchFailed", comment: "")
     }
     
     private func formatTime(_ date: Date) -> String {
