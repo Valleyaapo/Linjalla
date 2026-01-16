@@ -8,13 +8,12 @@
 import SwiftUI
 import MapKit
 import CoreLocation
-import Combine
 import OSLog
 
 struct ContentView: View {
     @Bindable var busManager: BusManager
     @Bindable var tramManager: TramManager
-    @State private var stopManager: StopManager = { StopManager() }()
+    @State private var selectionStore: SelectionStore
     @State private var mapStateManager = MapStateManager()
     @StateObject private var trainManager = TrainManager()
     @StateObject private var locationManager = LocationManager()
@@ -25,14 +24,18 @@ struct ContentView: View {
     // Initial center: user location with fallback
     @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
     
-    @State private var selectedLines: Set<BusLine> = []
     @State private var isSearchPresented = false
     @State private var isDeparturesPresented = false
     @State private var isTrainDeparturesPresented = false
     @State private var showStops = true
     @State private var showStopNames = false
-    @State private var isHSLErrorPresented = false
-    
+
+    init(busManager: BusManager, tramManager: TramManager) {
+        self.busManager = busManager
+        self.tramManager = tramManager
+        _selectionStore = State(initialValue: SelectionStore(busManager: busManager, tramManager: tramManager))
+    }
+
     var body: some View {
         mainContent
             .task(startupTask)
@@ -40,10 +43,6 @@ struct ContentView: View {
             .onChange(of: tramManager.vehicleList, tramListChanged)
             .onChange(of: busManager.favoriteLines, busFavoritesChanged)
             .onChange(of: tramManager.favoriteLines, tramFavoritesChanged)
-            .alert("ui.alert.busError", isPresented: busErrorBinding, actions: busErrorActions, message: busErrorMessage)
-            .alert("ui.alert.tramError", isPresented: tramErrorBinding, actions: tramErrorActions, message: tramErrorMessage)
-            .alert("ui.alert.stopError", isPresented: stopErrorBinding, actions: stopErrorActions, message: stopErrorMessage)
-            .alert("ui.alert.hslAppMissing", isPresented: $isHSLErrorPresented, actions: hslErrorActions, message: hslErrorMessage)
     }
     
     // MARK: - Task and onChange Handlers
@@ -51,7 +50,7 @@ struct ContentView: View {
     private func startupTask() async {
         locationManager.requestAuthorization()
         Logger.ui.info("App started, requesting location")
-        loadSelectedLines()
+        selectionStore.loadSelectedLines()
     }
     
     private func busListChanged(_ oldList: [BusModel], _ newList: [BusModel]) {
@@ -63,75 +62,13 @@ struct ContentView: View {
     }
     
     private func busFavoritesChanged(_ oldFavorites: [BusLine], _ newFavorites: [BusLine]) {
-        updateSelectionFromFavorites(old: oldFavorites, new: newFavorites)
+        selectionStore.syncFavorites(old: oldFavorites, new: newFavorites)
     }
     
     private func tramFavoritesChanged(_ oldFavorites: [BusLine], _ newFavorites: [BusLine]) {
-        updateSelectionFromFavorites(old: oldFavorites, new: newFavorites)
+        selectionStore.syncFavorites(old: oldFavorites, new: newFavorites)
     }
     
-    // MARK: - Alert Bindings and Views
-    
-    private var busErrorBinding: Binding<Bool> {
-        Binding(
-            get: { busManager.error != nil },
-            set: { if !$0 { busManager.error = nil } }
-        )
-    }
-    
-    @ViewBuilder
-    private func busErrorActions() -> some View {
-        Button("ui.button.ok", role: .cancel) { busManager.error = nil }
-    }
-    
-    @ViewBuilder
-    private func busErrorMessage() -> some View {
-        Text(busManager.error?.localizedDescription ?? "")
-    }
-    
-    private var tramErrorBinding: Binding<Bool> {
-        Binding(
-            get: { tramManager.error != nil },
-            set: { if !$0 { tramManager.error = nil } }
-        )
-    }
-    
-    @ViewBuilder
-    private func tramErrorActions() -> some View {
-        Button("ui.button.ok", role: .cancel) { tramManager.error = nil }
-    }
-    
-    @ViewBuilder
-    private func tramErrorMessage() -> some View {
-        Text(tramManager.error?.localizedDescription ?? "")
-    }
-    
-    private var stopErrorBinding: Binding<Bool> {
-        Binding(
-            get: { stopManager.error != nil },
-            set: { if !$0 { stopManager.error = nil } }
-        )
-    }
-    
-    @ViewBuilder
-    private func stopErrorActions() -> some View {
-        Button("ui.button.ok", role: .cancel) { stopManager.error = nil }
-    }
-    
-    @ViewBuilder
-    private func stopErrorMessage() -> some View {
-        Text(stopManager.error?.localizedDescription ?? "")
-    }
-    
-    @ViewBuilder
-    private func hslErrorActions() -> some View {
-        Button("ui.button.ok", role: .cancel) {}
-    }
-    
-    @ViewBuilder
-    private func hslErrorMessage() -> some View {
-        Text("ui.error.hslNotInstalled")
-    }
     
     // MARK: - Main Content
     
@@ -141,7 +78,7 @@ struct ContentView: View {
             BusMapView(
                 position: $position,
                 vehicles: mapStateManager.vehicles,
-                stops: stopManager.allStops,
+                stops: selectionStore.stopManager.allStops,
                 showStops: showStops,
                 showStopNames: showStopNames,
                 onCameraChange: handleCameraChange
@@ -150,10 +87,10 @@ struct ContentView: View {
             SelectionOverlay(
                 busLines: busManager.favoriteLines,
                 tramLines: tramManager.favoriteLines,
-                selectedLines: selectedLines,
-                isLoading: stopManager.isLoading,
-                onToggle: { toggleSelection(for: $0) },
-                onSelectAll: { selectAllFavorites() },
+                selectedLines: selectionStore.selectedLines,
+                isLoading: selectionStore.stopManager.isLoading,
+                onToggle: { selectionStore.toggleSelection(for: $0) },
+                onSelectAll: { selectionStore.selectAllFavorites() },
                 onAdd: { isSearchPresented = true },
                 onDepartures: { isDeparturesPresented = true },
                 onTrainDepartures: { isTrainDeparturesPresented = true },
@@ -170,9 +107,9 @@ struct ContentView: View {
         .sheet(isPresented: $isDeparturesPresented) {
             DeparturesView(
                 title: NSLocalizedString("ui.location.rautatientori", comment: ""),
-                selectedLines: selectedLines
+                selectedLines: selectionStore.selectedLines
             ) {
-                try await stopManager.fetchDepartures(for: rautatientoriStationId)
+                try await selectionStore.stopManager.fetchDepartures(for: rautatientoriStationId)
             }
             .presentationDetents([.medium, .large])
         }
@@ -185,70 +122,6 @@ struct ContentView: View {
             }
             .presentationDetents([.medium, .large])
         }
-    }
-    
-    private func updateSelectionFromFavorites(old: [BusLine], new: [BusLine]) {
-        let oldSet = Set(old)
-        let newSet = Set(new)
-        
-        let addedLines = newSet.subtracting(oldSet)
-        let removedLines = oldSet.subtracting(newSet)
-        
-        var selectionChanged = false
-        
-        if !addedLines.isEmpty {
-            selectedLines.formUnion(addedLines)
-            selectionChanged = true
-        }
-        
-        if !removedLines.isEmpty {
-            selectedLines.subtract(removedLines)
-            selectionChanged = true
-        }
-        
-        if selectionChanged {
-            saveSelectedLines()
-            updateManagers()
-        }
-    }
-    
-    private func toggleSelection(for line: BusLine) {
-        if selectedLines.contains(line) {
-            selectedLines.remove(line)
-        } else {
-            selectedLines.insert(line)
-        }
-        saveSelectedLines()
-        updateManagers()
-    }
-    
-    private func saveSelectedLines() {
-        if let encoded = try? JSONEncoder().encode(Array(selectedLines)) {
-            UserDefaults.standard.set(encoded, forKey: "SelectedLinesState")
-        }
-    }
-    
-    private func loadSelectedLines() {
-        if let data = UserDefaults.standard.data(forKey: "SelectedLinesState"),
-           let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
-            selectedLines = Set(decoded)
-            updateManagers()
-        }
-    }
-    
-    private func updateManagers() {
-        let selectedArray = Array(selectedLines)
-
-        // Filter lines by type - each manager only gets its relevant lines
-        let busLineIds = Set(busManager.favoriteLines.map { $0.id })
-        let tramLineIds = Set(tramManager.favoriteLines.map { $0.id })
-
-        let selectedBusLines = selectedArray.filter { busLineIds.contains($0.id) }
-        let selectedTramLines = selectedArray.filter { tramLineIds.contains($0.id) }
-
-        busManager.updateSubscriptions(selectedLines: selectedBusLines)
-        tramManager.updateSubscriptions(selectedLines: selectedTramLines)
-        stopManager.updateStops(for: selectedArray)
     }
     
     private func centerOnHelsinkiCentral() {
@@ -276,24 +149,11 @@ struct ContentView: View {
         }
     }
     
-    private func selectAllFavorites() {
-        let allFavorites = busManager.favoriteLines + tramManager.favoriteLines
-        
-        if selectedLines.count == allFavorites.count && !allFavorites.isEmpty {
-            selectedLines.removeAll()
-        } else {
-            selectedLines = Set(allFavorites)
-        }
-        saveSelectedLines()
-        updateManagers()
-    }
-
     private func openTickets() {
         guard let url = URL(string: "hslapp://tickets") else { return }
         UIApplication.shared.open(url, options: [:]) { success in
             if !success {
                  Logger.ui.warning("Could not open HSL tickets URL or app not installed")
-                 isHSLErrorPresented = true
             }
         }
     }
