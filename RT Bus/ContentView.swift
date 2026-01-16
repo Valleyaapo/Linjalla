@@ -19,10 +19,10 @@ struct ContentView: View {
     @StateObject private var locationManager = LocationManager()
     
     /// HSL station ID for Rautatientori bus terminal
-    let rautatientoriStationId = "HSL:1000003"
+    private let rautatientoriStationId = "HSL:1000003"
     
     // Trigger for programmatic camera updates
-    @State var cameraTrigger: MKCoordinateRegion? = nil
+    @State private var cameraTrigger: MKCoordinateRegion? = nil
     
     @State private var isSearchPresented = false
     @State private var isDeparturesPresented = false
@@ -62,7 +62,7 @@ struct ContentView: View {
         ZStack {
             BusMapView(
                 cameraTrigger: $cameraTrigger,
-                vehicles: mapStateManager.vehicles,
+                vehicles: currentVehicles,
                 stops: selectionStore.stopManager.allStops,
                 showStops: showStops,
                 showStopNames: showStopNames,
@@ -108,6 +108,163 @@ struct ContentView: View {
             }
             .presentationDetents([.medium, .large])
         }
+    }
+
+    private var currentVehicles: [MapItem] {
+        let vehicles = mapStateManager.vehicles
+        if !vehicles.isEmpty {
+            return vehicles
+        }
+
+        var fallback: [MapItem] = []
+        fallback.append(contentsOf: busManager.vehicleList.map { .bus($0) })
+        fallback.append(contentsOf: tramManager.vehicleList.map { .tram($0) })
+        return fallback
+    }
+}
+
+// MARK: - Actions
+
+extension ContentView {
+    func centerOnHelsinkiCentral() {
+        let helsinkiCentral = CLLocationCoordinate2D(latitude: 60.1710, longitude: 24.9410)
+        let region = MKCoordinateRegion(
+            center: helsinkiCentral,
+            span: MKCoordinateSpan(latitudeDelta: MapConstants.defaultSpanDelta, longitudeDelta: MapConstants.defaultSpanDelta)
+        )
+        cameraTrigger = region
+    }
+
+    func centerOnUser() {
+        if let location = locationManager.lastLocation {
+            let region = MKCoordinateRegion(
+                center: location.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: MapConstants.defaultSpanDelta, longitudeDelta: MapConstants.defaultSpanDelta)
+            )
+            cameraTrigger = region
+        } else {
+            locationManager.requestAuthorization()
+        }
+    }
+    
+    func handleCameraChange(_ zoomLevel: Double) {
+        let shouldShowStops = zoomLevel < MapConstants.showStopsThreshold
+        let shouldShowStopNames = zoomLevel < MapConstants.showStopNamesThreshold
+        
+        if showStops != shouldShowStops {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showStops = shouldShowStops
+            }
+        }
+        if showStopNames != shouldShowStopNames {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showStopNames = shouldShowStopNames
+            }
+        }
+    }
+    
+    func openTickets() {
+        guard let url = URL(string: "hslapp://tickets") else { return }
+        UIApplication.shared.open(url, options: [:]) { success in
+            if !success {
+                 Logger.ui.warning("Could not open HSL tickets URL or app not installed")
+            }
+        }
+    }
+    
+    func startupTask() async {
+        locationManager.requestAuthorization()
+        Logger.ui.info("App started, requesting location")
+        selectionStore.loadSelectedLines()
+    }
+    
+    func busListChanged(_ oldList: [BusModel], _ newList: [BusModel]) {
+        mapStateManager.updateBuses(newList)
+    }
+    
+    func tramListChanged(_ oldList: [BusModel], _ newList: [BusModel]) {
+        mapStateManager.updateTrams(newList)
+    }
+    
+    func busFavoritesChanged(_ oldFavorites: [BusLine], _ newFavorites: [BusLine]) {
+        selectionStore.syncFavorites(old: oldFavorites, new: newFavorites)
+    }
+    
+    func tramFavoritesChanged(_ oldFavorites: [BusLine], _ newFavorites: [BusLine]) {
+        selectionStore.syncFavorites(old: oldFavorites, new: newFavorites)
+    }
+}
+
+// MARK: - Selection
+
+extension ContentView {
+    func toggleSelection(for line: BusLine) {
+        selectionStore.toggleSelection(for: line)
+    }
+
+    func loadSelectedLines() {
+        selectionStore.loadSelectedLines()
+    }
+
+    func selectAllFavorites() {
+        selectionStore.selectAllFavorites()
+    }
+}
+
+// MARK: - Alerts
+
+extension ContentView {
+    var busErrorBinding: Binding<Bool> {
+        Binding(
+            get: { busManager.error != nil },
+            set: { if !$0 { busManager.error = nil } }
+        )
+    }
+    
+    var tramErrorBinding: Binding<Bool> {
+        Binding(
+            get: { tramManager.error != nil },
+            set: { if !$0 { tramManager.error = nil } }
+        )
+    }
+    
+    var stopErrorBinding: Binding<Bool> {
+        Binding(
+            get: { selectionStore.stopManager.error != nil },
+            set: { if !$0 { selectionStore.stopManager.clearError() } }
+        )
+    }
+    
+    func busErrorActions() -> AnyView {
+        AnyView(Button("ui.button.ok", role: .cancel) { busManager.error = nil })
+    }
+    
+    func tramErrorActions() -> AnyView {
+        AnyView(Button("ui.button.ok", role: .cancel) { tramManager.error = nil })
+    }
+    
+    func stopErrorActions() -> AnyView {
+        AnyView(Button("ui.button.ok", role: .cancel) { selectionStore.stopManager.clearError() })
+    }
+    
+    func hslErrorActions() -> AnyView {
+        AnyView(Button("ui.button.ok", role: .cancel) {})
+    }
+    
+    func busErrorMessage() -> AnyView {
+        AnyView(Text(busManager.error?.localizedDescription ?? ""))
+    }
+    
+    func tramErrorMessage() -> AnyView {
+        AnyView(Text(tramManager.error?.localizedDescription ?? ""))
+    }
+    
+    func stopErrorMessage() -> AnyView {
+        AnyView(Text(selectionStore.stopManager.error?.localizedDescription ?? ""))
+    }
+    
+    func hslErrorMessage() -> AnyView {
+        AnyView(Text("ui.error.hslNotInstalled"))
     }
 }
 
