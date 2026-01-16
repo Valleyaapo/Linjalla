@@ -1,21 +1,24 @@
 {
   "fill" : {
-    "solid" : "display-p3:0.09214,0.35693,0.67041,1.00000"
+    "linear-gradient" : [
+      "display-p3:0.83936,0.35693,0.67041,1.00000",
+      "display-p3:0.20398,0.47070,0.76465,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
+      }
+    }
   },
   "groups" : [
     {
       "layers" : [
         {
-          "blend-mode" : "normal",
-          "glass-specializations" : [
-            {
-              "value" : true
-            },
-            {
-              "appearance" : "light",
-              "value" : false
-            }
-          ],
           "hidden" : false,
           "image-name" : "bus-svgrepo-com.svg",
           "name" : "bus-svgrepo-com",
@@ -52,8 +55,9 @@
     }
   ],
   "supported-platforms" : {
-    "squares" : [
-      "macOS"
-    ]
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
   }
 }
