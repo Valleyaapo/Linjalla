@@ -213,7 +213,13 @@ class BaseVehicleManager {
         subscriptionTask?.cancel()
 
         subscriptionTask = Task {
-            let newTopics = Set(selectedLines.map { "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/+/+/\($0.routeId)/#" })
+            let routeTopics = selectedLines.flatMap { line in
+                [
+                    "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/\(line.routeId)/#",
+                    "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/+/+/\(line.routeId)/#"
+                ]
+            }
+            let newTopics = Set(routeTopics)
             let toSubscribe = newTopics.subtracting(currentSubscriptions)
             let toUnsubscribe = currentSubscriptions.subtracting(newTopics)
 
@@ -229,6 +235,12 @@ class BaseVehicleManager {
                     Logger.busManager.debug("\(String(describing: Self.self)): Subscribed to \(toSubscribe.count) topics")
                 }
             } catch {
+                if let mqttError = error as? MQTTError, case .noConnection = mqttError {
+                    self.isConnected = false
+                    self.currentSubscriptions.removeAll()
+                    self.setupConnection()
+                    return
+                }
                 Logger.busManager.error("\(String(describing: Self.self)): Subscription error: \(error)")
             }
 
@@ -269,9 +281,16 @@ class BaseVehicleManager {
         var buffer = info.payload
         guard let data = buffer.readData(length: buffer.readableBytes) else { return }
 
-        // Extract routeId from topic: /hfp/v2/journey/ongoing/vp/{type}/{op}/{veh}/{routeId}/...
+        // Extract routeId from topic (support multiple HFP layouts)
         let parts = info.topicName.split(separator: "/")
-        let routeId = parts.dropLast().last.map(String.init)
+        let routeId: String?
+        if parts.count > 10 {
+            routeId = String(parts[10])
+        } else if parts.count > 8 {
+            routeId = String(parts[8])
+        } else {
+            routeId = nil
+        }
 
         do {
             let response = try JSONDecoder().decode(LocalResponse.self, from: data)
