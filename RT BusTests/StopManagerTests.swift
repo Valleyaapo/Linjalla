@@ -26,7 +26,7 @@ struct StopManagerTests {
             let data = """
             {
               "data": {
-                "station": {
+                "stop": {
                   "stoptimesWithoutPatterns": [
                     {
                       "scheduledDeparture": 40000,
@@ -39,7 +39,7 @@ struct StopManagerTests {
                     }
                   ]
                 }
-              }
+             }
             }
             """.data(using: .utf8)
             return (response, data)
@@ -62,7 +62,7 @@ struct StopManagerTests {
          MockURLProtocol.requestHandler = { request in
              let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
              let data = """
-             { "data": { "station": { "stoptimesWithoutPatterns": [] } } }
+             { "data": { "stop": { "stoptimesWithoutPatterns": [] } } }
              """.data(using: .utf8)
              return (response, data)
          }
