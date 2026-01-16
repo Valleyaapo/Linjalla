@@ -32,6 +32,7 @@
 		08A82AE62F01297E00C2B3E8 /* RT Bus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RT Bus.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		08A82B2D2F042AE300C2B3E8 /* RT BusUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RT BusUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		08B9CBD62F042E260075AF1B /* RT Bus.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "RT Bus.xctestplan"; path = "../RT Bus.xctestplan"; sourceTree = "<group>"; };
+		08A82B992F1234AA00C2B3E8 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "Secrets.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -81,6 +82,7 @@
 		08A82ADD2F01297E00C2B3E8 = {
 			isa = PBXGroup;
 			children = (
+				08A82B992F1234AA00C2B3E8 /* Secrets.xcconfig */,
 				08B9CBD62F042E260075AF1B /* RT Bus.xctestplan */,
 				08A82B2E2F042AE300C2B3E8 /* RT BusUITests */,
 				08A82AE82F01297E00C2B3E8 /* RT Bus */,
@@ -454,6 +456,7 @@
 		};
 		08A82AF22F01297E00C2B3E8 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 08A82B992F1234AA00C2B3E8 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = bussit_icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -514,6 +517,7 @@
 		};
 		08A82AF32F01297E00C2B3E8 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 08A82B992F1234AA00C2B3E8 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = bussit_icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

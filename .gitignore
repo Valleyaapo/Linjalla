@@ -22,8 +22,7 @@ DerivedData/
 .build/
 
 # Secrets
-RT Bus/Secrets.swift
-Secrets.swift
+Secrets.xcconfig
 instrumentation.trace/
 
 # Archives and IPA
