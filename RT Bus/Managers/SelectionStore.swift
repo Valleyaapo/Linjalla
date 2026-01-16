@@ -18,6 +18,8 @@ final class SelectionStore {
     let stopManager: StopManager
 
     var selectedLines: Set<BusLine> = []
+    private var updateTask: Task<Void, Never>?
+    private let debounceInterval: UInt64 = 300_000_000 // 300ms
 
     init(
         busManager: BusManager,
@@ -32,6 +34,7 @@ final class SelectionStore {
     }
 
     func syncFavorites(old: [BusLine], new: [BusLine]) {
+        let wasEmpty = selectedLines.isEmpty
         let oldSet = Set(old)
         let newSet = Set(new)
 
@@ -52,21 +55,25 @@ final class SelectionStore {
 
         if selectionChanged {
             saveSelectedLines()
-            updateManagers()
+            let shouldUpdateImmediately = wasEmpty && !selectedLines.isEmpty
+            scheduleUpdateManagers(immediate: shouldUpdateImmediately)
         }
     }
 
     func toggleSelection(for line: BusLine) {
+        let wasEmpty = selectedLines.isEmpty
         if selectedLines.contains(line) {
             selectedLines.remove(line)
         } else {
             selectedLines.insert(line)
         }
         saveSelectedLines()
-        updateManagers()
+        let shouldUpdateImmediately = wasEmpty && !selectedLines.isEmpty
+        scheduleUpdateManagers(immediate: shouldUpdateImmediately)
     }
 
     func selectAllFavorites() {
+        let wasEmpty = selectedLines.isEmpty
         let allFavorites = busManager.favoriteLines + tramManager.favoriteLines
 
         if selectedLines.count == allFavorites.count && !allFavorites.isEmpty {
@@ -75,20 +82,36 @@ final class SelectionStore {
             selectedLines = Set(allFavorites)
         }
         saveSelectedLines()
-        updateManagers()
+        let shouldUpdateImmediately = wasEmpty && !selectedLines.isEmpty
+        scheduleUpdateManagers(immediate: shouldUpdateImmediately)
     }
 
     func loadSelectedLines() {
         if let data = userDefaults.data(forKey: selectedLinesKey),
            let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
             selectedLines = Set(decoded)
-            updateManagers()
+            scheduleUpdateManagers(immediate: true)
         }
     }
 
     private func saveSelectedLines() {
         if let encoded = try? JSONEncoder().encode(Array(selectedLines)) {
             userDefaults.set(encoded, forKey: selectedLinesKey)
+        }
+    }
+
+    private func scheduleUpdateManagers(immediate: Bool = false) {
+        updateTask?.cancel()
+
+        if immediate {
+            updateManagers()
+            return
+        }
+
+        updateTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: debounceInterval)
+            guard !Task.isCancelled else { return }
+            updateManagers()
         }
     }
 
