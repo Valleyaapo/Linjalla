@@ -24,6 +24,7 @@ class StopManager {
     
     // Internal cache
     private var stops: [String: [BusStop]] = [:]
+    private var fetchTasks: [String: Task<Void, Never>] = [:]
     private var urlSession: URLSession
     
     init(urlSession: URLSession = .shared) {
@@ -40,13 +41,22 @@ class StopManager {
         for lineId in linesToRemove {
             stops.removeValue(forKey: lineId)
         }
+
+        // Cancel in-flight fetches for deselected lines
+        let tasksToCancel = fetchTasks.keys.filter { !currentLineIds.contains($0) }
+        for lineId in tasksToCancel {
+            fetchTasks[lineId]?.cancel()
+            fetchTasks.removeValue(forKey: lineId)
+        }
         
         // 2. Fetch missing stops
         for line in lines {
             if stops[line.id] == nil {
-                Task {
+                fetchTasks[line.id]?.cancel()
+                let task = Task {
                     await fetchStops(for: line)
                 }
+                fetchTasks[line.id] = task
             }
         }
         
@@ -56,7 +66,10 @@ class StopManager {
     
     private func fetchStops(for line: BusLine) async {
         activeFetchCount += 1
-        defer { activeFetchCount -= 1 }
+        defer {
+            activeFetchCount -= 1
+            fetchTasks.removeValue(forKey: line.id)
+        }
         
         let url = URL(string: VehicleManagerConstants.graphQLEndpoint)!
         var request = URLRequest(url: url)
@@ -90,6 +103,8 @@ class StopManager {
             guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
                 throw AppError.networkError("Fetch Stops Failed")
             }
+
+            guard !Task.isCancelled else { return }
             
             let result = try JSONDecoder().decode(GraphQLStopResponse.self, from: data)
             
@@ -97,10 +112,13 @@ class StopManager {
                 let busStops = firstPattern.stops.map { stop in
                     BusStop(id: stop.gtfsId, name: stop.name, latitude: stop.lat, longitude: stop.lon)
                 }
-                
+
+                guard !Task.isCancelled else { return }
                 self.stops[line.id] = busStops
                 self.rebuildAllStops()
             }
+        } catch is CancellationError {
+            return
         } catch {
             Logger.stopManager.error("Failed to fetch stops for \(line.shortName): \(error)")
         }
