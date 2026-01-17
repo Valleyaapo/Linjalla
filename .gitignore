@@ -20,6 +20,7 @@ DerivedData/
 *.xcuserstate
 # Swift PM
 .build/
+.xcodebuild-cache/
 
 # Secrets
 Secrets.xcconfig

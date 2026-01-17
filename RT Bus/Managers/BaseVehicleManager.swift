@@ -96,6 +96,7 @@ class BaseVehicleManager {
     private var cleanupTimer: Timer?
     private var mockSimulationTimer: Timer?
     private var subscriptionTask: Task<Void, Never>?
+    private static let topicRouteIdIndex = 8
 
     // MARK: - UI Testing
 
@@ -208,10 +209,13 @@ class BaseVehicleManager {
 
         subscriptionTask = Task {
             let routeTopics = selectedLines.flatMap { line in
-                [
-                    "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/\(line.routeId)/#",
-                    "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/+/+/\(line.routeId)/#"
-                ]
+                let routeIds = Set([line.routeId, line.id, line.id.replacingOccurrences(of: "HSL:", with: "")])
+                return routeIds.flatMap { routeId in
+                    [
+                        "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/\(routeId)/#",
+                        "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/+/\(routeId)/#"
+                    ]
+                }
             }
             let newTopics = Set(routeTopics)
             let toSubscribe = newTopics.subtracting(currentSubscriptions)
@@ -248,7 +252,8 @@ class BaseVehicleManager {
 
             self.vehicles = self.vehicles.filter { vehicle in
                 if let routeId = vehicle.value.routeId {
-                    return selectedIds.contains(routeId)
+                    let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
+                    return selectedIds.contains(normalized)
                 } else {
                     return selectedNames.contains(vehicle.value.lineName)
                 }
@@ -277,14 +282,8 @@ class BaseVehicleManager {
 
         // Extract routeId from topic (support multiple HFP layouts)
         let parts = info.topicName.split(separator: "/")
-        let routeId: String?
-        if parts.count > 10 {
-            routeId = String(parts[10])
-        } else if parts.count > 8 {
-            routeId = String(parts[8])
-        } else {
-            routeId = nil
-        }
+        let routeId: String? = parts.count > Self.topicRouteIdIndex ? String(parts[Self.topicRouteIdIndex]) : nil
+        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
 
         do {
             let response = try JSONDecoder().decode(LocalResponse.self, from: data)
@@ -294,7 +293,7 @@ class BaseVehicleManager {
                 let vehicle = BusModel(
                     id: vp.veh,
                     lineName: desi,
-                    routeId: routeId,
+                    routeId: normalizedRouteId,
                     latitude: lat,
                     longitude: long,
                     heading: vp.hdg,
@@ -434,7 +433,8 @@ class BaseVehicleManager {
         for (id, newVehicle) in updates {
             let isActive: Bool
             if let routeId = newVehicle.routeId {
-                isActive = selectedIds.contains(routeId)
+                let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
+                isActive = selectedIds.contains(normalized)
             } else {
                 isActive = selectedNames.contains(newVehicle.lineName)
             }

@@ -191,11 +191,6 @@ final class MapViewCoordinator: NSObject {
         }
     }
     
-    // MARK: - Camera Position
-    
-    func updateCameraPosition(mapView: MKMapView, position: MapCameraPosition) {
-        // Camera control is handled via cameraTrigger in UIKitMapView
-    }
 }
 
 // MARK: - MKMapViewDelegate

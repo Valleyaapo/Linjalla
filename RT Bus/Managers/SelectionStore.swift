@@ -91,7 +91,14 @@ final class SelectionStore {
            let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
             selectedLines = Set(decoded)
             scheduleUpdateManagers(immediate: true)
+            return
         }
+
+        let defaults = busManager.favoriteLines + tramManager.favoriteLines
+        guard !defaults.isEmpty else { return }
+        selectedLines = Set(defaults)
+        saveSelectedLines()
+        scheduleUpdateManagers(immediate: true)
     }
 
     private func saveSelectedLines() {
