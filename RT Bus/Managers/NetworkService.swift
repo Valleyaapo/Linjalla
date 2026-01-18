@@ -12,6 +12,7 @@ actor NetworkService {
     static let shared = NetworkService()
     
     private let session: URLSession
+    private static let defaultDecoder = JSONDecoder()
     
     private init() {
         let config = URLSessionConfiguration.default
@@ -21,9 +22,10 @@ actor NetworkService {
         self.session = URLSession(configuration: config)
     }
     
-    func fetch<T: Decodable>(_ request: URLRequest, decoder: JSONDecoder = JSONDecoder()) async throws -> T {
+    func fetch<T: Decodable>(_ request: URLRequest, decoder: JSONDecoder? = nil) async throws -> T {
         let maxRetries = 3
         var currentAttempt = 0
+        let jsonDecoder = decoder ?? Self.defaultDecoder
         var lastError: Error?
         
         while currentAttempt <= maxRetries {
@@ -42,7 +44,7 @@ actor NetworkService {
                     }
                 }
                 
-                return try decoder.decode(T.self, from: data)
+                return try jsonDecoder.decode(T.self, from: data)
                 
             } catch {
                 lastError = error
@@ -68,4 +70,3 @@ actor NetworkService {
         throw lastError ?? AppError.networkError("Request failed after retries")
     }
 }
-
