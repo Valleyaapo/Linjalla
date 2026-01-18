@@ -22,7 +22,7 @@ import OSLog
 @Observable
 class BaseVehicleManager {
     /// Shared JSON decoder for high-volume updates and persistence.
-    private static let decoder = JSONDecoder()
+    private nonisolated(unsafe) static let decoder = JSONDecoder()
 
     // MARK: - Configuration (Override in Subclasses)
 
