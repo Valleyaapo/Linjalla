@@ -208,7 +208,9 @@ class BaseVehicleManager {
         let selections = selectedLines.map { RouteSelection(id: $0.id, routeId: $0.routeId) }
         subscriptionTask = Task { [weak self] in
             guard let self else { return }
+            guard !Task.isCancelled else { return }
             let topicPrefix = await MainActor.run { self.topicPrefix }
+            guard !Task.isCancelled else { return }
             let change = await stream.subscriptionChange(selections: selections, topicPrefix: topicPrefix)
             let newTopics = change.newTopics
             let toSubscribe = Set(change.toSubscribe)

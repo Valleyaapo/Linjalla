@@ -96,6 +96,14 @@ struct SelectionStoreTests {
         configuration.protocolClasses = [SelectionStoreTestURLProtocol.self]
         let session = URLSession(configuration: configuration)
 
+        SelectionStoreTestURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            { "data": { "route": { "patterns": [] } } }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
         let busManager = BusManager(urlSession: session, connectOnStart: false)
         let tramManager = TramManager(urlSession: session, connectOnStart: false)
         let stopManager = StopManager(urlSession: session)
