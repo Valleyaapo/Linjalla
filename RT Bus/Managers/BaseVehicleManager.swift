@@ -21,6 +21,9 @@ import OSLog
 @MainActor
 @Observable
 class BaseVehicleManager {
+    /// Shared JSON decoder for high-volume updates and persistence.
+    private static let decoder = JSONDecoder()
+
     // MARK: - Configuration (Override in Subclasses)
 
     /// The vehicle type this manager handles (bus or tram)
@@ -290,7 +293,7 @@ class BaseVehicleManager {
         let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
 
         do {
-            let response = try JSONDecoder().decode(LocalResponse.self, from: data)
+            let response = try Self.decoder.decode(LocalResponse.self, from: data)
             let vp = response.VP
 
             if let lat = vp.lat, let long = vp.long, let desi = vp.desi {
@@ -341,7 +344,7 @@ class BaseVehicleManager {
 
     private func loadFavorites() {
         if let data = UserDefaults.standard.data(forKey: favoritesKey),
-           let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
+           let decoded = try? Self.decoder.decode([BusLine].self, from: data) {
             self.favoriteLines = decoded
         } else {
             self.favoriteLines = defaultFavorites
