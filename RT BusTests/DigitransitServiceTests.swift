@@ -1,0 +1,173 @@
+//
+//  DigitransitServiceTests.swift
+//  RT BusTests
+//
+//  GraphQL service regression tests
+//
+
+import Testing
+import Foundation
+@testable import RT_Bus
+
+@MainActor
+@Suite(.serialized)
+struct DigitransitServiceTests {
+    final class DigitransitServiceTestURLProtocol: URLProtocol {
+        nonisolated(unsafe) static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data?))?
+
+        override class func canInit(with request: URLRequest) -> Bool {
+            true
+        }
+
+        override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+            request
+        }
+
+        override func startLoading() {
+            guard let handler = Self.requestHandler else {
+                fatalError("Handler is unavailable.")
+            }
+
+            do {
+                let (response, data) = try handler(request)
+                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+                if let data {
+                    client?.urlProtocol(self, didLoad: data)
+                }
+                client?.urlProtocolDidFinishLoading(self)
+            } catch {
+                client?.urlProtocol(self, didFailWithError: error)
+            }
+        }
+
+        override func stopLoading() {}
+    }
+    @Test
+    func searchRoutesReturnsLines() async throws {
+        let (service, _) = makeService()
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            {
+              "data": {
+                "routes": [
+                  { "gtfsId": "HSL:123", "shortName": "123", "longName": "Test Line" }
+                ]
+              }
+            }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        let lines = try await service.searchRoutes(query: "123", transportMode: "BUS")
+        #expect(lines.count == 1)
+        #expect(lines.first?.id == "HSL:123")
+        #expect(lines.first?.shortName == "123")
+        #expect(lines.first?.longName == "Test Line")
+    }
+
+    @Test
+    func fetchStopsMapsToBusStops() async throws {
+        let (service, _) = makeService()
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            {
+              "data": {
+                "route": {
+                  "patterns": [
+                    {
+                      "stops": [
+                        { "gtfsId": "HSL:STOP1", "name": "Stop 1", "lat": 60.1, "lon": 24.9 }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        let stops = try await service.fetchStops(routeId: "HSL:123")
+        #expect(stops.count == 1)
+        #expect(stops.first?.id == "HSL:STOP1")
+        #expect(stops.first?.name == "Stop 1")
+    }
+
+    @Test
+    func fetchDeparturesMapsToDepartures() async throws {
+        let (service, _) = makeService()
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            {
+              "data": {
+                "stop": {
+                  "stoptimesWithoutPatterns": [
+                    {
+                      "scheduledDeparture": 40000,
+                      "realtimeDeparture": 40100,
+                      "serviceDay": 1600000000,
+                      "headsign": "Destination",
+                      "pickupType": "SCHEDULED",
+                      "stop": { "platformCode": "1" },
+                      "trip": { "route": { "shortName": "550" } }
+                    }
+                  ]
+                }
+              }
+            }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        let departures = try await service.fetchDepartures(stationId: "HSL:STOP1")
+        #expect(departures.count == 1)
+        #expect(departures.first?.lineName == "550")
+        #expect(departures.first?.platform == "1")
+        #expect(departures.first?.headsign == "Destination")
+    }
+
+    @Test
+    func addsAuthHeader() async throws {
+        let (service, apiKey) = makeService()
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            #expect(request.value(forHTTPHeaderField: "digitransit-subscription-key") == apiKey)
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            { "data": { "routes": [] } }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        _ = try await service.searchRoutes(query: "x", transportMode: "BUS")
+    }
+
+    @Test
+    func apiErrorThrows() async {
+        let (service, _) = makeService()
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: nil, headerFields: nil)!
+            return (response, Data())
+        }
+
+        await #expect(throws: AppError.self) {
+            _ = try await service.fetchStops(routeId: "HSL:123")
+        }
+    }
+
+    private func makeService() -> (DigitransitService, String) {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [DigitransitServiceTestURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let apiKey = "TEST_KEY"
+        let service = DigitransitService(urlSession: session, digitransitKey: apiKey)
+        return (service, apiKey)
+    }
+}

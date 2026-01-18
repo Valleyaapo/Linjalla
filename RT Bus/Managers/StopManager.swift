@@ -25,10 +25,13 @@ final class StopManager {
     // Internal cache
     private var stops: [String: [BusStop]] = [:]
     private var fetchTasks: [String: Task<Void, Never>] = [:]
-    private let urlSession: URLSession
+    private let graphQLService: DigitransitService
     
     init(urlSession: URLSession = .shared) {
-        self.urlSession = urlSession
+        self.graphQLService = DigitransitService(
+            urlSession: urlSession,
+            digitransitKey: Secrets.digitransitKey
+        )
     }
 
     func clearError() {
@@ -75,52 +78,11 @@ final class StopManager {
             fetchTasks.removeValue(forKey: line.id)
         }
         
-        let url = URL(string: VehicleManagerConstants.graphQLEndpoint)!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Secrets.digitransitKey, forHTTPHeaderField: "digitransit-subscription-key")
-        
-        let graphqlQuery = """
-        query GetRouteStops($id: String!) {
-          route(id: $id) {
-            patterns {
-              stops {
-                gtfsId
-                name
-                lat
-                lon
-              }
-            }
-          }
-        }
-        """
-        
         do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: [
-                "query": graphqlQuery,
-                "variables": ["id": line.id]
-            ])
-            
-            let (data, response) = try await self.urlSession.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                throw AppError.networkError("Fetch Stops Failed")
-            }
-
+            let busStops = try await graphQLService.fetchStops(routeId: line.id)
             guard !Task.isCancelled else { return }
-            
-            let result = try JSONDecoder().decode(GraphQLStopResponse.self, from: data)
-            
-            if let firstPattern = result.data.route?.patterns.first {
-                let busStops = firstPattern.stops.map { stop in
-                    BusStop(id: stop.gtfsId, name: stop.name, latitude: stop.lat, longitude: stop.lon)
-                }
-
-                guard !Task.isCancelled else { return }
-                self.stops[line.id] = busStops
-                self.rebuildAllStops()
-            }
+            self.stops[line.id] = busStops
+            self.rebuildAllStops()
         } catch is CancellationError {
             return
         } catch {
@@ -129,63 +91,8 @@ final class StopManager {
     }
     
     func fetchDepartures(for stationId: String) async throws -> [Departure] {
-        let url = URL(string: VehicleManagerConstants.graphQLEndpoint)!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Secrets.digitransitKey, forHTTPHeaderField: "digitransit-subscription-key")
-        
-        let graphqlQuery = """
-        query GetDepartures($stationId: String!) {
-          stop(id: $stationId) {
-            stoptimesWithoutPatterns(numberOfDepartures: \(MapConstants.departuresFetchCount)) {
-              scheduledDeparture
-              realtimeDeparture
-              serviceDay
-              headsign
-              pickupType
-              stop {
-                platformCode
-              }
-              trip {
-                route {
-                  shortName
-                }
-              }
-            }
-          }
-        }
-        """
-        
         do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: [
-                "query": graphqlQuery,
-                "variables": ["stationId": stationId]
-            ])
-            
-            let (data, response) = try await self.urlSession.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                throw AppError.networkError("Fetch Departures Failed")
-            }
-            
-            let result = try JSONDecoder().decode(GraphQLStopDeparturesResponse.self, from: data)
-            
-            guard let stoptimes = result.data.stop?.stoptimesWithoutPatterns else { return [] }
-            
-            return stoptimes.compactMap { stoptime in
-                guard stoptime.pickupType != "NONE" else { return nil }
-                guard let lineName = stoptime.trip?.route?.shortName else { return nil }
-                
-                return Departure(
-                    lineName: lineName,
-                    headsign: stoptime.headsign ?? "Unknown",
-                    scheduledTime: stoptime.scheduledDeparture,
-                    realtimeTime: stoptime.realtimeDeparture,
-                    serviceDay: stoptime.serviceDay,
-                    platform: stoptime.stop?.platformCode
-                )
-            }
+            return try await graphQLService.fetchDepartures(stationId: stationId)
         } catch {
             Logger.stopManager.error("Fetch Departures failed: \(error)")
             throw AppError.networkError(error.localizedDescription)
@@ -205,53 +112,3 @@ final class StopManager {
 }
 
 
-
-// MARK: - API Response Models
-
-struct GraphQLStopDeparturesResponse: Codable, Sendable {
-    let data: GraphQLStopDeparturesData
-}
-struct GraphQLStopDeparturesData: Codable, Sendable {
-    let stop: GraphQLStation?
-}
-// Recycling GraphQLStation structure but mapped to 'stop' field now
-struct GraphQLStation: Codable, Sendable {
-    let stoptimesWithoutPatterns: [GraphQLStoptime]
-}
-struct GraphQLStoptime: Codable, Sendable {
-    let scheduledDeparture: Int
-    let realtimeDeparture: Int
-    let serviceDay: Int
-    let headsign: String?
-    let pickupType: String?
-    let stop: GraphQLStopShortPlatform?
-    let trip: GraphQLTrip?
-}
-struct GraphQLStopShortPlatform: Codable, Sendable {
-    let platformCode: String?
-}
-struct GraphQLTrip: Codable, Sendable {
-    let route: GraphQLRouteShort?
-}
-struct GraphQLRouteShort: Codable, Sendable {
-    let shortName: String?
-}
-
-struct GraphQLStopResponse: Codable, Sendable {
-    let data: GraphQLStopData
-}
-struct GraphQLStopData: Codable, Sendable {
-    let route: GraphQLRouteWithPatterns?
-}
-struct GraphQLRouteWithPatterns: Codable, Sendable {
-    let patterns: [GraphQLPattern]
-}
-struct GraphQLPattern: Codable, Sendable {
-    let stops: [GraphQLStop]
-}
-struct GraphQLStop: Codable, Sendable {
-    let gtfsId: String
-    let name: String
-    let lat: Double
-    let lon: Double
-}

@@ -85,4 +85,35 @@ struct MapStateManagerTests {
         
         #expect(manager.vehicles.count == 2)
     }
+
+    @Test
+    func mapItemsOrdering() async throws {
+        let manager = MapStateManager()
+        let bus = BusModel(id: 1, lineName: "1", routeId: "1", latitude: 60, longitude: 25, heading: 0, timestamp: 0, type: .bus)
+        let tram = BusModel(id: 2, lineName: "4", routeId: "2", latitude: 60, longitude: 25, heading: 0, timestamp: 0, type: .tram)
+        let stop = BusStop(id: "STOP1", name: "Stop 1", latitude: 60.1, longitude: 24.9)
+
+        manager.updateBuses([bus])
+        manager.updateTrams([tram])
+        manager.updateStops([stop])
+
+        try await Task.sleep(for: .milliseconds(50))
+
+        #expect(manager.mapItems.count == 3)
+        if case .bus = manager.mapItems.first {
+            #expect(true)
+        } else {
+            #expect(Bool(false), "Expected bus first")
+        }
+        if case .tram = manager.mapItems[1] {
+            #expect(true)
+        } else {
+            #expect(Bool(false), "Expected tram second")
+        }
+        if case .stop = manager.mapItems[2] {
+            #expect(true)
+        } else {
+            #expect(Bool(false), "Expected stop third")
+        }
+    }
 }

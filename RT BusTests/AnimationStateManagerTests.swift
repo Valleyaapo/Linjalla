@@ -12,6 +12,7 @@ import CoreLocation
 
 // MARK: - VehicleAnimationState Tests
 
+@MainActor
 @Suite(.serialized)
 struct VehicleAnimationStateTests {
     
@@ -143,6 +144,7 @@ struct VehicleAnimationStateTests {
 
 // MARK: - AnimationStateManager Tests (Pure State Logic)
 
+@MainActor
 @Suite(.serialized)
 struct AnimationStateManagerPureTests {
     

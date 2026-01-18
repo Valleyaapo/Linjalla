@@ -12,17 +12,48 @@ import Foundation
 @MainActor
 @Suite(.serialized)
 struct TramManagerTests {
+
+    final class TramManagerTestURLProtocol: URLProtocol {
+        nonisolated(unsafe) static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data?))?
+
+        override class func canInit(with request: URLRequest) -> Bool {
+            true
+        }
+
+        override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+            request
+        }
+
+        override func startLoading() {
+            guard let handler = Self.requestHandler else {
+                fatalError("Handler is unavailable.")
+            }
+
+            do {
+                let (response, data) = try handler(request)
+                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+                if let data {
+                    client?.urlProtocol(self, didLoad: data)
+                }
+                client?.urlProtocolDidFinishLoading(self)
+            } catch {
+                client?.urlProtocol(self, didFailWithError: error)
+            }
+        }
+
+        override func stopLoading() {}
+    }
     
     @Test
     func searchLinesFailure() async throws {
         // Setup
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.protocolClasses = [MockURLProtocol.self]
+        configuration.protocolClasses = [TramManagerTestURLProtocol.self]
         let session = URLSession(configuration: configuration)
         let tramManager = TramManager(urlSession: session, connectOnStart: false)
         
         // Mock
-        MockURLProtocol.requestHandler = { request in
+        TramManagerTestURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             let data = """
             { "data": { "routes": [] } }
@@ -39,12 +70,12 @@ struct TramManagerTests {
     func searchLinesSuccess() async throws {
         // Setup
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.protocolClasses = [MockURLProtocol.self]
+        configuration.protocolClasses = [TramManagerTestURLProtocol.self]
         let session = URLSession(configuration: configuration)
         let tramManager = TramManager(urlSession: session, connectOnStart: false)
         
         // Mock
-        MockURLProtocol.requestHandler = { request in
+        TramManagerTestURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             let data = """
             {
@@ -70,12 +101,12 @@ struct TramManagerTests {
     func searchLinesApiError() async throws {
         // Setup
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.protocolClasses = [MockURLProtocol.self]
+        configuration.protocolClasses = [TramManagerTestURLProtocol.self]
         let session = URLSession(configuration: configuration)
         let tramManager = TramManager(urlSession: session, connectOnStart: false)
         
         // Mock 500 Error
-        MockURLProtocol.requestHandler = { request in
+        TramManagerTestURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: nil, headerFields: nil)!
             return (response, Data())
         }

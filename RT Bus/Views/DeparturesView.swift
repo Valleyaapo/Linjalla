@@ -126,6 +126,7 @@ struct DeparturesView: View {
         }
     }
     
+    @MainActor
     private func loadDepartures() async {
         // If specific lines are required but none selected, do nothing (handled by UI)
         if let selected = selectedLines, selected.isEmpty {

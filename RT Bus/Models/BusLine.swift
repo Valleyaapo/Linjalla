@@ -14,17 +14,3 @@ struct BusLine: Identifiable, Hashable, Codable, Sendable {
     
     var routeId: String { id.replacingOccurrences(of: "HSL:", with: "") }
 }
-
-struct GraphQLRouteResponse: Codable, Sendable {
-    let data: GraphQLData
-}
-
-struct GraphQLData: Codable, Sendable {
-    let routes: [GraphQLRoute]
-}
-
-struct GraphQLRoute: Codable, Sendable {
-    let gtfsId: String?
-    let shortName: String?
-    let longName: String?
-}

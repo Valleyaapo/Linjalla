@@ -13,17 +13,48 @@ import Combine
 @MainActor
 @Suite(.serialized)
 struct BusManagerTests {
+
+    final class BusManagerTestURLProtocol: URLProtocol {
+        nonisolated(unsafe) static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data?))?
+
+        override class func canInit(with request: URLRequest) -> Bool {
+            true
+        }
+
+        override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+            request
+        }
+
+        override func startLoading() {
+            guard let handler = Self.requestHandler else {
+                fatalError("Handler is unavailable.")
+            }
+
+            do {
+                let (response, data) = try handler(request)
+                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+                if let data {
+                    client?.urlProtocol(self, didLoad: data)
+                }
+                client?.urlProtocolDidFinishLoading(self)
+            } catch {
+                client?.urlProtocol(self, didFailWithError: error)
+            }
+        }
+
+        override func stopLoading() {}
+    }
     
     @Test
     func searchLinesSuccess() async throws {
         // Setup
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.protocolClasses = [MockURLProtocol.self]
+        configuration.protocolClasses = [BusManagerTestURLProtocol.self]
         let session = URLSession(configuration: configuration)
         let busManager = BusManager(urlSession: session, connectOnStart: false)
         
         // Mock
-        MockURLProtocol.requestHandler = { request in
+        BusManagerTestURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             let data = """
             {
@@ -49,12 +80,12 @@ struct BusManagerTests {
     func searchLinesApiError() async throws {
         // Setup
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.protocolClasses = [MockURLProtocol.self]
+        configuration.protocolClasses = [BusManagerTestURLProtocol.self]
         let session = URLSession(configuration: configuration)
         let busManager = BusManager(urlSession: session, connectOnStart: false)
         
         // Mock 500 Error
-        MockURLProtocol.requestHandler = { request in
+        BusManagerTestURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: nil, headerFields: nil)!
             return (response, Data())
         }

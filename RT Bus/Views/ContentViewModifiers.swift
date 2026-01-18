@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Tasks and Change Handlers Modifier
 
 struct TasksAndChangeModifiers: ViewModifier {
-    let startupTask: @Sendable () async -> Void
+    let startupTask: @MainActor @Sendable () async -> Void
     let busVehicleList: [BusModel]
     let tramVehicleList: [BusModel]
     let busFavoriteLines: [BusLine]

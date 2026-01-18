@@ -16,26 +16,6 @@ import CoreLocation
 import Observation
 import OSLog
 
-// MARK: - Constants
-
-enum VehicleManagerConstants {
-    static let staleThreshold: TimeInterval = 300 // 5 minutes
-    static let updateInterval: TimeInterval = 1.0
-    static let cleanupInterval: TimeInterval = 5.0
-    static let graphQLEndpoint = "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1"
-}
-
-enum MapConstants {
-    /// Zoom threshold for showing stops (latitude delta)
-    static let showStopsThreshold: Double = 0.05
-    /// Zoom threshold for showing stop names (latitude delta)
-    static let showStopNamesThreshold: Double = 0.005
-    /// Default map span delta
-    static let defaultSpanDelta: Double = 0.02
-    /// Number of departures to fetch
-    static let departuresFetchCount = 10
-}
-
 // MARK: - Base Vehicle Manager
 
 @MainActor
@@ -76,7 +56,7 @@ class BaseVehicleManager {
 
     // MARK: - Dependencies
 
-    let urlSession: URLSession
+    private let graphQLService: DigitransitService
     private let connectOnStart: Bool
 
     private var _clientContainer: MQTTClientContainer?
@@ -91,12 +71,11 @@ class BaseVehicleManager {
         }
     }
 
-    let pendingBuffer = PendingBuffer()
+    private nonisolated let stream = VehicleStream()
     private var updateTimer: Timer?
     private var cleanupTimer: Timer?
     private var mockSimulationTimer: Timer?
     private var subscriptionTask: Task<Void, Never>?
-    private static let topicRouteIdIndex = 8
 
     // MARK: - UI Testing
 
@@ -107,7 +86,10 @@ class BaseVehicleManager {
     // MARK: - Initialization
 
     init(urlSession: URLSession = .shared, connectOnStart: Bool = true) {
-        self.urlSession = urlSession
+        self.graphQLService = DigitransitService(
+            urlSession: urlSession,
+            digitransitKey: Secrets.digitransitKey
+        )
         self.connectOnStart = connectOnStart
     }
 
@@ -141,21 +123,30 @@ class BaseVehicleManager {
         guard isConnected else { return }
         Logger.busManager.info("\(String(describing: Self.self)): App backgrounded, disconnecting MQTT...")
         cleanup()
+        let client = self.client
         Task {
             try? await client?.disconnect()
-            self.isConnected = false
-            self.currentSubscriptions.removeAll()
+            await stream.clearSubscriptions()
+            await MainActor.run {
+                self.isConnected = false
+                self.currentSubscriptions.removeAll()
+            }
         }
     }
 
     private func setupConnection() {
-        Task {
-            if isConnected { return }
+        Task { [weak self] in
+            guard let self else { return }
+            let alreadyConnected = await MainActor.run { self.isConnected }
+            guard !alreadyConnected else { return }
 
+            let isUITesting = await MainActor.run { self.isUITesting }
             if isUITesting {
-                self.isConnected = true
-                Logger.busManager.info("UI Testing: \(String(describing: Self.self)) skipping MQTT connection, starting simulation")
-                startMockSimulation()
+                await MainActor.run {
+                    self.isConnected = true
+                    Logger.busManager.info("UI Testing: \(String(describing: Self.self)) skipping MQTT connection, starting simulation")
+                    self.startMockSimulation()
+                }
                 return
             }
 
@@ -171,7 +162,10 @@ class BaseVehicleManager {
                         useSSL: true
                     )
                 )
-                self.client = client
+
+                await MainActor.run {
+                    self.client = client
+                }
 
                 try await client.connect()
 
@@ -182,17 +176,21 @@ class BaseVehicleManager {
                     }
                 }
 
-                self.isConnected = true
-                Logger.busManager.info("\(String(describing: Self.self)): MQTT Connected")
+                await MainActor.run {
+                    self.isConnected = true
+                    Logger.busManager.info("\(String(describing: Self.self)): MQTT Connected")
 
-                if !self.activeLines.isEmpty {
-                    self.updateSubscriptions(selectedLines: self.activeLines)
+                    if !self.activeLines.isEmpty {
+                        self.updateSubscriptions(selectedLines: self.activeLines)
+                    }
                 }
 
             } catch {
-                Logger.busManager.error("\(String(describing: Self.self)): MQTT Connection failed: \(error)")
-                self.isConnected = false
-                self.error = .mqttError(error.localizedDescription)
+                await MainActor.run {
+                    Logger.busManager.error("\(String(describing: Self.self)): MQTT Connection failed: \(error)")
+                    self.isConnected = false
+                    self.error = .mqttError(error.localizedDescription)
+                }
             }
         }
     }
@@ -207,19 +205,14 @@ class BaseVehicleManager {
         // Cancel any pending subscription task to prevent race conditions
         subscriptionTask?.cancel()
 
-        subscriptionTask = Task {
-            let routeTopics = selectedLines.flatMap { line in
-                let routeIds = Set([line.routeId, line.id, line.id.replacingOccurrences(of: "HSL:", with: "")])
-                return routeIds.flatMap { routeId in
-                    [
-                        "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/\(routeId)/#",
-                        "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/+/\(routeId)/#"
-                    ]
-                }
-            }
-            let newTopics = Set(routeTopics)
-            let toSubscribe = newTopics.subtracting(currentSubscriptions)
-            let toUnsubscribe = currentSubscriptions.subtracting(newTopics)
+        let selections = selectedLines.map { RouteSelection(id: $0.id, routeId: $0.routeId) }
+        subscriptionTask = Task { [weak self] in
+            guard let self else { return }
+            let topicPrefix = await MainActor.run { self.topicPrefix }
+            let change = await stream.subscriptionChange(selections: selections, topicPrefix: topicPrefix)
+            let newTopics = change.newTopics
+            let toSubscribe = Set(change.toSubscribe)
+            let toUnsubscribe = Set(change.toUnsubscribe)
 
             do {
                 if !toUnsubscribe.isEmpty {
@@ -234,9 +227,11 @@ class BaseVehicleManager {
                 }
             } catch {
                 if let mqttError = error as? MQTTError, case .noConnection = mqttError {
-                    self.isConnected = false
-                    self.currentSubscriptions.removeAll()
-                    self.setupConnection()
+                    await MainActor.run { [weak self] in
+                        self?.isConnected = false
+                        self?.currentSubscriptions.removeAll()
+                        self?.setupConnection()
+                    }
                     return
                 }
                 Logger.busManager.error("\(String(describing: Self.self)): Subscription error: \(error)")
@@ -244,27 +239,34 @@ class BaseVehicleManager {
 
             guard !Task.isCancelled else { return }
 
-            self.currentSubscriptions = newTopics
+            let applied = await stream.applySubscriptionUpdate(requestId: change.requestId, newTopics: newTopics)
+            guard applied else { return }
 
-            // Cleanup vehicles not in selected lines
-            let selectedIds = Set(selectedLines.map { $0.routeId })
-            let selectedNames = Set(selectedLines.map { $0.shortName })
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.currentSubscriptions = newTopics
 
-            self.vehicles = self.vehicles.filter { vehicle in
-                if let routeId = vehicle.value.routeId {
-                    let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                    return selectedIds.contains(normalized)
-                } else {
-                    return selectedNames.contains(vehicle.value.lineName)
+                // Cleanup vehicles not in selected lines
+                let selectedIds = Set(selectedLines.map { $0.routeId })
+                let selectedNames = Set(selectedLines.map { $0.shortName })
+
+                self.vehicles = self.vehicles.filter { vehicle in
+                    if let routeId = vehicle.value.routeId {
+                        let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
+                        return selectedIds.contains(normalized)
+                    } else {
+                        return selectedNames.contains(vehicle.value.lineName)
+                    }
                 }
+                self.vehicleList = self.vehicles.values.sorted { $0.id < $1.id }
             }
-            self.vehicleList = self.vehicles.values.sorted { $0.id < $1.id }
         }
     }
 
     // MARK: - Message Handling
 
     nonisolated func processMessage(_ info: MQTTPublishInfo) {
+        let topicRouteIdIndex = 8
         struct LocalVP: Decodable {
             let veh: Int
             let desi: String?
@@ -282,7 +284,7 @@ class BaseVehicleManager {
 
         // Extract routeId from topic (support multiple HFP layouts)
         let parts = info.topicName.split(separator: "/")
-        let routeId: String? = parts.count > Self.topicRouteIdIndex ? String(parts[Self.topicRouteIdIndex]) : nil
+        let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
         let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
 
         do {
@@ -301,7 +303,7 @@ class BaseVehicleManager {
                     type: vehicleType
                 )
 
-                Task { await pendingBuffer.add(vehicle) }
+                Task { await stream.buffer(vehicle) }
             }
         } catch {
             Logger.busManager.debug("\(String(describing: Self.self)): Decoding skipped: \(error)")
@@ -311,59 +313,8 @@ class BaseVehicleManager {
     // MARK: - Search
 
     func searchLines(query: String) async throws -> [BusLine] {
-        guard !query.isEmpty else { return [] }
-
-        guard let url = URL(string: VehicleManagerConstants.graphQLEndpoint) else { return [] }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Secrets.digitransitKey, forHTTPHeaderField: "digitransit-subscription-key")
-
-        let graphqlQuery = """
-        query SearchRoutes($name: String!) {
-          routes(name: $name, transportModes: \(transportMode)) {
-            gtfsId
-            shortName
-            longName
-          }
-        }
-        """
-
-        let body: [String: Any] = [
-            "query": graphqlQuery,
-            "variables": ["name": query]
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
         do {
-            let (data, response) = try await urlSession.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw AppError.networkError("Invalid Response")
-            }
-
-            guard (200...299).contains(httpResponse.statusCode) else {
-                throw AppError.apiError("HTTP \(httpResponse.statusCode)")
-            }
-
-            struct SearchResponse: Decodable {
-                let data: DataContainer?
-            }
-            struct DataContainer: Decodable {
-                let routes: [Route]?
-            }
-            struct Route: Decodable {
-                let gtfsId: String
-                let shortName: String?
-                let longName: String?
-            }
-
-            let decoded = try JSONDecoder().decode(SearchResponse.self, from: data)
-            return decoded.data?.routes?.compactMap { route in
-                guard let short = route.shortName else { return nil }
-                return BusLine(id: route.gtfsId, shortName: short, longName: route.longName ?? "")
-            } ?? []
+            return try await graphQLService.searchRoutes(query: query, transportMode: transportMode)
         } catch {
             self.error = error as? AppError ?? AppError.networkError(error.localizedDescription)
             throw error
@@ -401,6 +352,10 @@ class BaseVehicleManager {
         // Override in subclass
     }
 
+    func bufferMockVehicle(_ vehicle: BusModel) {
+        Task { await stream.buffer(vehicle) }
+    }
+
     func setMockSimulationTimer(_ timer: Timer) {
         mockSimulationTimer?.invalidate()
         mockSimulationTimer = timer
@@ -421,7 +376,7 @@ class BaseVehicleManager {
     }
 
     private func flushUpdates() async {
-        let updates = await pendingBuffer.take()
+        let updates = await stream.drain()
         guard !updates.isEmpty else { return }
 
         let now = Date().timeIntervalSince1970
@@ -493,21 +448,5 @@ class BaseVehicleManager {
         deinit {
             try? client.syncShutdownGracefully()
         }
-    }
-}
-
-// MARK: - Pending Buffer Actor
-
-actor PendingBuffer {
-    private var updates: [Int: BusModel] = [:]
-
-    func add(_ vehicle: BusModel) {
-        updates[vehicle.id] = vehicle
-    }
-
-    func take() -> [Int: BusModel] {
-        let copy = updates
-        updates.removeAll()
-        return copy
     }
 }

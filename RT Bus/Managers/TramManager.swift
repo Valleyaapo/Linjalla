@@ -57,7 +57,7 @@ final class TramManager: BaseVehicleManager {
             )
 
             Task { @MainActor in
-                await self.pendingBuffer.add(tram4)
+                self.bufferMockVehicle(tram4)
             }
         }
         setMockSimulationTimer(timer)
