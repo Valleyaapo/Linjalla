@@ -1,6 +1,6 @@
 import Foundation
 import CoreLocation
-import Combine
+import Observation
 import OSLog
 
 protocol LocationManaging: AnyObject {
@@ -37,18 +37,24 @@ final class CLLocationManagerWrapper: NSObject, LocationManaging {
     }
 }
 
-final class LocationManager: NSObject, ObservableObject, @unchecked Sendable {
+@MainActor
+@Observable
+final class LocationManager: NSObject {
     private let manager: LocationManaging
     
-    @Published var lastLocation: CLLocation?
-    @Published var authorizationStatus: CLAuthorizationStatus
+    var lastLocation: CLLocation?
+    var authorizationStatus: CLAuthorizationStatus
     
-    init(manager: LocationManaging = CLLocationManagerWrapper()) {
+    init(manager: LocationManaging) {
         self.manager = manager
         self.authorizationStatus = manager.authorizationStatus
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+    }
+
+    override convenience init() {
+        self.init(manager: CLLocationManagerWrapper())
     }
     
     func requestAuthorization() {
@@ -65,22 +71,18 @@ final class LocationManager: NSObject, ObservableObject, @unchecked Sendable {
 
 extension LocationManager: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        Task { @MainActor in
-            authorizationStatus = self.manager.authorizationStatus
-            switch authorizationStatus {
-            case .authorizedWhenInUse, .authorizedAlways:
-                self.manager.startUpdatingLocation()
-            default:
-                break
-            }
+        authorizationStatus = self.manager.authorizationStatus
+        switch authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            self.manager.startUpdatingLocation()
+        default:
+            break
         }
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.last {
-            Task { @MainActor in
-                self.lastLocation = location
-            }
+            self.lastLocation = location
         }
     }
     

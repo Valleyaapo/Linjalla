@@ -7,10 +7,12 @@
 
 import Foundation
 import Combine
+import Observation
 import OSLog
 
 @MainActor
-final class TrainManager: ObservableObject {
+@Observable
+final class TrainManager {
     private var stationNames: [String: String] = [:]
     
     private let decoder: JSONDecoder = {
@@ -25,7 +27,10 @@ final class TrainManager: ObservableObject {
         guard stationNames.isEmpty else { return }
         
         do {
-            let url = URL(string: "https://rata.digitraffic.fi/api/v1/metadata/stations")!
+            guard let url = URL(string: "https://rata.digitraffic.fi/api/v1/metadata/stations") else {
+                Logger.network.error("Invalid metadata URL")
+                return
+            }
             var request = URLRequest(url: url)
             request.setValue("gzip", forHTTPHeaderField: "Accept-Encoding")
             
@@ -45,7 +50,9 @@ final class TrainManager: ObservableObject {
         await fetchMetadata()
         
         // Fetch 20 departing trains, exclude non-stopping
-        let url = URL(string: "https://rata.digitraffic.fi/api/v1/live-trains/station/\(stationCode)?departing_trains=40&include_nonstopping=false")!
+        guard let url = URL(string: "https://rata.digitraffic.fi/api/v1/live-trains/station/\(stationCode)?departing_trains=40&include_nonstopping=false") else {
+            throw AppError.networkError("Invalid station URL")
+        }
         var request = URLRequest(url: url)
         request.setValue("gzip", forHTTPHeaderField: "Accept-Encoding")
         

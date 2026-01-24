@@ -31,6 +31,16 @@ final class MapStateManager {
             }
         }
     }
+
+    /// Stops only for use by BusMapView
+    var stopsList: [BusStop] {
+        mapItems.compactMap {
+            switch $0 {
+            case .stop(let stop): return stop
+            case .bus, .tram: return nil
+            }
+        }
+    }
     
     // Internal caches
     private var buses: [Int: BusModel] = [:]

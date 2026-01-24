@@ -9,8 +9,8 @@ import SwiftUI
 import OSLog
 
 struct LineSearchSheet: View {
-    let busManager: BusManager
-    let tramManager: TramManager
+    @Environment(BusManager.self) private var busManager
+    @Environment(TramManager.self) private var tramManager
     
     private enum SearchMode: String, CaseIterable {
         case bus = "Buses"
@@ -214,6 +214,7 @@ struct LineSearchRow: View {
     let isFavorite: Bool
     let onToggle: () -> Void
     var color: Color = .hslBlue
+    @State private var hapticTrigger = 0
     
     var body: some View {
         HStack {
@@ -236,8 +237,7 @@ struct LineSearchRow: View {
             
             AddButtonView(isFavorite: isFavorite) // Assume AddButtonView handles its own color or is neutral
                 .onTapGesture {
-                    let generator = UIImpactFeedbackGenerator(style: .light)
-                    generator.impactOccurred()
+                    hapticTrigger += 1
                     withAnimation {
                         onToggle()
                     }
@@ -248,11 +248,18 @@ struct LineSearchRow: View {
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 }
 
 #Preview {
-    LineSearchSheet(busManager: BusManager(), tramManager: TramManager())
+    let busManager = BusManager(connectOnStart: false)
+    let tramManager = TramManager(connectOnStart: false)
+    let selectionStore = SelectionStore(busManager: busManager, tramManager: tramManager)
+    return LineSearchSheet()
+        .environment(busManager)
+        .environment(tramManager)
+        .environment(selectionStore)
 }
 
 #Preview("Row") {

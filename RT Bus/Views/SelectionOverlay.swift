@@ -22,6 +22,7 @@ struct SelectionOverlay: View {
     let onTickets: () -> Void
     
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    @State private var hapticTrigger = 0
     
     var body: some View {
         VStack {
@@ -50,7 +51,7 @@ struct SelectionOverlay: View {
                 Spacer()
                 VStack(spacing: 12) {
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        bumpHaptic()
                         onCenter()
                     }) {
                         Image(systemName: "tram.fill")
@@ -65,7 +66,7 @@ struct SelectionOverlay: View {
                     .accessibilityLabel(Text("access.button.centerStation"))
                     
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        bumpHaptic()
                         onCenterUser()
                     }) {
                         Image(systemName: "location.fill")
@@ -89,7 +90,7 @@ struct SelectionOverlay: View {
                     let totalCount = busLines.count + tramLines.count
                     if totalCount > 0 {
                         Button(action: {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            bumpHaptic()
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                                 onSelectAll()
                             }
@@ -133,7 +134,7 @@ struct SelectionOverlay: View {
                     
                     // Add Button (Full Width)
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        bumpHaptic()
                         onAdd()
                     }) {
                         HStack {
@@ -156,7 +157,7 @@ struct SelectionOverlay: View {
                     let totalCount = busLines.count + tramLines.count
                     if totalCount > 0 {
                         Button(action: {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            bumpHaptic()
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                                 onSelectAll()
                             }
@@ -206,7 +207,7 @@ struct SelectionOverlay: View {
                     .padding(.horizontal, 10)
                     
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        bumpHaptic()
                         onAdd()
                     }) {
                         Image(systemName: "plus")
@@ -226,12 +227,12 @@ struct SelectionOverlay: View {
                 .padding(.horizontal, 20)
             }
         }
-
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
     
     private var ticketButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            bumpHaptic()
             onTickets()
         }) {
             HStack {
@@ -251,7 +252,7 @@ struct SelectionOverlay: View {
     
     private var trainButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            bumpHaptic()
             onTrainDepartures()
         }) {
             HStack {
@@ -271,7 +272,7 @@ struct SelectionOverlay: View {
     
     private var busButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            bumpHaptic()
             onDepartures()
         }) {
             HStack {
@@ -303,7 +304,7 @@ struct LineToggleView: View {
     
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            bumpHaptic()
             onToggle()
         }) {
             Text(line.shortName)
@@ -326,6 +327,13 @@ struct LineToggleView: View {
         .accessibilityLabel("\(line.shortName)")
         .accessibilityValue(isSelected ? Text("access.line.selected") : Text("access.line.unselected"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+    }
+
+    @State private var hapticTrigger = 0
+
+    private func bumpHaptic() {
+        hapticTrigger += 1
     }
 }
 
@@ -343,6 +351,12 @@ struct AddButtonView: View {
         .padding(.vertical, 8)
         .background(isFavorite ? Color.black.opacity(0.8) : Color.hslBlue)
         .clipShape(Capsule())
+    }
+}
+
+private extension SelectionOverlay {
+    func bumpHaptic() {
+        hapticTrigger += 1
     }
 }
 

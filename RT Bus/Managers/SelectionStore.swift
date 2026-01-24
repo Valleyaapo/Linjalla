@@ -122,6 +122,11 @@ final class SelectionStore {
         }
     }
 
+    func cancelPendingUpdate() {
+        updateTask?.cancel()
+        updateTask = nil
+    }
+
     private func updateManagers() {
         let selectedArray = Array(selectedLines)
 

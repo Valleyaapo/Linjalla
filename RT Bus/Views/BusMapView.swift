@@ -15,7 +15,7 @@ struct BusMapView: View {
     var showStops: Bool = true
     var showStopNames: Bool = false
     let onCameraChange: (Double) -> Void
-    var onStopTapped: ((BusStop) -> Void)? = nil
+    var onStopTapped: ((StopSelection) -> Void)? = nil
 
     var body: some View {
         UIKitMapView(
@@ -43,6 +43,6 @@ struct BusMapView: View {
         ],
         showStopNames: true,
         onCameraChange: { _ in },
-        onStopTapped: { stop in print("Tapped: \(stop.name)") }
+        onStopTapped: { selection in print("Tapped: \(selection.title)") }
     )
 }

@@ -1,36 +1,36 @@
 //
-//  DeparturesView.swift
+//  MultiStopDeparturesView.swift
 //  RT Bus
 //
-//  Created by Assistant on 29.12.2025.
+//  Created by Codex on 22.01.2026.
 //
 
 import SwiftUI
 import Combine
 import OSLog
 
-struct DeparturesView: View {
+struct MultiStopDeparturesView: View {
     let title: String
+    let stops: [BusStop]
     let selectedLines: Set<BusLine>?
-    let fetchAction: () async throws -> [Departure]
+    let fetchAction: (BusStop) async throws -> [Departure]
     
     @State private var viewState: ViewState = .idle
     
-    // Auto-refresh every 30 seconds
     private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
     
     @Environment(\.dismiss) private var dismiss
     
     private enum ViewState {
         case idle
-        case loading([Departure])
-        case loaded([Departure])
-        case error(String, [Departure])
+        case loading([String: [Departure]])
+        case loaded([String: [Departure]])
+        case error(String, [String: [Departure]])
         
-        var departures: [Departure] {
+        var departures: [String: [Departure]] {
             switch self {
             case .idle:
-                return []
+                return [:]
             case .loading(let departures),
                  .loaded(let departures),
                  .error(_, let departures):
@@ -52,9 +52,9 @@ struct DeparturesView: View {
             return false
         }
     }
-
+    
     var body: some View {
-        let departures = viewState.departures
+        let departuresByStop = viewState.departures
         NavigationStack {
             List {
                 if let errorMessage = viewState.errorMessage {
@@ -68,17 +68,29 @@ struct DeparturesView: View {
                         description: Text("ui.departures.selectHint")
                     )
                     .listRowBackground(Color.clear)
-                } else if viewState.isLoading && departures.isEmpty {
+                } else if viewState.isLoading && departuresByStop.values.allSatisfy({ $0.isEmpty }) {
                     ProgressView()
                         .frame(maxWidth: .infinity, alignment: .center)
                         .listRowBackground(Color.clear)
-                } else if departures.isEmpty && !viewState.isLoading {
+                } else if departuresByStop.values.allSatisfy({ $0.isEmpty }) && !viewState.isLoading {
                     Text("ui.departures.noneFound")
                         .foregroundStyle(.secondary)
                 }
                 
-                ForEach(departures) { departure in
-                    DepartureRowView(departure: departure)
+                ForEach(stops) { stop in
+                    Section(header: Text(sectionTitle(for: stop))) {
+                        let departures = departuresByStop[stop.id] ?? []
+                        if departures.isEmpty {
+                            if !viewState.isLoading {
+                                Text("ui.departures.noneFound")
+                                    .foregroundStyle(.secondary)
+                            }
+                        } else {
+                            ForEach(departures) { departure in
+                                DepartureRowView(departure: departure)
+                            }
+                        }
+                    }
                 }
             }
             .navigationTitle(title)
@@ -109,38 +121,50 @@ struct DeparturesView: View {
     
     @MainActor
     private func loadDepartures() async {
-        // If specific lines are required but none selected, do nothing (handled by UI)
         if let selected = selectedLines, selected.isEmpty {
             viewState = .idle
             return
         }
         
-        let currentDepartures = viewState.departures
-        viewState = .loading(currentDepartures)
+        let existingDepartures = viewState.departures
+        viewState = .loading(existingDepartures)
         do {
-            let fetched = try await fetchAction()
-            
-            // Filter out past departures
-            let now = Date()
-            var valid = fetched.filter { $0.departureDate > now }
-            
-            // Apply line filter if needed
-            if let selected = selectedLines {
-                let selectedNames = Set(selected.map { $0.shortName })
-                valid = valid.filter { selectedNames.contains($0.lineName) }
+            let selectedNames: Set<String>? = selectedLines.map { Set($0.map { $0.shortName }) }
+            var rawByStop: [String: [Departure]] = [:]
+            try await withThrowingTaskGroup(of: (String, [Departure]).self) { group in
+                for stop in stops {
+                    group.addTask {
+                        let fetched = try await fetchAction(stop)
+                        return (stop.id, fetched)
+                    }
+                }
+                
+                for try await (stopId, departures) in group {
+                    rawByStop[stopId] = departures
+                }
             }
             
-            let nextState: ViewState = .loaded(valid)
+            let now = Date()
+            var results: [String: [Departure]] = [:]
+            for (stopId, departures) in rawByStop {
+                var valid = departures.filter { $0.departureDate > now }
+                if let selectedNames {
+                    valid = valid.filter { selectedNames.contains($0.lineName) }
+                }
+                valid.sort { $0.departureDate < $1.departureDate }
+                results[stopId] = valid
+            }
+            
             withAnimation {
-                viewState = nextState
+                viewState = .loaded(results)
             }
         } catch {
-            Logger.ui.error("Error loading departures: \(error)")
+            Logger.ui.error("Error loading multi-stop departures: \(error)")
             let message = errorMessageKey(for: error)
-            viewState = .error(message, currentDepartures)
+            viewState = .error(message, existingDepartures)
         }
     }
-
+    
     private func errorMessageKey(for error: Error) -> String {
         if let urlError = error as? URLError {
             switch urlError.code {
@@ -153,37 +177,12 @@ struct DeparturesView: View {
         return NSLocalizedString("ui.error.fetchFailed", comment: "")
     }
     
-}
-
-#Preview {
-    DeparturesView(
-        title: "Test Station",
-        selectedLines: nil
-    ) {
-        let now = Int(Date().timeIntervalSince1970)
-        // Midnight at start of day
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: Date())
-        let serviceDay = Int(startOfDay.timeIntervalSince1970)
-        let secondsSinceMidnight = now - serviceDay
-        
-        return [
-            Departure(
-                lineName: "55",
-                headsign: "Rautatientori",
-                scheduledTime: secondsSinceMidnight + 300,
-                realtimeTime: secondsSinceMidnight + 300,
-                serviceDay: serviceDay,
-                platform: "5"
-            ),
-            Departure(
-                lineName: "500",
-                headsign: "Munkkivuori",
-                scheduledTime: secondsSinceMidnight + 600,
-                realtimeTime: secondsSinceMidnight + 600,
-                serviceDay: serviceDay,
-                platform: "12"
-            )
-        ]
+    private func sectionTitle(for stop: BusStop) -> String {
+        let nameCounts = Dictionary(grouping: stops, by: { $0.name })
+        if let count = nameCounts[stop.name]?.count, count > 1 {
+            return "\(stop.name) • \(stop.id)"
+        }
+        return stop.name
     }
+    
 }

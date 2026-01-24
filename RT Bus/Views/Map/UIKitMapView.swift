@@ -25,7 +25,7 @@ struct UIKitMapView: UIViewRepresentable {
     // MARK: - Callbacks
     
     let onCameraChange: (Double) -> Void
-    var onStopTapped: ((BusStop) -> Void)?
+    var onStopTapped: ((StopSelection) -> Void)?
     
     // MARK: - UIViewRepresentable
     

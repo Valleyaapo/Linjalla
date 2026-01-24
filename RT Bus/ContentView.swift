@@ -11,12 +11,12 @@ import CoreLocation
 import OSLog
 
 struct ContentView: View {
-    @Bindable var busManager: BusManager
-    @Bindable var tramManager: TramManager
-    @State private var selectionStore: SelectionStore
+    @Environment(BusManager.self) private var busManager
+    @Environment(TramManager.self) private var tramManager
+    @Environment(SelectionStore.self) private var selectionStore
     @State private var mapStateManager = MapStateManager()
-    @StateObject private var trainManager = TrainManager()
-    @StateObject private var locationManager = LocationManager()
+    @State private var trainManager = TrainManager()
+    @State private var locationManager = LocationManager()
     
     /// HSL station ID for Rautatientori bus terminal
     private let rautatientoriStationId = "HSL:1000003"
@@ -29,13 +29,9 @@ struct ContentView: View {
     @State private var isTrainDeparturesPresented = false
     @State private var showStops = true
     @State private var showStopNames = false
-    @State private var selectedStop: BusStop?
-
-    init(busManager: BusManager, tramManager: TramManager) {
-        self.busManager = busManager
-        self.tramManager = tramManager
-        _selectionStore = State(initialValue: SelectionStore(busManager: busManager, tramManager: tramManager))
-    }
+    @State private var selectedStop: StopSelection?
+    @State private var showHslAppMissingAlert = false
+    @State private var didCenterOnUser = false
 
     var body: some View {
         mainContent
@@ -44,15 +40,37 @@ struct ContentView: View {
             .onChange(of: tramManager.vehicleList, tramListChanged)
             .onChange(of: busManager.favoriteLines, busFavoritesChanged)
             .onChange(of: tramManager.favoriteLines, tramFavoritesChanged)
-            .sheet(item: $selectedStop) { stop in
-                DeparturesView(
-                    title: stop.name,
-                    selectedLines: nil
-                ) {
-                    try await selectionStore.stopManager.fetchDepartures(for: stop.id)
-                }
-                .presentationDetents([.medium, .large])
+            .onChange(of: selectionStore.stopManager.allStops, initial: true) { _, newValue in
+                mapStateManager.updateStops(newValue)
             }
+            .onChange(of: locationManager.lastLocation, initial: true) { _, newValue in
+                guard !didCenterOnUser, let location = newValue else { return }
+                didCenterOnUser = true
+                centerOnLocation(location)
+            }
+            .sheet(item: $selectedStop) { selection in
+                if selection.stops.count >= 2 {
+                    MultiStopDeparturesView(
+                        title: selection.title,
+                        stops: selection.stops,
+                        selectedLines: nil
+                    ) { stop in
+                        try await selectionStore.stopManager.fetchDepartures(for: stop.id)
+                    }
+                    .presentationDetents([.medium, .large])
+                } else if let stop = selection.stops.first {
+                    DeparturesView(
+                        title: stop.name,
+                        selectedLines: nil
+                    ) {
+                        try await selectionStore.stopManager.fetchDepartures(for: stop.id)
+                    }
+                    .presentationDetents([.medium, .large])
+                }
+            }
+            .alert("ui.error.title", isPresented: busErrorBinding, actions: busErrorActions, message: busErrorMessage)
+            .alert("ui.error.title", isPresented: tramErrorBinding, actions: tramErrorActions, message: tramErrorMessage)
+            .alert("ui.error.title", isPresented: stopErrorBinding, actions: stopErrorActions, message: stopErrorMessage)
     }
     
     // MARK: - Main Content
@@ -63,11 +81,11 @@ struct ContentView: View {
             BusMapView(
                 cameraTrigger: $cameraTrigger,
                 vehicles: currentVehicles,
-                stops: selectionStore.stopManager.allStops,
+                stops: mapStateManager.stopsList,
                 showStops: showStops,
                 showStopNames: showStopNames,
                 onCameraChange: handleCameraChange,
-                onStopTapped: { stop in selectedStop = stop }
+                onStopTapped: { selection in selectedStop = selection }
             )
             
             SelectionOverlay(
@@ -86,7 +104,7 @@ struct ContentView: View {
             )
         }
         .sheet(isPresented: $isSearchPresented) {
-            LineSearchSheet(busManager: busManager, tramManager: tramManager)
+            LineSearchSheet()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -107,6 +125,9 @@ struct ContentView: View {
                 try await trainManager.fetchDepartures(stationCode: "HKI")
             }
             .presentationDetents([.medium, .large])
+        }
+        .alert(Text("ui.error.hslNotInstalled"), isPresented: $showHslAppMissingAlert) {
+            Button("ui.button.ok", role: .cancel) {}
         }
     }
 
@@ -137,14 +158,18 @@ extension ContentView {
 
     func centerOnUser() {
         if let location = locationManager.lastLocation {
-            let region = MKCoordinateRegion(
-                center: location.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: MapConstants.defaultSpanDelta, longitudeDelta: MapConstants.defaultSpanDelta)
-            )
-            cameraTrigger = region
+            centerOnLocation(location)
         } else {
             locationManager.requestAuthorization()
         }
+    }
+
+    func centerOnLocation(_ location: CLLocation) {
+        let region = MKCoordinateRegion(
+            center: location.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: MapConstants.defaultSpanDelta, longitudeDelta: MapConstants.defaultSpanDelta)
+        )
+        cameraTrigger = region
     }
     
     func handleCameraChange(_ zoomLevel: Double) {
@@ -168,6 +193,9 @@ extension ContentView {
         UIApplication.shared.open(url, options: [:]) { success in
             if !success {
                  Logger.ui.warning("Could not open HSL tickets URL or app not installed")
+                 DispatchQueue.main.async {
+                     showHslAppMissingAlert = true
+                 }
             }
         }
     }
@@ -269,5 +297,11 @@ extension ContentView {
 }
 
 #Preview {
-    ContentView(busManager: BusManager(), tramManager: TramManager())
+    let busManager = BusManager(connectOnStart: false)
+    let tramManager = TramManager(connectOnStart: false)
+    let selectionStore = SelectionStore(busManager: busManager, tramManager: tramManager)
+    return ContentView()
+        .environment(busManager)
+        .environment(tramManager)
+        .environment(selectionStore)
 }
