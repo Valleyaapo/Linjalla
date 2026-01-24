@@ -1,11 +1,11 @@
 import Foundation
 
-struct RouteSelection: Sendable {
+nonisolated struct RouteSelection: Sendable {
     let id: String
     let routeId: String
 }
 
-struct SubscriptionChange: Sendable {
+nonisolated struct SubscriptionChange: Sendable {
     let requestId: UInt64
     let newTopics: Set<String>
     let toSubscribe: [String]

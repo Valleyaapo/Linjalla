@@ -8,7 +8,7 @@
 import Foundation
 import OSLog
 
-enum AppError: LocalizedError, Equatable {
+nonisolated enum AppError: LocalizedError, Equatable, Sendable {
     case networkError(String)
     case apiError(String)
     case decodingError(String)

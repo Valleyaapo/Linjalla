@@ -21,8 +21,6 @@ import OSLog
 @MainActor
 @Observable
 class BaseVehicleManager {
-    /// Shared JSON decoder for high-volume updates and persistence.
-    private static let decoder = JSONDecoder()
 
     // MARK: - Configuration (Override in Subclasses)
 
@@ -79,6 +77,9 @@ class BaseVehicleManager {
     private var cleanupTimer: Timer?
     private var mockSimulationTimer: Timer?
     private var subscriptionTask: Task<Void, Never>?
+    private var reconnectTask: Task<Void, Never>?
+    private var isConnecting = false
+    private var connectionAttempts = 0
 
     // MARK: - UI Testing
 
@@ -101,6 +102,7 @@ class BaseVehicleManager {
         cleanupTimer?.invalidate()
         mockSimulationTimer?.invalidate()
         subscriptionTask?.cancel()
+        reconnectTask?.cancel()
     }
 
     func setup() {
@@ -126,6 +128,8 @@ class BaseVehicleManager {
         guard isConnected else { return }
         Logger.busManager.info("\(String(describing: Self.self)): App backgrounded, disconnecting MQTT...")
         cleanup()
+        vehicles.removeAll()
+        vehicleList.removeAll()
         let client = self.client
         Task {
             try? await client?.disconnect()
@@ -133,6 +137,7 @@ class BaseVehicleManager {
             await MainActor.run {
                 self.isConnected = false
                 self.currentSubscriptions.removeAll()
+                self.isConnecting = false
             }
         }
     }
@@ -140,13 +145,17 @@ class BaseVehicleManager {
     private func setupConnection() {
         Task { [weak self] in
             guard let self else { return }
-            let alreadyConnected = await MainActor.run { self.isConnected }
+            let alreadyConnected = await MainActor.run { self.isConnected || self.isConnecting }
             guard !alreadyConnected else { return }
+            await MainActor.run {
+                self.isConnecting = true
+            }
 
             let isUITesting = await MainActor.run { self.isUITesting }
             if isUITesting {
                 await MainActor.run {
                     self.isConnected = true
+                    self.isConnecting = false
                     Logger.busManager.info("UI Testing: \(String(describing: Self.self)) skipping MQTT connection, starting simulation")
                     self.startMockSimulation()
                 }
@@ -181,6 +190,9 @@ class BaseVehicleManager {
 
                 await MainActor.run {
                     self.isConnected = true
+                    self.isConnecting = false
+                    self.connectionAttempts = 0
+                    self.error = nil
                     Logger.busManager.info("\(String(describing: Self.self)): MQTT Connected")
 
                     if !self.activeLines.isEmpty {
@@ -189,13 +201,41 @@ class BaseVehicleManager {
                 }
 
             } catch {
-                await MainActor.run {
+                let attempt = await MainActor.run { () -> Int in
                     Logger.busManager.error("\(String(describing: Self.self)): MQTT Connection failed: \(error)")
                     self.isConnected = false
-                    self.error = .mqttError(error.localizedDescription)
+                    self.isConnecting = false
+                    self.connectionAttempts += 1
+                    return self.connectionAttempts
+                }
+
+                guard attempt <= VehicleManagerConstants.mqttReconnectMaxAttempts else {
+                    await MainActor.run {
+                        self.error = .mqttError(error.localizedDescription)
+                    }
+                    return
+                }
+
+                let delay = mqttRetryDelay(for: attempt)
+                Logger.busManager.warning("\(String(describing: Self.self)): Retry MQTT connection in \(delay, format: .fixed(precision: 2))s (attempt \(attempt))")
+                reconnectTask?.cancel()
+                reconnectTask = Task { [weak self] in
+                    try? await Task.sleep(for: .seconds(delay))
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run {
+                        self?.setupConnection()
+                    }
                 }
             }
         }
+    }
+
+    private func mqttRetryDelay(for attempt: Int) -> TimeInterval {
+        let base = VehicleManagerConstants.mqttReconnectBaseDelay
+        let maxDelay = VehicleManagerConstants.mqttReconnectMaxDelay
+        let exponential = base * pow(2.0, Double(max(0, attempt - 1)))
+        let jitter = Double.random(in: 0...0.5)
+        return min(maxDelay, exponential + jitter)
     }
 
     // MARK: - Subscriptions
@@ -293,7 +333,8 @@ class BaseVehicleManager {
         let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
 
         do {
-            let response = try Self.decoder.decode(LocalResponse.self, from: data)
+            let decoder = JSONDecoder()
+            let response = try decoder.decode(LocalResponse.self, from: data)
             let vp = response.VP
 
             if let lat = vp.lat, let long = vp.long, let desi = vp.desi {
@@ -344,7 +385,7 @@ class BaseVehicleManager {
 
     private func loadFavorites() {
         if let data = UserDefaults.standard.data(forKey: favoritesKey),
-           let decoded = try? Self.decoder.decode([BusLine].self, from: data) {
+           let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
             self.favoriteLines = decoded
         } else {
             self.favoriteLines = defaultFavorites

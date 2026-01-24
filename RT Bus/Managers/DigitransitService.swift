@@ -1,10 +1,10 @@
 import Foundation
 import OSLog
 
-@MainActor
-final class DigitransitService {
+actor DigitransitService {
     private let urlSession: URLSession
     private let digitransitKey: String
+    private let decoder = JSONDecoder()
 
     init(urlSession: URLSession = .shared, digitransitKey: String) {
         self.urlSession = urlSession
@@ -55,8 +55,12 @@ final class DigitransitService {
         )
 
         let response: GraphQLStopResponse = try await fetch(request)
-        guard let firstPattern = response.data.route?.patterns.first else { return [] }
-        return firstPattern.stops.map { stop in
+        let patterns = response.data.route?.patterns ?? []
+        let allStops = patterns.flatMap { $0.stops }
+        let uniqueStops = Dictionary(grouping: allStops, by: { $0.gtfsId }).compactMap { (_, stops) in
+            stops.first
+        }
+        return uniqueStops.map { stop in
             BusStop(id: stop.gtfsId, name: stop.name, latitude: stop.lat, longitude: stop.lon)
         }
     }
@@ -120,22 +124,100 @@ final class DigitransitService {
         return request
     }
 
+    private enum DigitransitError: Error {
+        case httpStatus(Int)
+    }
+
     private func fetch<T: Decodable>(_ request: URLRequest) async throws -> T {
-        let (data, response) = try await urlSession.data(for: request)
+        let maxRetries = 3
+        var attempt = 0
+        var lastError: Error?
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw AppError.networkError("Invalid Response")
+        while attempt <= maxRetries {
+            try Task.checkCancellation()
+            do {
+                let (data, response) = try await urlSession.data(for: request)
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw AppError.networkError("Invalid Response")
+                }
+
+                guard (200...299).contains(httpResponse.statusCode) else {
+                    throw DigitransitError.httpStatus(httpResponse.statusCode)
+                }
+
+                do {
+                    return try decoder.decode(T.self, from: data)
+                } catch {
+                    Logger.network.error("Decoding error: \(error)")
+                    throw AppError.decodingError(error.localizedDescription)
+                }
+            } catch {
+                lastError = error
+                if error is CancellationError {
+                    throw error
+                }
+
+                guard attempt < maxRetries, shouldRetry(error: error) else {
+                    throw mapError(error)
+                }
+
+                let delay = retryDelay(for: attempt)
+                Logger.network.warning("Retrying Digitransit request in \(delay, format: .fixed(precision: 2))s (attempt \(attempt + 1))")
+                try await Task.sleep(for: .seconds(delay))
+                attempt += 1
+            }
         }
 
-        guard (200...299).contains(httpResponse.statusCode) else {
-            throw AppError.apiError("HTTP \(httpResponse.statusCode)")
+        throw mapError(lastError ?? AppError.networkError("Unknown error"))
+    }
+
+    private func shouldRetry(error: Error) -> Bool {
+        if let urlError = error as? URLError {
+            return [
+                .networkConnectionLost,
+                .notConnectedToInternet,
+                .timedOut,
+                .cannotConnectToHost,
+                .cannotFindHost
+            ].contains(urlError.code)
         }
 
-        do {
-            return try JSONDecoder().decode(T.self, from: data)
-        } catch {
-            Logger.network.error("Decoding error: \(error)")
-            throw error
+        if let digitransitError = error as? DigitransitError {
+            switch digitransitError {
+            case .httpStatus(let statusCode):
+                return statusCode == 429 || (500...599).contains(statusCode)
+            }
         }
+
+        if case AppError.networkError = error {
+            return true
+        }
+
+        return false
+    }
+
+    private func retryDelay(for attempt: Int) -> TimeInterval {
+        let base: TimeInterval = 0.5
+        let maxDelay: TimeInterval = 6.0
+        let exponential = base * pow(2.0, Double(attempt))
+        let jitter = Double.random(in: 0...0.5)
+        return min(maxDelay, exponential + jitter)
+    }
+
+    private func mapError(_ error: Error) -> AppError {
+        if let appError = error as? AppError {
+            return appError
+        }
+        if let urlError = error as? URLError {
+            return AppError.networkError(urlError.localizedDescription)
+        }
+        if let digitransitError = error as? DigitransitError {
+            switch digitransitError {
+            case .httpStatus(let statusCode):
+                return AppError.apiError("HTTP \(statusCode)")
+            }
+        }
+        return AppError.networkError(error.localizedDescription)
     }
 }

@@ -9,7 +9,7 @@ import Foundation
 import CoreLocation
 
 /// Modern, Sendable Bus Model for late 2025 (iOS 26 context)
-struct BusModel: Identifiable, Codable, Equatable, Sendable {
+nonisolated struct BusModel: Identifiable, Codable, Equatable, Sendable {
     enum VehicleType: String, Codable, Sendable {
         case bus
         case tram
@@ -26,7 +26,7 @@ struct BusModel: Identifiable, Codable, Equatable, Sendable {
     let type: VehicleType
     
     // Default config for older initializers if needed, though we should update them
-    nonisolated init(id: Int, lineName: String, routeId: String?, headsign: String? = nil, latitude: Double, longitude: Double, heading: Int?, timestamp: TimeInterval, type: VehicleType = .bus) {
+    init(id: Int, lineName: String, routeId: String?, headsign: String? = nil, latitude: Double, longitude: Double, heading: Int?, timestamp: TimeInterval, type: VehicleType = .bus) {
         self.id = id
         self.lineName = lineName
         self.routeId = routeId
@@ -56,11 +56,11 @@ struct BusModel: Identifiable, Codable, Equatable, Sendable {
 }
 
 // HSL API Response Structures (Sendable)
-struct HSLResponse: Codable, Sendable {
+nonisolated struct HSLResponse: Codable, Sendable {
     let VP: VehiclePosition
 }
 
-struct VehiclePosition: Codable, Sendable {
+nonisolated struct VehiclePosition: Codable, Sendable {
     let veh: Int
     let desi: String?
     let lat: Double?
@@ -93,4 +93,3 @@ struct VehiclePosition: Codable, Sendable {
         )
     }
 }
-

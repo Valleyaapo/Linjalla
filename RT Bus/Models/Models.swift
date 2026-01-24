@@ -10,7 +10,7 @@ import CoreLocation
 
 // Shared models used across Managers
 
-struct BusStop: Identifiable, Hashable, Sendable {
+nonisolated struct BusStop: Identifiable, Hashable, Sendable {
     let id: String
     let name: String
     let latitude: Double
@@ -22,7 +22,7 @@ struct BusStop: Identifiable, Hashable, Sendable {
 }
 
 // MARK: - Departure Model
-struct Departure: Identifiable, Sendable {
+nonisolated struct Departure: Identifiable, Sendable {
     let id = UUID()
     let lineName: String
     let headsign: String

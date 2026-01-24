@@ -10,7 +10,7 @@ import CoreLocation
 
 /// Unified enum representing all items that can be displayed on the map.
 /// Used by MapStateManager to build a single, atomically-updated list for BusMapView.
-enum MapItem: Identifiable, Equatable {
+nonisolated enum MapItem: Identifiable, Equatable, Sendable {
     case stop(BusStop)
     case bus(BusModel)
     case tram(BusModel)
