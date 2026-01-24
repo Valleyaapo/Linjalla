@@ -39,6 +39,7 @@ final class VehicleAnnotation: NSObject, MKAnnotation {
     @objc dynamic var headingDegrees: Double
     
     private(set) var vehicleType: VehicleType
+    private(set) var needsEntryAnimation: Bool
     
     // MARK: - Initialization
     
@@ -48,16 +49,28 @@ final class VehicleAnnotation: NSObject, MKAnnotation {
         self.lineName = model.lineName
         self.headingDegrees = Double(model.heading ?? -1)
         self.vehicleType = type
+        self.needsEntryAnimation = true
         super.init()
+    }
+
+    func markEntryAnimationHandled() {
+        needsEntryAnimation = false
     }
     
     // MARK: - Updates
     
     /// Update annotation in-place with smooth animation
-    func update(from model: BusModel) {
-        // Animate coordinate change for smooth movement
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveLinear) {
-            self.coordinate = model.coordinate
+    func update(from model: BusModel, animate: Bool = true) {
+        if animate {
+            UIView.animate(
+                withDuration: VehicleManagerConstants.updateInterval,
+                delay: 0,
+                options: [.curveLinear, .beginFromCurrentState, .allowUserInteraction]
+            ) {
+                self.coordinate = model.coordinate
+            }
+        } else {
+            coordinate = model.coordinate
         }
         lineName = model.lineName
         headingDegrees = Double(model.heading ?? -1)

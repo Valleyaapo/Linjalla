@@ -6,6 +6,7 @@
 //
 
 import MapKit
+import CoreLocation
 
 /// Coordinates between SwiftUI and MKMapView
 final class MapViewCoordinator: NSObject {
@@ -13,13 +14,14 @@ final class MapViewCoordinator: NSObject {
     // MARK: - Callbacks
     
     private let onCameraChange: (Double) -> Void
-    private let onStopTapped: ((BusStop) -> Void)?
+    private let onStopTapped: ((StopSelection) -> Void)?
     
     // MARK: - State
     
     private var vehicleAnnotations: [String: VehicleAnnotation] = [:]
     private var stopAnnotations: [String: StopAnnotation] = [:]
     private var currentZoomLevel: Double = 0.05
+    private var latestStops: [BusStop] = []
     
     // Debouncing for stop updates
     private var lastStopRefreshZoom: Double = 0.05
@@ -29,7 +31,7 @@ final class MapViewCoordinator: NSObject {
     
     // MARK: - Initialization
     
-    init(onCameraChange: @escaping (Double) -> Void, onStopTapped: ((BusStop) -> Void)?) {
+    init(onCameraChange: @escaping (Double) -> Void, onStopTapped: ((StopSelection) -> Void)?) {
         self.onCameraChange = onCameraChange
         self.onStopTapped = onStopTapped
         super.init()
@@ -44,6 +46,7 @@ final class MapViewCoordinator: NSObject {
         showStops: Bool,
         showStopNames: Bool
     ) {
+        latestStops = stops
         // MARK: Process Vehicles
         
         var newVehicleAnnotations: [String: VehicleAnnotation] = [:]
@@ -144,7 +147,8 @@ final class MapViewCoordinator: NSObject {
         if let _ = animationStateManager.cancelPendingRemoval(vehicleId: key) {
             // Reappeared! Cancel removal and update existing
             if let existing = vehicleAnnotations[key] {
-                existing.update(from: model)
+                let shouldAnimate = mapView.view(for: existing) != nil
+                existing.update(from: model, animate: shouldAnimate)
                 newAnnotations[key] = existing
                 toAnimate.append((key: key, annotation: existing, isNew: false))
                 return
@@ -152,7 +156,8 @@ final class MapViewCoordinator: NSObject {
         }
         
         if let existing = vehicleAnnotations[key] {
-            existing.update(from: model)
+            let shouldAnimate = mapView.view(for: existing) != nil
+            existing.update(from: model, animate: shouldAnimate)
             newAnnotations[key] = existing
             toAnimate.append((key: key, annotation: existing, isNew: false))
         } else {
@@ -173,11 +178,8 @@ final class MapViewCoordinator: NSObject {
             let state = animationStateManager.state(for: key)
             
             if isNew {
-                // Entry animation
-                let generation = state.beginEntering()
-                view.animateEntry(heading: annotation.headingDegrees) {
-                    state.complete(generation: generation)
-                }
+                // Entry animation handled via viewFor/prepareForDisplay.
+                continue
             } else {
                 // Update animation (heading)
                 let generation = state.beginUpdating(to: annotation.coordinate, heading: annotation.headingDegrees)
@@ -205,23 +207,36 @@ extension MapViewCoordinator: MKMapViewDelegate {
         
         // Vehicle annotations
         if let vehicle = annotation as? VehicleAnnotation {
-            let view = mapView.dequeueReusableAnnotationView(
+            guard let view = mapView.dequeueReusableAnnotationView(
                 withIdentifier: VehicleAnnotationView.reuseIdentifier,
                 for: annotation
-            ) as! VehicleAnnotationView
+            ) as? VehicleAnnotationView else {
+                return nil
+            }
             
             // Configure layout only - animation is triggered by updateAnnotations
             view.configure(with: vehicle)
             view.setHeading(vehicle.headingDegrees) // Set initial heading without animation
+            
+            if vehicle.needsEntryAnimation {
+                vehicle.markEntryAnimationHandled()
+                let state = animationStateManager.state(for: vehicle.identifier)
+                let generation = state.beginEntering()
+                view.queueEntryAnimation(heading: vehicle.headingDegrees) {
+                    state.complete(generation: generation)
+                }
+            }
             return view
         }
         
         // Stop annotations
         if let stop = annotation as? StopAnnotation {
-            let view = mapView.dequeueReusableAnnotationView(
+            guard let view = mapView.dequeueReusableAnnotationView(
                 withIdentifier: StopAnnotationView.reuseIdentifier,
                 for: annotation
-            ) as! StopAnnotationView
+            ) as? StopAnnotationView else {
+                return nil
+            }
             
             view.configure(with: stop, zoomLevel: currentZoomLevel)
             return view
@@ -229,10 +244,12 @@ extension MapViewCoordinator: MKMapViewDelegate {
         
         // Cluster annotations
         if let cluster = annotation as? MKClusterAnnotation {
-            let view = mapView.dequeueReusableAnnotationView(
+            guard let view = mapView.dequeueReusableAnnotationView(
                 withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier,
                 for: annotation
-            ) as! MKMarkerAnnotationView
+            ) as? MKMarkerAnnotationView else {
+                return nil
+            }
             
             view.markerTintColor = .gray
             view.glyphText = "\(cluster.memberAnnotations.count)"
@@ -242,11 +259,47 @@ extension MapViewCoordinator: MKMapViewDelegate {
         
         return nil
     }
-    
+
     func mapView(_ mapView: MKMapView, didSelect annotation: MKAnnotation) {
         if let stopAnnotation = annotation as? StopAnnotation {
-            onStopTapped?(stopAnnotation.stop)
+            let nearbyStops = mergedStops(around: stopAnnotation.stop)
+            let selection = StopSelection(
+                id: nearbyStops.map { $0.id }.sorted().joined(separator: "|"),
+                title: selectionTitle(for: nearbyStops),
+                stops: nearbyStops
+            )
+            onStopTapped?(selection)
+            mapView.deselectAnnotation(annotation, animated: false)
+            return
         }
+        
+        if let cluster = annotation as? MKClusterAnnotation {
+            let members = cluster.memberAnnotations.compactMap { $0 as? StopAnnotation }
+            guard !members.isEmpty else {
+                mapView.deselectAnnotation(annotation, animated: false)
+                return
+            }
+            let stops = members.map { $0.stop }.sorted { lhs, rhs in
+                if lhs.name == rhs.name {
+                    return lhs.id < rhs.id
+                }
+                return lhs.name < rhs.name
+            }
+            let title = selectionTitle(for: stops)
+            let selection = StopSelection(
+                id: stops.map { $0.id }.sorted().joined(separator: "|"),
+                title: title,
+                stops: stops
+            )
+            if stops.count >= 2 {
+                onStopTapped?(selection)
+            } else if let single = stops.first {
+                onStopTapped?(StopSelection(id: single.id, title: single.name, stops: [single]))
+            }
+            mapView.deselectAnnotation(annotation, animated: false)
+            return
+        }
+        
         mapView.deselectAnnotation(annotation, animated: false)
     }
     
@@ -271,5 +324,30 @@ extension MapViewCoordinator: MKMapViewDelegate {
                 view.configure(with: stop, zoomLevel: zoomLevel)
             }
         }
+    }
+
+    private func mergedStops(around stop: BusStop) -> [BusStop] {
+        guard !latestStops.isEmpty else { return [stop] }
+        let target = CLLocation(latitude: stop.latitude, longitude: stop.longitude)
+        let nearby = latestStops.filter { candidate in
+            let location = CLLocation(latitude: candidate.latitude, longitude: candidate.longitude)
+            let distance = target.distance(from: location)
+            if distance <= MapConstants.stopMergeDistanceMeters {
+                return true
+            }
+            return candidate.name == stop.name && distance <= MapConstants.stopNameMergeDistanceMeters
+        }
+        let stops = nearby.isEmpty ? [stop] : nearby
+        return stops.sorted { lhs, rhs in
+            if lhs.name == rhs.name {
+                return lhs.id < rhs.id
+            }
+            return lhs.name < rhs.name
+        }
+    }
+
+    private func selectionTitle(for stops: [BusStop]) -> String {
+        let uniqueNames = Set(stops.map { $0.name })
+        return uniqueNames.count == 1 ? (stops.first?.name ?? "") : NSLocalizedString("ui.stops.nearby", comment: "")
     }
 }

@@ -37,11 +37,15 @@ final class VehicleAnnotationView: MKAnnotationView {
         return label
     }()
     
-    private let arrowView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "arrowtriangle.up.fill")
-        imageView.contentMode = .scaleAspectFit
-        return imageView
+    private let arrowShapeLayer: CAShapeLayer = {
+        let layer = CAShapeLayer()
+        layer.fillColor = UIColor.clear.cgColor
+        layer.strokeColor = UIColor.white.cgColor
+        layer.lineWidth = 2
+        layer.lineJoin = .round
+        layer.lineCap = .round
+        layer.contentsScale = UIScreen.main.scale
+        return layer
     }()
     
     // MARK: - Animation State
@@ -54,6 +58,10 @@ final class VehicleAnnotationView: MKAnnotationView {
     
     /// Current heading in radians for velocity calculation
     private var currentHeadingRadians: CGFloat = 0
+    
+    /// Pending entry animation (set before display)
+    private var pendingEntryHeading: Double?
+    private var pendingEntryCompletion: (() -> Void)?
     
     // MARK: - Initialization
     
@@ -75,7 +83,7 @@ final class VehicleAnnotationView: MKAnnotationView {
         centerOffset = .zero
         
         addSubview(arrowContainer)
-        arrowContainer.addSubview(arrowView)
+        arrowContainer.layer.addSublayer(arrowShapeLayer)
         addSubview(containerView)
         containerView.addSubview(lineLabel)
     }
@@ -108,6 +116,18 @@ final class VehicleAnnotationView: MKAnnotationView {
         containerView.alpha = 1
         lineLabel.text = nil
         currentHeadingRadians = 0
+        pendingEntryHeading = nil
+        pendingEntryCompletion = nil
+    }
+    
+    override func prepareForDisplay() {
+        super.prepareForDisplay()
+        
+        guard let heading = pendingEntryHeading else { return }
+        let completion = pendingEntryCompletion
+        pendingEntryHeading = nil
+        pendingEntryCompletion = nil
+        animateEntry(heading: heading, completion: completion)
     }
     
     // MARK: - Configuration (Layout Only)
@@ -124,7 +144,8 @@ final class VehicleAnnotationView: MKAnnotationView {
         // Badge color
         let color = annotation.vehicleType.color
         containerView.backgroundColor = color
-        arrowView.tintColor = color
+        arrowShapeLayer.fillColor = color.cgColor
+        arrowShapeLayer.strokeColor = UIColor.white.cgColor
         
         // Size badge to fit text, circular shape
         let textSize = lineLabel.intrinsicContentSize
@@ -148,7 +169,7 @@ final class VehicleAnnotationView: MKAnnotationView {
         lineLabel.frame = containerView.bounds
         
         // Layout orbit container
-        let orbitSize = diameter + 14
+        let orbitSize = diameter + 24
         arrowContainer.frame = CGRect(
             x: (totalSize - orbitSize) / 2,
             y: (totalSize - orbitSize) / 2,
@@ -157,17 +178,33 @@ final class VehicleAnnotationView: MKAnnotationView {
         )
         
         // Position arrow at top of orbit
-        let arrowSize: CGFloat = 12
-        arrowView.frame = CGRect(
-            x: (orbitSize - arrowSize) / 2,
+        let arrowSize: CGFloat = 30
+        let arrowX = (orbitSize - arrowSize) / 2
+        arrowShapeLayer.frame = CGRect(
+            x: arrowX,
             y: 0,
             width: arrowSize,
             height: arrowSize
         )
+        let inset = arrowShapeLayer.lineWidth / 2
+        let bounds = arrowShapeLayer.bounds.insetBy(dx: inset, dy: inset)
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: bounds.midX, y: bounds.minY))
+        path.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY))
+        path.addLine(to: CGPoint(x: bounds.minX, y: bounds.maxY))
+        path.close()
+        arrowShapeLayer.path = path.cgPath
         
         // Z-Priority: VEHICLES ON TOP
         displayPriority = .required
         zPriority = .max
+    }
+    
+    // MARK: - Entry Queue
+    
+    func queueEntryAnimation(heading: Double, completion: (() -> Void)? = nil) {
+        pendingEntryHeading = heading
+        pendingEntryCompletion = completion
     }
     
     // MARK: - Entry Animation
@@ -180,10 +217,12 @@ final class VehicleAnnotationView: MKAnnotationView {
         
         // Set initial small state without animation
         UIView.performWithoutAnimation {
+            self.alpha = 1
+            self.transform = scale
             self.containerView.alpha = 1
             self.arrowContainer.alpha = 1
-            self.containerView.transform = scale
-            self.arrowContainer.transform = scale.concatenating(rotation)
+            self.containerView.transform = .identity
+            self.arrowContainer.transform = rotation
             self.arrowContainer.isHidden = heading < 0
         }
         
@@ -191,8 +230,7 @@ final class VehicleAnnotationView: MKAnnotationView {
         
         // Spring animation to full size
         entryAnimator = UIViewPropertyAnimator(duration: 0.25, dampingRatio: 0.8) {
-            self.containerView.transform = .identity
-            self.arrowContainer.transform = rotation
+            self.transform = .identity
         }
         
         entryAnimator?.addCompletion { _ in
