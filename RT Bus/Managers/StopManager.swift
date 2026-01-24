@@ -9,6 +9,7 @@ import Foundation
 import CoreLocation
 import Observation
 import OSLog
+import QuartzCore
 import SwiftUI
 
 @MainActor
@@ -26,6 +27,9 @@ final class StopManager {
     private var stops: [String: [BusStop]] = [:]
     private var fetchTasks: [String: Task<Void, Never>] = [:]
     private let graphQLService: DigitransitService
+    
+    @ObservationIgnored private var displayLink: CADisplayLink?
+    @ObservationIgnored private var needsRebuild = false
     
     init(urlSession: URLSession = .shared) {
         self.graphQLService = DigitransitService(
@@ -68,7 +72,7 @@ final class StopManager {
         }
         
         // 3. Rebuild (Immediate for removals)
-        rebuildAllStops()
+        scheduleRebuildAllStops()
     }
     
     private func fetchStops(for line: BusLine) async {
@@ -81,21 +85,27 @@ final class StopManager {
         do {
             let busStops = try await graphQLService.fetchStops(routeId: line.id)
             guard !Task.isCancelled else { return }
+            self.error = nil
             self.stops[line.id] = busStops
-            self.rebuildAllStops()
+            self.scheduleRebuildAllStops()
         } catch is CancellationError {
             return
         } catch {
             Logger.stopManager.error("Failed to fetch stops for \(line.shortName): \(error)")
+            self.error = AppError.networkError(error.localizedDescription)
         }
     }
     
     func fetchDepartures(for stationId: String) async throws -> [Departure] {
         do {
-            return try await graphQLService.fetchDepartures(stationId: stationId)
+            let departures = try await graphQLService.fetchDepartures(stationId: stationId)
+            self.error = nil
+            return departures
         } catch {
             Logger.stopManager.error("Fetch Departures failed: \(error)")
-            throw AppError.networkError(error.localizedDescription)
+            let appError = AppError.networkError(error.localizedDescription)
+            self.error = appError
+            throw appError
         }
     }
     
@@ -109,6 +119,19 @@ final class StopManager {
             }
         }
     }
+    
+    private func scheduleRebuildAllStops() {
+        needsRebuild = true
+        guard displayLink == nil else { return }
+        displayLink = CADisplayLink(target: self, selector: #selector(displayLinkFired))
+        displayLink?.add(to: .main, forMode: .common)
+    }
+    
+    @objc private func displayLinkFired() {
+        displayLink?.invalidate()
+        displayLink = nil
+        guard needsRebuild else { return }
+        needsRebuild = false
+        rebuildAllStops()
+    }
 }
-
-
