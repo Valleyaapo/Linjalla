@@ -24,7 +24,8 @@ DerivedData/
 
 # Secrets
 Secrets.xcconfig
-instrumentation.trace/
+instrumentation.trace
+*.trace
 
 # Archives and IPA
 *.ipa
@@ -38,6 +39,11 @@ gemini.md
 capture_screenshots.sh
 docs/app_store_metadata.txt
 docs/metadata.md
+AGENTS.md
+animation_state_manager.md
+RT Bus/architecture/
+RT Bus/swftui26.md
+docs/release-notes-1.2.md
 
 # Xcode
 DerivedData/
