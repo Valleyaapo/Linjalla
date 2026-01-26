@@ -117,6 +117,7 @@ final class TrainManager {
         
         return Departure(
             lineName: lineId,
+            routeId: nil,
             headsign: destination,
             scheduledTime: 0,
             realtimeTime: Int(time.timeIntervalSince1970),

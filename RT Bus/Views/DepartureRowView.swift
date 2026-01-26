@@ -16,7 +16,7 @@ struct DepartureRowView: View {
                 .font(.title3.bold())
                 .fontDesign(.rounded)
                 .frame(minWidth: 50, alignment: .leading)
-                .foregroundColor(.hslBlue)
+                .foregroundStyle(Color.hslBlue)
             
             VStack(alignment: .leading) {
                 Text(departure.headsign)
@@ -30,12 +30,12 @@ struct DepartureRowView: View {
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Color.gray.opacity(0.2))
-                            .cornerRadius(4)
+                            .clipShape(.rect(cornerRadius: 4))
                     }
                     
                     Text(DepartureFormatting.formatTime(departure.departureDate))
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             
@@ -47,8 +47,8 @@ struct DepartureRowView: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(Color.green.opacity(0.1))
-                .cornerRadius(8)
-                .foregroundColor(.green)
+                .clipShape(.rect(cornerRadius: 8))
+                .foregroundStyle(.green)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(

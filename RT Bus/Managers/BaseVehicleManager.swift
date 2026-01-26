@@ -72,7 +72,7 @@ class BaseVehicleManager {
         }
     }
 
-    private nonisolated let stream = VehicleStream()
+    private let stream = VehicleStream()
     private var updateTimer: Timer?
     private var cleanupTimer: Timer?
     private var mockSimulationTimer: Timer?
@@ -80,6 +80,10 @@ class BaseVehicleManager {
     private var reconnectTask: Task<Void, Never>?
     private var isConnecting = false
     private var connectionAttempts = 0
+
+    private var isMQTTDisabled: Bool {
+        false
+    }
 
     // MARK: - UI Testing
 
@@ -107,7 +111,8 @@ class BaseVehicleManager {
 
     func setup() {
         loadFavorites()
-        if connectOnStart {
+        if isMQTTDisabled {
+        } else if connectOnStart {
             setupConnection()
         }
         startCleanupTimer()
@@ -118,7 +123,9 @@ class BaseVehicleManager {
 
     func reconnect() {
         guard !isConnected else { return }
-        Logger.busManager.info("\(String(describing: Self.self)): App became active, reconnecting MQTT...")
+        guard !isMQTTDisabled else {
+            return
+        }
         startCleanupTimer()
         startUpdateTimer()
         setupConnection()
@@ -126,7 +133,6 @@ class BaseVehicleManager {
 
     func disconnect() {
         guard isConnected else { return }
-        Logger.busManager.info("\(String(describing: Self.self)): App backgrounded, disconnecting MQTT...")
         cleanup()
         vehicles.removeAll()
         vehicleList.removeAll()
@@ -156,7 +162,6 @@ class BaseVehicleManager {
                 await MainActor.run {
                     self.isConnected = true
                     self.isConnecting = false
-                    Logger.busManager.info("UI Testing: \(String(describing: Self.self)) skipping MQTT connection, starting simulation")
                     self.startMockSimulation()
                 }
                 return
@@ -184,7 +189,12 @@ class BaseVehicleManager {
                 client.addPublishListener(named: "\(String(describing: Self.self))Listener") { [weak self] result in
                     guard let self = self else { return }
                     if case .success(let publishInfo) = result {
-                        self.processMessage(publishInfo)
+                        var buffer = publishInfo.payload
+                        guard let data = buffer.readData(length: buffer.readableBytes) else { return }
+                        let topic = publishInfo.topicName
+                        Task { @MainActor in
+                            self.processMessage(topicName: topic, payload: data)
+                        }
                     }
                 }
 
@@ -193,7 +203,6 @@ class BaseVehicleManager {
                     self.isConnecting = false
                     self.connectionAttempts = 0
                     self.error = nil
-                    Logger.busManager.info("\(String(describing: Self.self)): MQTT Connected")
 
                     if !self.activeLines.isEmpty {
                         self.updateSubscriptions(selectedLines: self.activeLines)
@@ -262,13 +271,11 @@ class BaseVehicleManager {
             do {
                 if !toUnsubscribe.isEmpty {
                     try await client.unsubscribe(from: Array(toUnsubscribe))
-                    Logger.busManager.debug("\(String(describing: Self.self)): Unsubscribed from \(toUnsubscribe.count) topics")
                 }
 
                 if !toSubscribe.isEmpty {
                     let subscriptions = toSubscribe.map { MQTTSubscribeInfo(topicFilter: $0, qos: .atMostOnce) }
                     _ = try await client.subscribe(to: subscriptions)
-                    Logger.busManager.debug("\(String(describing: Self.self)): Subscribed to \(toSubscribe.count) topics")
                 }
             } catch {
                 if let mqttError = error as? MQTTError, case .noConnection = mqttError {
@@ -310,7 +317,8 @@ class BaseVehicleManager {
 
     // MARK: - Message Handling
 
-    nonisolated func processMessage(_ info: MQTTPublishInfo) {
+    @MainActor
+    func processMessage(topicName: String, payload: Data) {
         let topicRouteIdIndex = 8
         struct LocalVP: Decodable {
             let veh: Int
@@ -324,17 +332,14 @@ class BaseVehicleManager {
             let VP: LocalVP
         }
 
-        var buffer = info.payload
-        guard let data = buffer.readData(length: buffer.readableBytes) else { return }
-
         // Extract routeId from topic (support multiple HFP layouts)
-        let parts = info.topicName.split(separator: "/")
+        let parts = topicName.split(separator: "/")
         let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
         let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
 
         do {
             let decoder = JSONDecoder()
-            let response = try decoder.decode(LocalResponse.self, from: data)
+            let response = try decoder.decode(LocalResponse.self, from: payload)
             let vp = response.VP
 
             if let lat = vp.lat, let long = vp.long, let desi = vp.desi {
@@ -348,11 +353,9 @@ class BaseVehicleManager {
                     timestamp: vp.tsi ?? Date().timeIntervalSince1970,
                     type: vehicleType
                 )
-
                 Task { await stream.buffer(vehicle) }
             }
         } catch {
-            Logger.busManager.debug("\(String(describing: Self.self)): Decoding skipped: \(error)")
         }
     }
 

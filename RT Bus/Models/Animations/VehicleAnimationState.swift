@@ -32,6 +32,7 @@ enum VehicleAnimationPhase: Equatable {
 
 /// Single source of truth for a vehicle's animation state.
 /// Used to coordinate animations and validate completion handlers.
+@MainActor
 final class VehicleAnimationState {
     let vehicleId: String
 

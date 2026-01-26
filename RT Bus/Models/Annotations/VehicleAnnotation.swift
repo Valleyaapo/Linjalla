@@ -9,6 +9,7 @@ import MapKit
 import UIKit
 
 /// MKAnnotation wrapper for bus/tram vehicles
+@MainActor
 final class VehicleAnnotation: NSObject, MKAnnotation {
 
     enum VehicleType {

@@ -1,30 +1,36 @@
 import Foundation
 
-nonisolated struct GraphQLRouteResponse: Codable, Sendable {
+struct GraphQLRouteResponse: Codable, Sendable {
     let data: GraphQLData?
 }
 
-nonisolated struct GraphQLData: Codable, Sendable {
+struct GraphQLData: Codable, Sendable {
     let routes: [GraphQLRoute]?
 }
 
-nonisolated struct GraphQLRoute: Codable, Sendable {
+struct GraphQLRoute: Codable, Sendable {
     let gtfsId: String?
     let shortName: String?
     let longName: String?
 }
 
-nonisolated struct GraphQLStopDeparturesResponse: Codable, Sendable {
+struct GraphQLStopDeparturesResponse: Codable, Sendable {
     let data: GraphQLStopDeparturesData
 }
-nonisolated struct GraphQLStopDeparturesData: Codable, Sendable {
+struct GraphQLStopDeparturesData: Codable, Sendable {
     let stop: GraphQLStation?
 }
-// Recycling GraphQLStation structure but mapped to 'stop' field now
-nonisolated struct GraphQLStation: Codable, Sendable {
-    let stoptimesWithoutPatterns: [GraphQLStoptime]
+struct GraphQLStationDeparturesResponse: Codable, Sendable {
+    let data: GraphQLStationDeparturesData
 }
-nonisolated struct GraphQLStoptime: Codable, Sendable {
+struct GraphQLStationDeparturesData: Codable, Sendable {
+    let station: GraphQLStation?
+}
+// Recycling GraphQLStation structure but mapped to 'stop' field now
+struct GraphQLStation: Codable, Sendable {
+    let stoptimesWithoutPatterns: [GraphQLStoptime]?
+}
+struct GraphQLStoptime: Codable, Sendable {
     let scheduledDeparture: Int
     let realtimeDeparture: Int
     let serviceDay: Int
@@ -33,29 +39,30 @@ nonisolated struct GraphQLStoptime: Codable, Sendable {
     let stop: GraphQLStopShortPlatform?
     let trip: GraphQLTrip?
 }
-nonisolated struct GraphQLStopShortPlatform: Codable, Sendable {
+struct GraphQLStopShortPlatform: Codable, Sendable {
     let platformCode: String?
 }
-nonisolated struct GraphQLTrip: Codable, Sendable {
+struct GraphQLTrip: Codable, Sendable {
     let route: GraphQLRouteShort?
 }
-nonisolated struct GraphQLRouteShort: Codable, Sendable {
+struct GraphQLRouteShort: Codable, Sendable {
+    let gtfsId: String?
     let shortName: String?
 }
 
-nonisolated struct GraphQLStopResponse: Codable, Sendable {
+struct GraphQLStopResponse: Codable, Sendable {
     let data: GraphQLStopData
 }
-nonisolated struct GraphQLStopData: Codable, Sendable {
+struct GraphQLStopData: Codable, Sendable {
     let route: GraphQLRouteWithPatterns?
 }
-nonisolated struct GraphQLRouteWithPatterns: Codable, Sendable {
+struct GraphQLRouteWithPatterns: Codable, Sendable {
     let patterns: [GraphQLPattern]
 }
-nonisolated struct GraphQLPattern: Codable, Sendable {
+struct GraphQLPattern: Codable, Sendable {
     let stops: [GraphQLStop]
 }
-nonisolated struct GraphQLStop: Codable, Sendable {
+struct GraphQLStop: Codable, Sendable {
     let gtfsId: String
     let name: String
     let lat: Double

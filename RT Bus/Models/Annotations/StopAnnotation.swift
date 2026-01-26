@@ -8,6 +8,7 @@
 import MapKit
 
 /// MKAnnotation wrapper for bus/tram stops
+@MainActor
 final class StopAnnotation: NSObject, MKAnnotation {
     
     // MARK: - MKAnnotation
@@ -15,7 +16,7 @@ final class StopAnnotation: NSObject, MKAnnotation {
     @objc dynamic var coordinate: CLLocationCoordinate2D
     
     var title: String? {
-        showName ? stop.name : nil
+        showName ? stopName : nil
     }
     
     // MARK: - Clustering
@@ -25,13 +26,15 @@ final class StopAnnotation: NSObject, MKAnnotation {
     
     // MARK: - Stop Properties
     
-    let stop: BusStop
+    let stopId: String
+    let stopName: String
     var showName: Bool
     
     // MARK: - Initialization
     
     init(stop: BusStop, showName: Bool) {
-        self.stop = stop
+        self.stopId = stop.id
+        self.stopName = stop.name
         self.coordinate = stop.coordinate
         self.showName = showName
         super.init()
@@ -40,6 +43,6 @@ final class StopAnnotation: NSObject, MKAnnotation {
     // MARK: - Identity
     
     var identifier: String {
-        stop.id
+        stopId
     }
 }

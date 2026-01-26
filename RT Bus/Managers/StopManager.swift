@@ -108,6 +108,19 @@ final class StopManager {
             throw appError
         }
     }
+
+    func fetchStationDepartures(for stationId: String) async throws -> [Departure] {
+        do {
+            let departures = try await graphQLService.fetchStationDepartures(stationId: stationId)
+            self.error = nil
+            return departures
+        } catch {
+            Logger.stopManager.error("Fetch Station Departures failed: \(error)")
+            let appError = AppError.networkError(error.localizedDescription)
+            self.error = appError
+            throw appError
+        }
+    }
     
     private func rebuildAllStops() {
         let uniqueStops = Set(self.stops.values.flatMap { $0 })

@@ -61,7 +61,7 @@ final class MapStateManager {
         for stop in list {
             newStops[stop.id] = stop
         }
-        
+
         if newStops != stops {
             stops = newStops
             scheduleRebuild()

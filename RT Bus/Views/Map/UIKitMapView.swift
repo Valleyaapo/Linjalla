@@ -21,11 +21,7 @@ struct UIKitMapView: UIViewRepresentable {
     let stops: [BusStop]
     var showStops: Bool
     var showStopNames: Bool
-    
-    // MARK: - Callbacks
-    
-    let onCameraChange: (Double) -> Void
-    var onStopTapped: ((StopSelection) -> Void)?
+    let mapViewState: MapViewState
     
     // MARK: - UIViewRepresentable
     
@@ -84,9 +80,6 @@ struct UIKitMapView: UIViewRepresentable {
     }
     
     func makeCoordinator() -> MapViewCoordinator {
-        MapViewCoordinator(
-            onCameraChange: onCameraChange,
-            onStopTapped: onStopTapped
-        )
+        MapViewCoordinator(mapViewState: mapViewState)
     }
 }

@@ -149,6 +149,34 @@ struct DigitransitServiceTests {
     }
 
     @Test
+    func departuresRequestEncodesTypedVariables() async throws {
+        let (service, _) = makeService()
+        let stationId = "HSL:STOP1"
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let body = try #require(request.httpBody)
+            let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+            let variables = try #require(json["variables"] as? [String: Any])
+            #expect(variables["stationId"] as? String == stationId)
+            #expect(variables["count"] as? Int == MapConstants.departuresFetchCount)
+
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            {
+              "data": {
+                "stop": {
+                  "stoptimesWithoutPatterns": []
+                }
+              }
+            }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        _ = try await service.fetchDepartures(stationId: stationId)
+    }
+
+    @Test
     func apiErrorThrows() async {
         let (service, _) = makeService()
 

@@ -223,29 +223,31 @@ struct LineSearchRow: View {
                     Text(line.shortName)
                         .font(.title3.bold())
                         .fontDesign(.rounded)
-                        .foregroundColor(color)
+                        .foregroundStyle(color)
                     
                     Spacer()
                 }
                 Text(line.longName)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             
             Spacer()
             
-            AddButtonView(isFavorite: isFavorite) // Assume AddButtonView handles its own color or is neutral
-                .onTapGesture {
-                    hapticTrigger += 1
-                    withAnimation {
-                        onToggle()
-                    }
+            Button(action: {
+                hapticTrigger += 1
+                withAnimation {
+                    onToggle()
                 }
+            }) {
+                AddButtonView(isFavorite: isFavorite)
+            }
+            .buttonStyle(.plain)
         }
         .padding(16)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)

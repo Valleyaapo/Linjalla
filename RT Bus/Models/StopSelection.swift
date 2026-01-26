@@ -7,7 +7,7 @@
 
 import Foundation
 
-nonisolated struct StopSelection: Identifiable, Hashable, Sendable {
+struct StopSelection: Identifiable, Hashable, Sendable {
     let id: String
     let title: String
     let stops: [BusStop]

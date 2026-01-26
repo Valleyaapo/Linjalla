@@ -7,7 +7,7 @@
 
 import Foundation
 
-nonisolated struct BusLine: Identifiable, Hashable, Codable, Sendable {
+struct BusLine: Identifiable, Hashable, Codable, Sendable {
     let id: String
     let shortName: String
     let longName: String

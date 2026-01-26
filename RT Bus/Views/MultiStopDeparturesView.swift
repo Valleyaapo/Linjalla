@@ -13,9 +13,12 @@ struct MultiStopDeparturesView: View {
     let title: String
     let stops: [BusStop]
     let selectedLines: Set<BusLine>?
-    let fetchAction: (BusStop) async throws -> [Departure]
+    let groupByStop: Bool
+    let autoRefresh: Bool
+    let fetchAction: @MainActor (BusStop) async throws -> [Departure]
     
     @State private var viewState: ViewState = .idle
+    @State private var loadInFlight = false
     
     private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
     
@@ -53,30 +56,73 @@ struct MultiStopDeparturesView: View {
         }
     }
     
+    init(
+        title: String,
+        stops: [BusStop],
+        selectedLines: Set<BusLine>?,
+        groupByStop: Bool = true,
+        autoRefresh: Bool = true,
+        fetchAction: @escaping @MainActor (BusStop) async throws -> [Departure]
+    ) {
+        self.title = title
+        self.stops = stops
+        self.selectedLines = selectedLines
+        self.groupByStop = groupByStop
+        self.autoRefresh = autoRefresh
+        self.fetchAction = fetchAction
+    }
+
     var body: some View {
-        let departuresByStop = viewState.departures
         NavigationStack {
-            List {
-                if let errorMessage = viewState.errorMessage {
-                    Text(errorMessage)
-                        .foregroundStyle(.secondary)
-                        .listRowBackground(Color.clear)
-                } else if let selected = selectedLines, selected.isEmpty {
-                    ContentUnavailableView(
-                        NSLocalizedString("ui.departures.noLines", comment: ""),
-                        systemImage: "bus.fill",
-                        description: Text("ui.departures.selectHint")
-                    )
+            if autoRefresh {
+                departuresList
+                    .onReceive(refreshTimer) { _ in
+                        Task { @MainActor in
+                            await loadDepartures()
+                        }
+                    }
+                    .refreshable {
+                        await loadDepartures()
+                    }
+            } else {
+                departuresList
+            }
+        }
+    }
+
+    private var departuresByStop: [String: [Departure]] {
+        viewState.departures
+    }
+
+    private var allDepartures: [Departure] {
+        departuresByStop.values
+            .flatMap { $0 }
+            .sorted { $0.departureDate < $1.departureDate }
+    }
+
+    private var departuresList: some View {
+        List {
+            if let errorMessage = viewState.errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(.secondary)
                     .listRowBackground(Color.clear)
-                } else if viewState.isLoading && departuresByStop.values.allSatisfy({ $0.isEmpty }) {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .listRowBackground(Color.clear)
-                } else if departuresByStop.values.allSatisfy({ $0.isEmpty }) && !viewState.isLoading {
-                    Text("ui.departures.noneFound")
-                        .foregroundStyle(.secondary)
-                }
-                
+            } else if let selected = selectedLines, selected.isEmpty {
+                ContentUnavailableView(
+                    NSLocalizedString("ui.departures.noLines", comment: ""),
+                    systemImage: "bus.fill",
+                    description: Text("ui.departures.selectHint")
+                )
+                .listRowBackground(Color.clear)
+            } else if viewState.isLoading && allDepartures.isEmpty {
+                ProgressView()
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .listRowBackground(Color.clear)
+            } else if allDepartures.isEmpty && !viewState.isLoading {
+                Text("ui.departures.noneFound")
+                    .foregroundStyle(.secondary)
+            }
+
+            if groupByStop {
                 ForEach(stops) { stop in
                     Section(header: Text(sectionTitle(for: stop))) {
                         let departures = departuresByStop[stop.id] ?? []
@@ -92,35 +138,34 @@ struct MultiStopDeparturesView: View {
                         }
                     }
                 }
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                    .accessibilityLabel(Text("ui.button.done"))
+            } else {
+                ForEach(allDepartures) { departure in
+                    DepartureRowView(departure: departure)
                 }
             }
-            .listStyle(.insetGrouped)
-            .task {
-                await loadDepartures()
-            }
-            .onReceive(refreshTimer) { _ in
-                Task {
-                    await loadDepartures()
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
                 }
+                .accessibilityLabel(Text("ui.button.done"))
             }
-            .refreshable {
-                await loadDepartures()
-            }
+        }
+        .listStyle(.insetGrouped)
+        .task {
+            await loadDepartures()
         }
     }
     
     @MainActor
     private func loadDepartures() async {
+        guard !loadInFlight else { return }
+        loadInFlight = true
+        defer { loadInFlight = false }
         if let selected = selectedLines, selected.isEmpty {
             viewState = .idle
             return
@@ -131,17 +176,10 @@ struct MultiStopDeparturesView: View {
         do {
             let selectedNames: Set<String>? = selectedLines.map { Set($0.map { $0.shortName }) }
             var rawByStop: [String: [Departure]] = [:]
-            try await withThrowingTaskGroup(of: (String, [Departure]).self) { group in
-                for stop in stops {
-                    group.addTask {
-                        let fetched = try await fetchAction(stop)
-                        return (stop.id, fetched)
-                    }
-                }
-                
-                for try await (stopId, departures) in group {
-                    rawByStop[stopId] = departures
-                }
+            for stop in stops {
+                try Task.checkCancellation()
+                let fetched = try await fetchAction(stop)
+                rawByStop[stop.id] = fetched
             }
             
             let now = Date()
@@ -164,7 +202,7 @@ struct MultiStopDeparturesView: View {
             viewState = .error(message, existingDepartures)
         }
     }
-    
+
     private func errorMessageKey(for error: Error) -> String {
         if let urlError = error as? URLError {
             switch urlError.code {

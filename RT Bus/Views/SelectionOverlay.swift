@@ -56,7 +56,7 @@ struct SelectionOverlay: View {
                     }) {
                         Image(systemName: "tram.fill")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(10)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
@@ -71,7 +71,7 @@ struct SelectionOverlay: View {
                     }) {
                         Image(systemName: "location.fill")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(10)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
@@ -100,7 +100,7 @@ struct SelectionOverlay: View {
                                 Text(selectedLines.count == totalCount ? "access.button.deselectAll" : "access.button.selectAll")
                             }
                             .font(.headline)
-                            .foregroundColor(.black).opacity(0.8)
+                            .foregroundStyle(.black).opacity(0.8)
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(Color.white.opacity(0.9))
@@ -143,7 +143,7 @@ struct SelectionOverlay: View {
                             Text("ui.button.add")
                         }
                         .font(.headline)
-                        .foregroundColor(.black).opacity(0.8)
+                        .foregroundStyle(.black).opacity(0.8)
                         .padding()
                         .frame(maxWidth: .infinity)
                         .background(Color.white.opacity(0.9))
@@ -164,7 +164,7 @@ struct SelectionOverlay: View {
                         }) {
                             Image(systemName: selectedLines.count == totalCount ? "eye.circle.fill" : "eye.circle")
                                 .font(.title2.bold()) // Slightly larger for clarity
-                                .foregroundColor(.black).opacity(0.7)
+                                .foregroundStyle(.black).opacity(0.7)
                                 .padding(10)
                                 .background(Circle().fill(.white.opacity(0.2)))
                                 .contentTransition(.symbolEffect(.replace))
@@ -173,7 +173,7 @@ struct SelectionOverlay: View {
                         .padding(.leading, 20)
                     }
                     
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    ScrollView(.horizontal) {
                         LazyHGrid(rows: [
                             GridItem(.flexible(), spacing: 10),
                             GridItem(.flexible(), spacing: 10)
@@ -200,6 +200,7 @@ struct SelectionOverlay: View {
                         .frame(height: 120)
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: busLines + tramLines)
                     }
+                    .scrollIndicators(.hidden)
                     
                     Rectangle()
                     .fill(.white.opacity(0.3))
@@ -212,7 +213,7 @@ struct SelectionOverlay: View {
                     }) {
                         Image(systemName: "plus")
                         .font(.headline)
-                        .foregroundColor(.black).opacity(0.7)
+                        .foregroundStyle(.black).opacity(0.7)
                         .padding(10)
                         .background(Circle().fill(.white.opacity(0.2)))
                     }
@@ -240,7 +241,7 @@ struct SelectionOverlay: View {
                 Text("ui.button.tickets")
             }
             .font(.subheadline.bold())
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(Color.hslOrange.opacity(0.75))
@@ -260,7 +261,7 @@ struct SelectionOverlay: View {
                 Text("ui.button.trains")
             }
             .font(.subheadline.bold())
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(Color.hslPurple.opacity(0.75))
@@ -280,7 +281,7 @@ struct SelectionOverlay: View {
                 Text("Rautatientori")
             }
             .font(.subheadline.bold())
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(Color.hslBlue.opacity(0.75))
@@ -310,7 +311,7 @@ struct LineToggleView: View {
             Text(line.shortName)
                 .font(.body.bold().monospacedDigit())
                 .fontDesign(.rounded)
-                .foregroundColor(isSelected ? .white : .secondary)
+                .foregroundStyle(isSelected ? .white : .secondary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background {
@@ -346,7 +347,7 @@ struct AddButtonView: View {
             Text(isFavorite ? NSLocalizedString("ui.button.saved", comment: "") : NSLocalizedString("ui.button.add", comment: ""))
                 .font(.subheadline.bold())
         }
-        .foregroundColor(isFavorite ? .yellow : .white)
+        .foregroundStyle(isFavorite ? .yellow : .white)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(isFavorite ? Color.black.opacity(0.8) : Color.hslBlue)

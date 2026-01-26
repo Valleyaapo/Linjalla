@@ -15,6 +15,7 @@ struct ContentView: View {
     @Environment(TramManager.self) private var tramManager
     @Environment(SelectionStore.self) private var selectionStore
     @State private var mapStateManager = MapStateManager()
+    @State private var mapViewState = MapViewState()
     @State private var trainManager = TrainManager()
     @State private var locationManager = LocationManager()
     
@@ -27,13 +28,11 @@ struct ContentView: View {
     @State private var isSearchPresented = false
     @State private var isDeparturesPresented = false
     @State private var isTrainDeparturesPresented = false
-    @State private var showStops = true
-    @State private var showStopNames = false
-    @State private var selectedStop: StopSelection?
     @State private var showHslAppMissingAlert = false
     @State private var didCenterOnUser = false
 
     var body: some View {
+        @Bindable var mapViewState = mapViewState
         mainContent
             .task(startupTask)
             .onChange(of: busManager.vehicleList, busListChanged)
@@ -48,13 +47,13 @@ struct ContentView: View {
                 didCenterOnUser = true
                 centerOnLocation(location)
             }
-            .sheet(item: $selectedStop) { selection in
+            .sheet(item: $mapViewState.selectedStop) { selection in
                 if selection.stops.count >= 2 {
                     MultiStopDeparturesView(
                         title: selection.title,
                         stops: selection.stops,
                         selectedLines: nil
-                    ) { stop in
+                    ) { @MainActor stop in
                         try await selectionStore.stopManager.fetchDepartures(for: stop.id)
                     }
                     .presentationDetents([.medium, .large])
@@ -62,7 +61,7 @@ struct ContentView: View {
                     DeparturesView(
                         title: stop.name,
                         selectedLines: nil
-                    ) {
+                    ) { @MainActor in
                         try await selectionStore.stopManager.fetchDepartures(for: stop.id)
                     }
                     .presentationDetents([.medium, .large])
@@ -80,12 +79,9 @@ struct ContentView: View {
         ZStack {
             BusMapView(
                 cameraTrigger: $cameraTrigger,
+                mapViewState: mapViewState,
                 vehicles: currentVehicles,
-                stops: mapStateManager.stopsList,
-                showStops: showStops,
-                showStopNames: showStopNames,
-                onCameraChange: handleCameraChange,
-                onStopTapped: { selection in selectedStop = selection }
+                stops: mapStateManager.stopsList
             )
             
             SelectionOverlay(
@@ -112,8 +108,8 @@ struct ContentView: View {
             DeparturesView(
                 title: NSLocalizedString("ui.location.rautatientori", comment: ""),
                 selectedLines: selectionStore.selectedLines
-            ) {
-                try await selectionStore.stopManager.fetchDepartures(for: rautatientoriStationId)
+            ) { @MainActor in
+                try await selectionStore.stopManager.fetchStationDepartures(for: rautatientoriStationId)
             }
             .presentationDetents([.medium, .large])
         }
@@ -121,7 +117,7 @@ struct ContentView: View {
             DeparturesView(
                 title: NSLocalizedString("ui.location.helsinkiCentral", comment: ""),
                 selectedLines: nil
-            ) {
+            ) { @MainActor in
                 try await trainManager.fetchDepartures(stationCode: "HKI")
             }
             .presentationDetents([.medium, .large])
@@ -172,22 +168,6 @@ extension ContentView {
         cameraTrigger = region
     }
     
-    func handleCameraChange(_ zoomLevel: Double) {
-        let shouldShowStops = zoomLevel < MapConstants.showStopsThreshold
-        let shouldShowStopNames = zoomLevel < MapConstants.showStopNamesThreshold
-        
-        if showStops != shouldShowStops {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                showStops = shouldShowStops
-            }
-        }
-        if showStopNames != shouldShowStopNames {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                showStopNames = shouldShowStopNames
-            }
-        }
-    }
-    
     func openTickets() {
         guard let url = URL(string: "hslapp://tickets") else { return }
         UIApplication.shared.open(url, options: [:]) { success in
@@ -202,7 +182,6 @@ extension ContentView {
     
     func startupTask() async {
         locationManager.requestAuthorization()
-        Logger.ui.info("App started, requesting location")
         selectionStore.loadSelectedLines()
     }
     

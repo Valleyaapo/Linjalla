@@ -33,7 +33,10 @@ actor NetworkService {
                 if currentAttempt > 0 {
                     let delay = pow(2.0, Double(currentAttempt - 1)) * 0.5 // 0.5s, 1s, 2s
                     try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                    Logger.network.warning("Retrying request (attempt \(currentAttempt + 1))...")
+                    let attemptForLog = currentAttempt + 1
+                    await MainActor.run {
+                        Logger.network.warning("Retrying request (attempt \(attemptForLog))...")
+                    }
                 }
                 
                 let (data, response) = try await session.data(for: request)

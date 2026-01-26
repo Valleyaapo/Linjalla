@@ -9,7 +9,7 @@ import Foundation
 import CoreLocation
 
 /// Modern, Sendable Bus Model for late 2025 (iOS 26 context)
-nonisolated struct BusModel: Identifiable, Codable, Equatable, Sendable {
+struct BusModel: Identifiable, Codable, Equatable, Sendable {
     enum VehicleType: String, Codable, Sendable {
         case bus
         case tram
@@ -56,11 +56,11 @@ nonisolated struct BusModel: Identifiable, Codable, Equatable, Sendable {
 }
 
 // HSL API Response Structures (Sendable)
-nonisolated struct HSLResponse: Codable, Sendable {
+struct HSLResponse: Codable, Sendable {
     let VP: VehiclePosition
 }
 
-nonisolated struct VehiclePosition: Codable, Sendable {
+struct VehiclePosition: Codable, Sendable {
     let veh: Int
     let desi: String?
     let lat: Double?

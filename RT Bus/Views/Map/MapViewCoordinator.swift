@@ -7,14 +7,15 @@
 
 import MapKit
 import CoreLocation
+import OSLog
 
 /// Coordinates between SwiftUI and MKMapView
+@MainActor
 final class MapViewCoordinator: NSObject {
-    
+
     // MARK: - Callbacks
-    
-    private let onCameraChange: (Double) -> Void
-    private let onStopTapped: ((StopSelection) -> Void)?
+
+    private let mapViewState: MapViewState
     
     // MARK: - State
     
@@ -31,9 +32,8 @@ final class MapViewCoordinator: NSObject {
     
     // MARK: - Initialization
     
-    init(onCameraChange: @escaping (Double) -> Void, onStopTapped: ((StopSelection) -> Void)?) {
-        self.onCameraChange = onCameraChange
-        self.onStopTapped = onStopTapped
+    init(mapViewState: MapViewState) {
+        self.mapViewState = mapViewState
         super.init()
     }
     
@@ -262,13 +262,13 @@ extension MapViewCoordinator: MKMapViewDelegate {
 
     func mapView(_ mapView: MKMapView, didSelect annotation: MKAnnotation) {
         if let stopAnnotation = annotation as? StopAnnotation {
-            let nearbyStops = mergedStops(around: stopAnnotation.stop)
+            let nearbyStops = mergedStops(around: stopAnnotation)
             let selection = StopSelection(
                 id: nearbyStops.map { $0.id }.sorted().joined(separator: "|"),
                 title: selectionTitle(for: nearbyStops),
                 stops: nearbyStops
             )
-            onStopTapped?(selection)
+            mapViewState.handleStopTapped(selection)
             mapView.deselectAnnotation(annotation, animated: false)
             return
         }
@@ -279,7 +279,7 @@ extension MapViewCoordinator: MKMapViewDelegate {
                 mapView.deselectAnnotation(annotation, animated: false)
                 return
             }
-            let stops = members.map { $0.stop }.sorted { lhs, rhs in
+            let stops = members.map { stopFromLatest(for: $0) }.sorted { lhs, rhs in
                 if lhs.name == rhs.name {
                     return lhs.id < rhs.id
                 }
@@ -292,9 +292,9 @@ extension MapViewCoordinator: MKMapViewDelegate {
                 stops: stops
             )
             if stops.count >= 2 {
-                onStopTapped?(selection)
+                mapViewState.handleStopTapped(selection)
             } else if let single = stops.first {
-                onStopTapped?(StopSelection(id: single.id, title: single.name, stops: [single]))
+                mapViewState.handleStopTapped(StopSelection(id: single.id, title: single.name, stops: [single]))
             }
             mapView.deselectAnnotation(annotation, animated: false)
             return
@@ -308,7 +308,7 @@ extension MapViewCoordinator: MKMapViewDelegate {
         
         if abs(currentZoomLevel - zoomLevel) > 0.001 {
             currentZoomLevel = zoomLevel
-            onCameraChange(zoomLevel)
+            mapViewState.handleCameraChange(zoomLevel)
         }
         
         if abs(lastStopRefreshZoom - zoomLevel) > 0.005 {
@@ -326,7 +326,8 @@ extension MapViewCoordinator: MKMapViewDelegate {
         }
     }
 
-    private func mergedStops(around stop: BusStop) -> [BusStop] {
+    private func mergedStops(around annotation: StopAnnotation) -> [BusStop] {
+        let stop = stopFromLatest(for: annotation)
         guard !latestStops.isEmpty else { return [stop] }
         let target = CLLocation(latitude: stop.latitude, longitude: stop.longitude)
         let nearby = latestStops.filter { candidate in
@@ -338,12 +339,25 @@ extension MapViewCoordinator: MKMapViewDelegate {
             return candidate.name == stop.name && distance <= MapConstants.stopNameMergeDistanceMeters
         }
         let stops = nearby.isEmpty ? [stop] : nearby
-        return stops.sorted { lhs, rhs in
+        let sortedStops = stops.sorted { lhs, rhs in
             if lhs.name == rhs.name {
                 return lhs.id < rhs.id
             }
             return lhs.name < rhs.name
         }
+        return sortedStops
+    }
+
+    private func stopFromLatest(for annotation: StopAnnotation) -> BusStop {
+        if let match = latestStops.first(where: { $0.id == annotation.stopId }) {
+            return match
+        }
+        return BusStop(
+            id: annotation.stopId,
+            name: annotation.stopName,
+            latitude: annotation.coordinate.latitude,
+            longitude: annotation.coordinate.longitude
+        )
     }
 
     private func selectionTitle(for stops: [BusStop]) -> String {

@@ -12,7 +12,7 @@ import OSLog
 struct DeparturesView: View {
     let title: String
     let selectedLines: Set<BusLine>?
-    let fetchAction: () async throws -> [Departure]
+    let fetchAction: @MainActor () async throws -> [Departure]
     
     @State private var viewState: ViewState = .idle
     
@@ -97,7 +97,7 @@ struct DeparturesView: View {
                 await loadDepartures()
             }
             .onReceive(refreshTimer) { _ in
-                Task {
+                Task { @MainActor in
                     await loadDepartures()
                 }
             }
@@ -126,8 +126,16 @@ struct DeparturesView: View {
             
             // Apply line filter if needed
             if let selected = selectedLines {
-                let selectedNames = Set(selected.map { $0.shortName })
-                valid = valid.filter { selectedNames.contains($0.lineName) }
+                let selectedIds = Set(selected.map { $0.id })
+                valid = valid.filter { departure in
+                    if let routeId = departure.routeId {
+                        return selectedIds.contains(routeId)
+                    }
+                    return selectedIds.contains("HSL:\(departure.lineName)")
+                        || selectedIds.contains("HSL:\(departure.lineName)N")
+                        || selectedIds.contains("HSL:\(departure.lineName)B")
+                        || selectedIds.contains("HSL:\(departure.lineName)K")
+                }
             }
             
             let nextState: ViewState = .loaded(valid)
@@ -159,7 +167,7 @@ struct DeparturesView: View {
     DeparturesView(
         title: "Test Station",
         selectedLines: nil
-    ) {
+    ) { @MainActor in
         let now = Int(Date().timeIntervalSince1970)
         // Midnight at start of day
         let calendar = Calendar.current
@@ -170,6 +178,7 @@ struct DeparturesView: View {
         return [
             Departure(
                 lineName: "55",
+                routeId: nil,
                 headsign: "Rautatientori",
                 scheduledTime: secondsSinceMidnight + 300,
                 realtimeTime: secondsSinceMidnight + 300,
@@ -178,6 +187,7 @@ struct DeparturesView: View {
             ),
             Departure(
                 lineName: "500",
+                routeId: nil,
                 headsign: "Munkkivuori",
                 scheduledTime: secondsSinceMidnight + 600,
                 realtimeTime: secondsSinceMidnight + 600,

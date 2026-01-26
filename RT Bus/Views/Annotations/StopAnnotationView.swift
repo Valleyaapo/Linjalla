@@ -78,7 +78,7 @@ final class StopAnnotationView: MKAnnotationView {
         
         // Name label
         if annotation.showName {
-            nameLabel.text = " \(annotation.stop.name) " // Padding
+            nameLabel.text = " \(annotation.stopName) " // Padding
             nameLabel.sizeToFit()
             
             // Re-center label below the stop

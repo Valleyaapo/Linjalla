@@ -10,6 +10,7 @@ import MapKit
 
 /// Manages animation states for all vehicles on the map.
 /// Provides race condition prevention via generation counters and pending removal tracking.
+@MainActor
 final class AnimationStateManager {
     
     // MARK: - Properties

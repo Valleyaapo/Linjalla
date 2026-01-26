@@ -8,7 +8,7 @@
 import Foundation
 import OSLog
 
-nonisolated enum AppError: LocalizedError, Equatable, Sendable {
+enum AppError: LocalizedError, Equatable, Sendable {
     case networkError(String)
     case apiError(String)
     case decodingError(String)
@@ -30,9 +30,12 @@ nonisolated enum AppError: LocalizedError, Equatable, Sendable {
 
 extension Logger {
     private static let subsystem = "com.aapolaakso.RT-Bus"
-    
-    nonisolated static let network = Logger(subsystem: subsystem, category: "Network")
-    nonisolated static let busManager = Logger(subsystem: subsystem, category: "BusManager")
-    nonisolated static let stopManager = Logger(subsystem: subsystem, category: "StopManager")
-    nonisolated static let ui = Logger(subsystem: subsystem, category: "UI")
+
+    static let network = Logger(subsystem: subsystem, category: "Network")
+    static let busManager = Logger(subsystem: subsystem, category: "BusManager")
+    static let stopManager = Logger(subsystem: subsystem, category: "StopManager")
+    static let digitransit = Logger(subsystem: subsystem, category: "Digitransit")
+    static let ui = Logger(subsystem: subsystem, category: "UI")
+    static let map = Logger(subsystem: subsystem, category: "Map")
+    static let mapState = Logger(subsystem: subsystem, category: "MapState")
 }
