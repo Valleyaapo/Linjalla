@@ -29,6 +29,7 @@ Repository: https://github.com/Valleyaapo/Linjalla
 
 ## Documentation
 - Privacy Policy: [`docs/privacy.md`](docs/privacy.md)
+- Landing Page: [`docs/landing.html`](docs/landing.html)
 
 ## Contributing
 Pull requests are welcome. For larger changes, consider opening an issue first to discuss what you’d like to add or change.
