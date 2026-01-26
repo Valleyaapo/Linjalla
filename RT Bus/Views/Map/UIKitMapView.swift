@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import RTBusCore
 
 /// UIViewRepresentable wrapper for MKMapView with proper z-index control
 struct UIKitMapView: UIViewRepresentable {

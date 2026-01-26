@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreLocation
+import RTBusCore
 
 /// Unified enum representing all items that can be displayed on the map.
 /// Used by MapStateManager to build a single, atomically-updated list for BusMapView.

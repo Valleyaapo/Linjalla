@@ -8,6 +8,7 @@
 import MapKit
 import CoreLocation
 import OSLog
+import RTBusCore
 
 /// Coordinates between SwiftUI and MKMapView
 @MainActor

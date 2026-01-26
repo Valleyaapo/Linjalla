@@ -1,9 +1,8 @@
 import Foundation
 import OSLog
 
-@MainActor
-final class GraphQLClient {
-    private struct RequestBody<V: Encodable>: Encodable {
+actor GraphQLClient {
+    private struct RequestBody<V: Encodable & Sendable>: Encodable {
         let query: String
         let variables: V
     }
@@ -34,7 +33,7 @@ final class GraphQLClient {
         self.endpoint = url
     }
 
-    func request<V: Encodable, T: Decodable>(
+    func request<V: Encodable & Sendable, T: Decodable & Sendable>(
         query: String,
         variables: V,
         as type: T.Type
@@ -52,7 +51,7 @@ final class GraphQLClient {
         }
     }
 
-    private func makeRequest<V: Encodable>(query: String, variables: V) throws -> URLRequest {
+    private func makeRequest<V: Encodable & Sendable>(query: String, variables: V) throws -> URLRequest {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

@@ -7,6 +7,7 @@
 
 import Testing
 import Foundation
+import RTBusCore
 @testable import RT_Bus
 
 @MainActor

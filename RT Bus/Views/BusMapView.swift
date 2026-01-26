@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import RTBusCore
 
 struct BusMapView: View {
     @Binding var cameraTrigger: MKCoordinateRegion?

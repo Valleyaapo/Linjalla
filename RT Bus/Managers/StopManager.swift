@@ -11,6 +11,7 @@ import Observation
 import OSLog
 import QuartzCore
 import SwiftUI
+import RTBusCore
 
 @MainActor
 @Observable
@@ -96,9 +97,15 @@ final class StopManager {
         }
     }
     
-    func fetchDepartures(for stationId: String) async throws -> [Departure] {
+    func fetchDepartures(
+        for stationId: String,
+        filter: DepartureFilterInput? = nil
+    ) async throws -> [Departure] {
         do {
-            let departures = try await graphQLService.fetchDepartures(stationId: stationId)
+            let departures = try await graphQLService.fetchDepartures(
+                request: .stop(stationId: stationId),
+                filter: filter
+            )
             self.error = nil
             return departures
         } catch {
@@ -109,9 +116,15 @@ final class StopManager {
         }
     }
 
-    func fetchStationDepartures(for stationId: String) async throws -> [Departure] {
+    func fetchStationDepartures(
+        for stationId: String,
+        filter: DepartureFilterInput? = nil
+    ) async throws -> [Departure] {
         do {
-            let departures = try await graphQLService.fetchStationDepartures(stationId: stationId)
+            let departures = try await graphQLService.fetchStationDepartures(
+                request: .station(stationId: stationId),
+                filter: filter
+            )
             self.error = nil
             return departures
         } catch {

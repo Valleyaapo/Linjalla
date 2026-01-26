@@ -12,15 +12,24 @@ let package = Package(
         .library(
             name: "RT_Bus",
             targets: ["RT_Bus"]),
+        .library(
+            name: "RTBusCore",
+            targets: ["RTBusCore"]),
     ],
     dependencies: [
         .package(url: "https://github.com/swift-server-community/mqtt-nio.git", from: "2.12.1"),
     ],
     targets: [
         .target(
+            name: "RTBusCore",
+            dependencies: [],
+            path: "RT Bus Core"
+        ),
+        .target(
             name: "RT_Bus",
             dependencies: [
                 .product(name: "MQTTNIO", package: "mqtt-nio"),
+                "RTBusCore",
             ],
             path: "RT Bus",
             exclude: [
@@ -39,15 +48,11 @@ let package = Package(
                 "Managers/TrainManager.swift",
                 "Managers/LocationManager.swift",
                 "Managers/MapStateManager.swift",
-                "Managers/NetworkService.swift",
-                "Models/Models.swift",
                 "Models/BusModel.swift",
-                "Models/BusLine.swift",
                 "Models/MapItem.swift",
                 "Secrets.swift",
                 "Secrets.swift",
-                "Theme.swift",
-                "AppError.swift"
+                "Theme.swift"
             ],
             resources: [
                 .process("Localizable.xcstrings")
@@ -55,7 +60,7 @@ let package = Package(
         ),
         .testTarget(
             name: "RT_BusTests",
-            dependencies: ["RT_Bus"],
+            dependencies: ["RT_Bus", "RTBusCore"],
             path: "RT BusTests"
         ),
     ]

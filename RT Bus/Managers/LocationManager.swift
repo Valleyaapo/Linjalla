@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import Observation
 import OSLog
+import RTBusCore
 
 protocol LocationManaging: AnyObject {
     var delegate: CLLocationManagerDelegate? { get set }

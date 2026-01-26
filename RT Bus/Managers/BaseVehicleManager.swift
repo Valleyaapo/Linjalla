@@ -15,6 +15,7 @@ import NIOTransportServices
 import CoreLocation
 import Observation
 import OSLog
+import RTBusCore
 
 // MARK: - Base Vehicle Manager
 

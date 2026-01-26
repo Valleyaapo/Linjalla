@@ -7,6 +7,7 @@
 
 import MapKit
 import UIKit
+import RTBusCore
 
 /// MKAnnotation wrapper for bus/tram vehicles
 @MainActor

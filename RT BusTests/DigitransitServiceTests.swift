@@ -7,7 +7,7 @@
 
 import Testing
 import Foundation
-@testable import RT_Bus
+@testable import RTBusCore
 
 @MainActor
 @Suite(.serialized)
@@ -101,6 +101,10 @@ struct DigitransitServiceTests {
     func fetchDeparturesMapsToDepartures() async throws {
         let (service, _) = makeService()
 
+        let now = Int(Date().timeIntervalSince1970)
+        let serviceDay = now - (now % 86_400)
+        let realtimeDeparture = (now - serviceDay) + 300
+
         DigitransitServiceTestURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             let data = """
@@ -109,9 +113,9 @@ struct DigitransitServiceTests {
                 "stop": {
                   "stoptimesWithoutPatterns": [
                     {
-                      "scheduledDeparture": 40000,
-                      "realtimeDeparture": 40100,
-                      "serviceDay": 1600000000,
+                      "scheduledDeparture": \(realtimeDeparture),
+                      "realtimeDeparture": \(realtimeDeparture),
+                      "serviceDay": \(serviceDay),
                       "headsign": "Destination",
                       "pickupType": "SCHEDULED",
                       "stop": { "platformCode": "1" },
@@ -125,7 +129,7 @@ struct DigitransitServiceTests {
             return (response, data)
         }
 
-        let departures = try await service.fetchDepartures(stationId: "HSL:STOP1")
+        let departures = try await service.fetchDepartures(request: .stop(stationId: "HSL:STOP1"))
         #expect(departures.count == 1)
         #expect(departures.first?.lineName == "550")
         #expect(departures.first?.platform == "1")
@@ -173,7 +177,7 @@ struct DigitransitServiceTests {
             return (response, data)
         }
 
-        _ = try await service.fetchDepartures(stationId: stationId)
+        _ = try await service.fetchDepartures(request: .stop(stationId: stationId))
     }
 
     @Test

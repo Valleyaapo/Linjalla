@@ -6,6 +6,7 @@
 //
 
 import MapKit
+import RTBusCore
 
 /// MKAnnotation wrapper for bus/tram stops
 @MainActor

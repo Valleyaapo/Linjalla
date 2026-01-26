@@ -9,6 +9,7 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import OSLog
+import RTBusCore
 
 struct ContentView: View {
     @Environment(BusManager.self) private var busManager
@@ -109,7 +110,11 @@ struct ContentView: View {
                 title: NSLocalizedString("ui.location.rautatientori", comment: ""),
                 selectedLines: selectionStore.selectedLines
             ) { @MainActor in
-                try await selectionStore.stopManager.fetchStationDepartures(for: rautatientoriStationId)
+                let filter = DepartureFilterInput.from(selectionStore.selectedLines)
+                return try await selectionStore.stopManager.fetchStationDepartures(
+                    for: rautatientoriStationId,
+                    filter: filter
+                )
             }
             .presentationDetents([.medium, .large])
         }

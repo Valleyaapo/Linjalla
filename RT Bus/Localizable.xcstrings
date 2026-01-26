@@ -139,6 +139,7 @@
       }
     },
     "error.api" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -155,6 +156,7 @@
       }
     },
     "error.decoding" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -171,6 +173,7 @@
       }
     },
     "error.location" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -187,6 +190,7 @@
       }
     },
     "error.mqtt" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -203,6 +207,7 @@
       }
     },
     "error.network" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -219,6 +224,7 @@
       }
     },
     "error.unknown" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -499,18 +505,18 @@
         }
       }
     },
-    "ui.stops.nearby" : {
+    "ui.error.fetchFailed" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nearby stops"
+            "value" : "Couldn't load data. Pull to retry."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Läheiset pysäkit"
+            "value" : "Tietojen haku epäonnistui. Vedä alas yrittääksesi uudelleen."
           }
         }
       }
@@ -531,22 +537,6 @@
         }
       }
     },
-    "ui.error.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Error"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Virhe"
-          }
-        }
-      }
-    },
     "ui.error.offline" : {
       "localizations" : {
         "en" : {
@@ -563,22 +553,6 @@
         }
       }
     },
-    "ui.error.fetchFailed" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't load data. Pull to retry."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tietojen haku epäonnistui. Vedä alas yrittääksesi uudelleen."
-          }
-        }
-      }
-    },
     "ui.error.searchFailed" : {
       "localizations" : {
         "en" : {
@@ -591,6 +565,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Haku epäonnistui. Yritä uudelleen."
+          }
+        }
+      }
+    },
+    "ui.error.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Virhe"
           }
         }
       }
@@ -751,6 +741,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ei tuloksia"
+          }
+        }
+      }
+    },
+    "ui.stops.nearby" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nearby stops"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läheiset pysäkit"
           }
         }
       }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import RTBusCore
 
 struct DepartureRowView: View {
     let departure: Departure

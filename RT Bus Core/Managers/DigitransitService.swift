@@ -65,11 +65,10 @@ private enum Queries {
         """
 }
 
-@MainActor
-final class DigitransitService {
+public actor DigitransitService {
     private let client: GraphQLClient
 
-    init(urlSession: URLSession = .shared, digitransitKey: String) {
+    public init(urlSession: URLSession = .shared, digitransitKey: String) {
         self.client = GraphQLClient(
             session: urlSession,
             apiKey: digitransitKey,
@@ -77,7 +76,7 @@ final class DigitransitService {
         )
     }
 
-    func searchRoutes(query: String, transportMode: String) async throws -> [BusLine] {
+    public func searchRoutes(query: String, transportMode: String) async throws -> [BusLine] {
         guard !query.isEmpty else { return [] }
 
         let searchQuery = """
@@ -102,7 +101,7 @@ final class DigitransitService {
         }
     }
 
-    func fetchStops(routeId: String) async throws -> [BusStop] {
+    public func fetchStops(routeId: String) async throws -> [BusStop] {
         let response: GraphQLStopResponse = try await client.request(
             query: Queries.routeStops,
             variables: RouteStopsVars(id: routeId),
@@ -123,17 +122,20 @@ final class DigitransitService {
         }
     }
 
-    func fetchDepartures(stationId: String) async throws -> [Departure] {
+    public func fetchDepartures(
+        request: DeparturesRequest,
+        filter: DepartureFilterInput? = nil
+    ) async throws -> [Departure] {
         let response: GraphQLStopDeparturesResponse = try await client.request(
             query: Queries.departures,
             variables: DeparturesVars(
-                stationId: stationId,
-                count: MapConstants.departuresFetchCount
+                stationId: request.stationId,
+                count: request.count
             ),
             as: GraphQLStopDeparturesResponse.self
         )
         guard let stoptimes = response.data.stop?.stoptimesWithoutPatterns else { return [] }
-        return stoptimes.compactMap { stoptime in
+        let departures: [Departure] = stoptimes.compactMap { stoptime in
             guard stoptime.pickupType != "NONE" else { return nil }
             guard let route = stoptime.trip?.route,
                   let lineName = route.shortName else { return nil }
@@ -148,19 +150,23 @@ final class DigitransitService {
                 platform: stoptime.stop?.platformCode
             )
         }
+        return DepartureFiltering.apply(departures, filter: filter)
     }
 
-    func fetchStationDepartures(stationId: String) async throws -> [Departure] {
+    public func fetchStationDepartures(
+        request: DeparturesRequest,
+        filter: DepartureFilterInput? = nil
+    ) async throws -> [Departure] {
         let response: GraphQLStationDeparturesResponse = try await client.request(
             query: Queries.stationDepartures,
             variables: DeparturesVars(
-                stationId: stationId,
-                count: MapConstants.stationDeparturesFetchCount
+                stationId: request.stationId,
+                count: request.count
             ),
             as: GraphQLStationDeparturesResponse.self
         )
         guard let stoptimes = response.data.station?.stoptimesWithoutPatterns else { return [] }
-        return stoptimes.compactMap { stoptime in
+        let departures: [Departure] = stoptimes.compactMap { stoptime in
             guard stoptime.pickupType != "NONE" else { return nil }
             guard let route = stoptime.trip?.route,
                   let lineName = route.shortName else { return nil }
@@ -175,5 +181,6 @@ final class DigitransitService {
                 platform: stoptime.stop?.platformCode
             )
         }
+        return DepartureFiltering.apply(departures, filter: filter)
     }
 }

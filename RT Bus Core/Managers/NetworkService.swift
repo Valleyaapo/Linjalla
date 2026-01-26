@@ -8,8 +8,8 @@
 import Foundation
 import OSLog
 
-actor NetworkService {
-    static let shared = NetworkService()
+public actor NetworkService {
+    public static let shared = NetworkService()
     
     private let session: URLSession
     private static let defaultDecoder = JSONDecoder()
@@ -22,7 +22,7 @@ actor NetworkService {
         self.session = URLSession(configuration: config)
     }
     
-    func fetch<T: Decodable>(_ request: URLRequest, decoder: JSONDecoder? = nil) async throws -> T {
+    public func fetch<T: Decodable>(_ request: URLRequest, decoder: JSONDecoder? = nil) async throws -> T {
         let maxRetries = 3
         var currentAttempt = 0
         let jsonDecoder = decoder ?? Self.defaultDecoder

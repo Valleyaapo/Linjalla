@@ -9,6 +9,7 @@ import Foundation
 import Observation
 import OSLog
 import QuartzCore
+import RTBusCore
 
 /// Central state manager that aggregates data from BusManager, TramManager, and StopManager
 /// into a single, atomically-updated mapItems array. This eliminates race conditions

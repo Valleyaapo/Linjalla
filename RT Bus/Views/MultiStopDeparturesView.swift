@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import OSLog
+import RTBusCore
 
 struct MultiStopDeparturesView: View {
     let title: String
@@ -174,27 +175,15 @@ struct MultiStopDeparturesView: View {
         let existingDepartures = viewState.departures
         viewState = .loading(existingDepartures)
         do {
-            let selectedNames: Set<String>? = selectedLines.map { Set($0.map { $0.shortName }) }
             var rawByStop: [String: [Departure]] = [:]
             for stop in stops {
                 try Task.checkCancellation()
                 let fetched = try await fetchAction(stop)
                 rawByStop[stop.id] = fetched
             }
-            
-            let now = Date()
-            var results: [String: [Departure]] = [:]
-            for (stopId, departures) in rawByStop {
-                var valid = departures.filter { $0.departureDate > now }
-                if let selectedNames {
-                    valid = valid.filter { selectedNames.contains($0.lineName) }
-                }
-                valid.sort { $0.departureDate < $1.departureDate }
-                results[stopId] = valid
-            }
-            
+
             withAnimation {
-                viewState = .loaded(results)
+                viewState = .loaded(rawByStop)
             }
         } catch {
             Logger.ui.error("Error loading multi-stop departures: \(error)")

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import RTBusCore
 
 struct SelectionOverlay: View {
     let busLines: [BusLine]

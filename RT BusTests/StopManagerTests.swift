@@ -7,6 +7,7 @@
 
 import Testing
 import Foundation
+import RTBusCore
 @testable import RT_Bus
 
 @MainActor
@@ -52,6 +53,10 @@ struct StopManagerTests {
         let session = URLSession(configuration: configuration)
         let stopManager = StopManager(urlSession: session)
         
+        let now = Int(Date().timeIntervalSince1970)
+        let serviceDay = now - (now % 86_400)
+        let realtimeDeparture = (now - serviceDay) + 300
+
         StopManagerTestURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             let data = """
@@ -60,9 +65,9 @@ struct StopManagerTests {
                 "stop": {
                   "stoptimesWithoutPatterns": [
                     {
-                      "scheduledDeparture": 40000,
-                      "realtimeDeparture": 40100,
-                      "serviceDay": 1600000000,
+                      "scheduledDeparture": \(realtimeDeparture),
+                      "realtimeDeparture": \(realtimeDeparture),
+                      "serviceDay": \(serviceDay),
                       "headsign": "Destination",
                       "pickupType": "SCHEDULED",
                       "stop": { "platformCode": "1" },

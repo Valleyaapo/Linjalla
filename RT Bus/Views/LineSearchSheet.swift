@@ -7,6 +7,7 @@
 
 import SwiftUI
 import OSLog
+import RTBusCore
 
 struct LineSearchSheet: View {
     @Environment(BusManager.self) private var busManager

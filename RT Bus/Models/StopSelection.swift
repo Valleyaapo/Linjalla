@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import RTBusCore
 
 struct StopSelection: Identifiable, Hashable, Sendable {
     let id: String

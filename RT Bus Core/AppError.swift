@@ -8,7 +8,7 @@
 import Foundation
 import OSLog
 
-enum AppError: LocalizedError, Equatable, Sendable {
+public enum AppError: LocalizedError, Equatable, Sendable {
     case networkError(String)
     case apiError(String)
     case decodingError(String)
@@ -16,7 +16,7 @@ enum AppError: LocalizedError, Equatable, Sendable {
     case mqttError(String)
     case unknown(String)
     
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .networkError(let msg): return String(format: NSLocalizedString("error.network", comment: ""), msg)
         case .apiError(let msg): return String(format: NSLocalizedString("error.api", comment: ""), msg)
@@ -28,7 +28,7 @@ enum AppError: LocalizedError, Equatable, Sendable {
     }
 }
 
-extension Logger {
+public extension Logger {
     private static let subsystem = "com.aapolaakso.RT-Bus"
 
     static let network = Logger(subsystem: subsystem, category: "Network")

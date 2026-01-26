@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import Observation
 import OSLog
+import RTBusCore
 
 @MainActor
 @Observable

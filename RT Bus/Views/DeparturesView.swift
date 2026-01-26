@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import OSLog
+import RTBusCore
 
 struct DeparturesView: View {
     let title: String
@@ -119,26 +120,8 @@ struct DeparturesView: View {
         viewState = .loading(currentDepartures)
         do {
             let fetched = try await fetchAction()
-            
-            // Filter out past departures
-            let now = Date()
-            var valid = fetched.filter { $0.departureDate > now }
-            
-            // Apply line filter if needed
-            if let selected = selectedLines {
-                let selectedIds = Set(selected.map { $0.id })
-                valid = valid.filter { departure in
-                    if let routeId = departure.routeId {
-                        return selectedIds.contains(routeId)
-                    }
-                    return selectedIds.contains("HSL:\(departure.lineName)")
-                        || selectedIds.contains("HSL:\(departure.lineName)N")
-                        || selectedIds.contains("HSL:\(departure.lineName)B")
-                        || selectedIds.contains("HSL:\(departure.lineName)K")
-                }
-            }
-            
-            let nextState: ViewState = .loaded(valid)
+
+            let nextState: ViewState = .loaded(fetched)
             withAnimation {
                 viewState = nextState
             }
