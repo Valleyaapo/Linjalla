@@ -158,7 +158,7 @@ struct DigitransitServiceTests {
         let stationId = "HSL:STOP1"
 
         DigitransitServiceTestURLProtocol.requestHandler = { request in
-            let body = try #require(request.httpBody)
+            let body = try requestBodyData(request)
             let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
             let variables = try #require(json["variables"] as? [String: Any])
             #expect(variables["stationId"] as? String == stationId)
