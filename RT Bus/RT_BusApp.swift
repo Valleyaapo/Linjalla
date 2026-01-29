@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @main
 struct RT_BusApp: App {
@@ -15,11 +18,25 @@ struct RT_BusApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        let busManager = BusManager()
-        let tramManager = TramManager()
+        if ProcessInfo.processInfo.arguments.contains("UITesting") {
+            #if canImport(UIKit)
+            UIView.setAnimationsEnabled(false)
+            #endif
+        }
+        UITestNetworkStub.registerIfNeeded()
+        let session: URLSession
+        if ProcessInfo.processInfo.arguments.contains("UITesting") {
+            session = UITestNetworkStub.makeSession()
+        } else {
+            session = .shared
+        }
+
+        let busManager = BusManager(urlSession: session)
+        let tramManager = TramManager(urlSession: session)
+        let stopManager = StopManager(urlSession: session)
         _busManager = State(initialValue: busManager)
         _tramManager = State(initialValue: tramManager)
-        _selectionStore = State(initialValue: SelectionStore(busManager: busManager, tramManager: tramManager))
+        _selectionStore = State(initialValue: SelectionStore(busManager: busManager, tramManager: tramManager, stopManager: stopManager))
     }
     
     var body: some Scene {

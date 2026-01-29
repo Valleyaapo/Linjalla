@@ -42,10 +42,11 @@ final class CLLocationManagerWrapper: NSObject, LocationManaging {
 @Observable
 final class LocationManager: NSObject {
     private let manager: LocationManaging
-    
+
     var lastLocation: CLLocation?
     var authorizationStatus: CLAuthorizationStatus
-    
+    var error: AppError?
+
     init(manager: LocationManaging) {
         self.manager = manager
         self.authorizationStatus = manager.authorizationStatus
@@ -57,16 +58,32 @@ final class LocationManager: NSObject {
     override convenience init() {
         self.init(manager: CLLocationManagerWrapper())
     }
-    
+
+    /// Request location authorization. Sets error if denied (called from user action).
     func requestAuthorization() {
+        error = nil
         switch manager.authorizationStatus {
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse, .authorizedAlways:
             manager.startUpdatingLocation()
-        default:
+        case .denied:
+            Logger.ui.warning("Location access denied by user")
+            error = AppError.locationError(
+                NSLocalizedString("error.location.denied", comment: "Location access denied")
+            )
+        case .restricted:
+            Logger.ui.warning("Location access restricted")
+            error = AppError.locationError(
+                NSLocalizedString("error.location.restricted", comment: "Location access restricted")
+            )
+        @unknown default:
             break
         }
+    }
+
+    func clearError() {
+        error = nil
     }
 }
 

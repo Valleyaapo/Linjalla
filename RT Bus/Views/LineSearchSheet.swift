@@ -35,7 +35,7 @@ struct LineSearchSheet: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            if isSearchPresented && isIOS18OrLater {
+            if isSearchPresented {
                 Spacer()
                     .frame(height: 20)
             }
@@ -118,13 +118,7 @@ struct LineSearchSheet: View {
                 }
             }
         }
-    }
-    
-    private var isIOS18OrLater: Bool {
-        if #available(iOS 18, *) {
-            return true
-        }
-        return false
+        .accessibilityIdentifier("LineSearchSheet")
     }
     
     private func getLinesToShow() -> [BusLine] {
@@ -216,6 +210,7 @@ struct LineSearchRow: View {
     let onToggle: () -> Void
     var color: Color = .hslBlue
     @State private var hapticTrigger = 0
+    private var safeLineId: String { line.id.replacingOccurrences(of: ":", with: "_") }
     
     var body: some View {
         HStack {
@@ -245,6 +240,7 @@ struct LineSearchRow: View {
                 AddButtonView(isFavorite: isFavorite)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("LineSearchToggle_\(safeLineId)")
         }
         .padding(16)
         .background(Color(.secondarySystemBackground))
@@ -252,6 +248,8 @@ struct LineSearchRow: View {
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("LineSearchRow_\(safeLineId)")
     }
 }
 

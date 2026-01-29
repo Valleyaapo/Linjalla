@@ -180,7 +180,7 @@ struct StopManagerTests {
     }
 
     private func extractVariable(name: String, from request: URLRequest) -> String? {
-        guard let data = request.httpBody,
+        guard let data = try? requestBodyData(request),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let variables = json["variables"] as? [String: Any],
               let value = variables[name] as? String else {

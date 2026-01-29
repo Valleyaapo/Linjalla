@@ -14,8 +14,12 @@ import RTBusCore
 @MainActor
 @Observable
 final class TrainManager {
+    var error: AppError?
     private var stationNames: [String: String] = [:]
-    
+    private var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains("UITesting")
+    }
+
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -25,18 +29,27 @@ final class TrainManager {
     init() {}
     
     func fetchMetadata() async {
+        if isUITesting {
+            stationNames = ["HKI": "Helsinki"]
+            error = nil
+            return
+        }
+
         guard stationNames.isEmpty else { return }
-        
+
+        guard let url = URL(string: "https://rata.digitraffic.fi/api/v1/metadata/stations") else {
+            Logger.network.error("Invalid metadata URL")
+            self.error = AppError.networkError("Invalid metadata URL")
+            return
+        }
+
         do {
-            guard let url = URL(string: "https://rata.digitraffic.fi/api/v1/metadata/stations") else {
-                Logger.network.error("Invalid metadata URL")
-                return
-            }
             var request = URLRequest(url: url)
             request.setValue("gzip", forHTTPHeaderField: "Accept-Encoding")
-            
+
             let stations: [DigitrafficStation] = try await NetworkService.shared.fetch(request, decoder: decoder)
-            
+            self.error = nil
+
             for station in stations {
                 // Clean up name (e.g., "Helsinki asema" -> "Helsinki")
                 let cleanName = station.stationName.replacingOccurrences(of: " asema", with: "")
@@ -44,10 +57,30 @@ final class TrainManager {
             }
         } catch {
             Logger.network.error("Failed to fetch station metadata: \(error)")
+            self.error = AppError.networkError(error.localizedDescription)
         }
     }
     
     func fetchDepartures(stationCode: String = "HKI") async throws -> [Departure] {
+        if isUITesting {
+            let now = Date()
+            let startOfDay = Calendar.current.startOfDay(for: now)
+            let serviceDay = Int(startOfDay.timeIntervalSince1970)
+            let secondsSinceMidnight = Int(now.timeIntervalSince1970) - serviceDay
+            let departure = secondsSinceMidnight + 300
+            return [
+                Departure(
+                    lineName: "I",
+                    routeId: nil,
+                    headsign: "via Tikkurila",
+                    scheduledTime: departure,
+                    realtimeTime: departure,
+                    serviceDay: serviceDay,
+                    platform: "1"
+                )
+            ]
+        }
+
         await fetchMetadata()
         
         // Fetch 20 departing trains, exclude non-stopping

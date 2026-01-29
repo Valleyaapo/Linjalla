@@ -201,6 +201,7 @@ struct SelectionOverlay: View {
                         .frame(height: 120)
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: busLines + tramLines)
                     }
+                    .accessibilityIdentifier("LineToggleScroll")
                     .scrollIndicators(.hidden)
                     
                     Rectangle()
@@ -303,6 +304,7 @@ struct LineToggleView: View {
     let isSelected: Bool
     var color: Color = .hslBlue
     let onToggle: () -> Void
+    private var safeLineId: String { line.id.replacingOccurrences(of: ":", with: "_") }
     
     var body: some View {
         Button(action: {
@@ -327,6 +329,7 @@ struct LineToggleView: View {
                 }
         }
         .accessibilityLabel("\(line.shortName)")
+        .accessibilityIdentifier("LineToggle_\(safeLineId)")
         .accessibilityValue(isSelected ? Text("access.line.selected") : Text("access.line.unselected"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)

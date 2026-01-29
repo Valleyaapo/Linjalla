@@ -60,22 +60,32 @@ final class VehicleAnnotation: NSObject, MKAnnotation {
     }
     
     // MARK: - Updates
-    
-    /// Update annotation in-place with smooth animation
-    func update(from model: BusModel, animate: Bool = true) {
-        if animate {
-            UIView.animate(
-                withDuration: VehicleManagerConstants.updateInterval,
-                delay: 0,
-                options: [.curveLinear, .beginFromCurrentState, .allowUserInteraction]
-            ) {
-                self.coordinate = model.coordinate
-            }
-        } else {
-            coordinate = model.coordinate
-        }
+
+    /// Update annotation data with smooth animation to new position.
+    func update(from model: BusModel) {
         lineName = model.lineName
         headingDegrees = Double(model.heading ?? -1)
+
+        let latDelta = abs(model.coordinate.latitude - coordinate.latitude)
+        let lonDelta = abs(model.coordinate.longitude - coordinate.longitude)
+
+        // Skip glitchy data - if movement > 500m, just snap (don't animate)
+        let maxDelta = 0.005 // ~500m in degrees
+        if latDelta > maxDelta || lonDelta > maxDelta {
+            coordinate = model.coordinate
+            return
+        }
+
+        // Skip tiny movements < ~2m (not visible, wastes CPU)
+        let minDelta = 0.00002
+        if latDelta < minDelta && lonDelta < minDelta {
+            return
+        }
+
+        // Animate over update interval - .beginFromCurrentState blends if new update arrives mid-animation
+        UIView.animate(withDuration: VehicleManagerConstants.updateInterval, delay: 0, options: [.curveLinear, .beginFromCurrentState]) {
+            self.coordinate = model.coordinate
+        }
     }
     
     // MARK: - Identity

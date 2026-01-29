@@ -19,15 +19,15 @@ final class MapViewCoordinator: NSObject {
     private let mapViewState: MapViewState
     
     // MARK: - State
-    
+
     private var vehicleAnnotations: [String: VehicleAnnotation] = [:]
     private var stopAnnotations: [String: StopAnnotation] = [:]
     private var currentZoomLevel: Double = 0.05
     private var latestStops: [BusStop] = []
-    
+
     // Debouncing for stop updates
     private var lastStopRefreshZoom: Double = 0.05
-    
+
     // Centralized animation state management
     private let animationStateManager = AnimationStateManager()
     
@@ -78,11 +78,11 @@ final class MapViewCoordinator: NSObject {
                 // Already animating out - will be removed by completion handler
                 continue
             }
-            
+
             let state = animationStateManager.state(for: key)
             let generation = state.beginExiting()
             animationStateManager.markPendingRemoval(vehicleId: key, annotation: annotation, generation: generation)
-            
+
             if let view = mapView.view(for: annotation) as? VehicleAnnotationView {
                 view.animateExit { [weak self, weak mapView] in
                     guard let self = self, let mapView = mapView else { return }
@@ -99,7 +99,7 @@ final class MapViewCoordinator: NSObject {
                 animationStateManager.removeState(for: key)
             }
         }
-        
+
         vehicleAnnotations = newVehicleAnnotations
         
         // Trigger animations for new/updated vehicles after view is assigned
@@ -148,17 +148,15 @@ final class MapViewCoordinator: NSObject {
         if let _ = animationStateManager.cancelPendingRemoval(vehicleId: key) {
             // Reappeared! Cancel removal and update existing
             if let existing = vehicleAnnotations[key] {
-                let shouldAnimate = mapView.view(for: existing) != nil
-                existing.update(from: model, animate: shouldAnimate)
+                existing.update(from: model)
                 newAnnotations[key] = existing
                 toAnimate.append((key: key, annotation: existing, isNew: false))
                 return
             }
         }
-        
+
         if let existing = vehicleAnnotations[key] {
-            let shouldAnimate = mapView.view(for: existing) != nil
-            existing.update(from: model, animate: shouldAnimate)
+            existing.update(from: model)
             newAnnotations[key] = existing
             toAnimate.append((key: key, annotation: existing, isNew: false))
         } else {

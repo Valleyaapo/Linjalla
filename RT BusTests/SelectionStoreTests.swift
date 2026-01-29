@@ -126,4 +126,45 @@ struct SelectionStoreTests {
         #expect(store.selectedLines.contains(tramLine))
         #expect(store.selectedLines.count == 2)
     }
+
+    @Test
+    func loadsDefaultsWhenStoredSelectionIsCorrupt() {
+        let suiteName = "SelectionStoreTests.Corrupt.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defaults.set(Data("not-json".utf8), forKey: "SelectedLinesState")
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [SelectionStoreTestURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+
+        SelectionStoreTestURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            { "data": { "route": { "patterns": [] } } }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        let busManager = BusManager(urlSession: session, connectOnStart: false)
+        let tramManager = TramManager(urlSession: session, connectOnStart: false)
+        let stopManager = StopManager(urlSession: session)
+
+        let busLine = BusLine(id: "HSL:2001", shortName: "2", longName: "Bus 2")
+        let tramLine = BusLine(id: "HSL:2004", shortName: "4", longName: "Tram 4")
+        busManager.favoriteLines = [busLine]
+        tramManager.favoriteLines = [tramLine]
+
+        let store = SelectionStore(
+            busManager: busManager,
+            tramManager: tramManager,
+            stopManager: stopManager,
+            userDefaults: defaults
+        )
+        store.loadSelectedLines()
+
+        #expect(store.selectedLines.contains(busLine))
+        #expect(store.selectedLines.contains(tramLine))
+        #expect(store.selectedLines.count == 2)
+    }
 }

@@ -97,41 +97,35 @@ final class StopManager {
         }
     }
     
+    /// Fetches departures for a stop. Throws on error - callers handle display.
     func fetchDepartures(
         for stationId: String,
         filter: DepartureFilterInput? = nil
     ) async throws -> [Departure] {
         do {
-            let departures = try await graphQLService.fetchDepartures(
+            return try await graphQLService.fetchDepartures(
                 request: .stop(stationId: stationId),
                 filter: filter
             )
-            self.error = nil
-            return departures
         } catch {
             Logger.stopManager.error("Fetch Departures failed: \(error)")
-            let appError = AppError.networkError(error.localizedDescription)
-            self.error = appError
-            throw appError
+            throw error
         }
     }
 
+    /// Fetches departures for a station. Throws on error - callers handle display.
     func fetchStationDepartures(
         for stationId: String,
         filter: DepartureFilterInput? = nil
     ) async throws -> [Departure] {
         do {
-            let departures = try await graphQLService.fetchStationDepartures(
+            return try await graphQLService.fetchStationDepartures(
                 request: .station(stationId: stationId),
                 filter: filter
             )
-            self.error = nil
-            return departures
         } catch {
             Logger.stopManager.error("Fetch Station Departures failed: \(error)")
-            let appError = AppError.networkError(error.localizedDescription)
-            self.error = appError
-            throw appError
+            throw error
         }
     }
     

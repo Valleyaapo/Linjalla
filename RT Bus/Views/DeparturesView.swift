@@ -80,8 +80,10 @@ struct DeparturesView: View {
                 
                 ForEach(departures) { departure in
                     DepartureRowView(departure: departure)
+                        .accessibilityIdentifier("DepartureRow_\(departure.lineName)")
                 }
             }
+            .accessibilityIdentifier("DeparturesList")
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

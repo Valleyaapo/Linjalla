@@ -68,9 +68,8 @@ struct ContentView: View {
                     .presentationDetents([.medium, .large])
                 }
             }
-            .alert("ui.error.title", isPresented: busErrorBinding, actions: busErrorActions, message: busErrorMessage)
-            .alert("ui.error.title", isPresented: tramErrorBinding, actions: tramErrorActions, message: tramErrorMessage)
             .alert("ui.error.title", isPresented: stopErrorBinding, actions: stopErrorActions, message: stopErrorMessage)
+            .alert("ui.error.title", isPresented: locationErrorBinding, actions: locationErrorActions, message: locationErrorMessage)
     }
     
     // MARK: - Main Content
@@ -225,58 +224,37 @@ extension ContentView {
 
 // MARK: - Alerts
 
+// MARK: - Alerts (user-action triggered only)
+
 extension ContentView {
-    var busErrorBinding: Binding<Bool> {
-        Binding(
-            get: { busManager.error != nil },
-            set: { if !$0 { busManager.error = nil } }
-        )
-    }
-    
-    var tramErrorBinding: Binding<Bool> {
-        Binding(
-            get: { tramManager.error != nil },
-            set: { if !$0 { tramManager.error = nil } }
-        )
-    }
-    
     var stopErrorBinding: Binding<Bool> {
         Binding(
             get: { selectionStore.stopManager.error != nil },
             set: { if !$0 { selectionStore.stopManager.clearError() } }
         )
     }
-    
-    func busErrorActions() -> AnyView {
-        AnyView(Button("ui.button.ok", role: .cancel) { busManager.error = nil })
+
+    var locationErrorBinding: Binding<Bool> {
+        Binding(
+            get: { locationManager.error != nil },
+            set: { if !$0 { locationManager.clearError() } }
+        )
     }
-    
-    func tramErrorActions() -> AnyView {
-        AnyView(Button("ui.button.ok", role: .cancel) { tramManager.error = nil })
-    }
-    
+
     func stopErrorActions() -> AnyView {
         AnyView(Button("ui.button.ok", role: .cancel) { selectionStore.stopManager.clearError() })
     }
-    
-    func hslErrorActions() -> AnyView {
-        AnyView(Button("ui.button.ok", role: .cancel) {})
-    }
-    
-    func busErrorMessage() -> AnyView {
-        AnyView(Text(busManager.error?.localizedDescription ?? ""))
-    }
-    
-    func tramErrorMessage() -> AnyView {
-        AnyView(Text(tramManager.error?.localizedDescription ?? ""))
-    }
-    
+
     func stopErrorMessage() -> AnyView {
         AnyView(Text(selectionStore.stopManager.error?.localizedDescription ?? ""))
     }
-    
-    func hslErrorMessage() -> AnyView {
-        AnyView(Text("ui.error.hslNotInstalled"))
+
+    func locationErrorActions() -> AnyView {
+        AnyView(Button("ui.button.ok", role: .cancel) { locationManager.clearError() })
+    }
+
+    func locationErrorMessage() -> AnyView {
+        AnyView(Text(locationManager.error?.localizedDescription ?? ""))
     }
 }
 

@@ -35,6 +35,20 @@
                ReferencedContainer = "container:RT Bus.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "08A82B2C2F042AE300C2B3E8"
+               BuildableName = "RT BusUITests.xctest"
+               BlueprintName = "RT BusUITests"
+               ReferencedContainer = "container:RT Bus.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -51,6 +65,17 @@
                BlueprintIdentifier = "08348A742F06708F007E8299"
                BuildableName = "RT BusTests.xctest"
                BlueprintName = "RT BusTests"
+               ReferencedContainer = "container:RT Bus.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "08A82B2C2F042AE300C2B3E8"
+               BuildableName = "RT BusUITests.xctest"
+               BlueprintName = "RT BusUITests"
                ReferencedContainer = "container:RT Bus.xcodeproj">
             </BuildableReference>
          </TestableReference>

@@ -189,6 +189,40 @@
         }
       }
     },
+    "error.location.denied" : {
+      "comment" : "Location access denied",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location access denied. Enable in Settings."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijainnin käyttö estetty. Salli asetuksista."
+          }
+        }
+      }
+    },
+    "error.location.restricted" : {
+      "comment" : "Location access restricted",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location access restricted on this device."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijainnin käyttö on rajoitettu tällä laitteella."
+          }
+        }
+      }
+    },
     "error.mqtt" : {
       "extractionState" : "stale",
       "localizations" : {

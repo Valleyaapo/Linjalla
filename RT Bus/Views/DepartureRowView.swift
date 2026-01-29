@@ -55,6 +55,7 @@ struct DepartureRowView: View {
         .accessibilityLabel(
             "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign). \(DepartureFormatting.timeUntil(departure.departureDate))"
         )
+        .accessibilityIdentifier("DepartureRow_\(departure.lineName)")
     }
 }
 
