@@ -5,8 +5,7 @@ let package = Package(
     name: "RT_Bus",
     defaultLocalization: "en",
     platforms: [
-        .iOS(.v17),
-        .macOS(.v14)
+        .iOS(.v17)
     ],
     products: [
         .library(
@@ -33,26 +32,19 @@ let package = Package(
             ],
             path: "RT Bus",
             exclude: [
+                // App entry points (not library code)
                 "RT_BusApp.swift",
                 "ContentView.swift",
+                // Resources and assets
                 "Assets.xcassets",
-                "RT Bus 2025-12-30 20-16-49",
                 "Settings.bundle",
-                "bussit_icon.icon"
-            ],
-            sources: [
-                "Managers/BaseVehicleManager.swift",
-                "Managers/BusManager.swift",
-                "Managers/TramManager.swift",
-                "Managers/StopManager.swift",
-                "Managers/TrainManager.swift",
-                "Managers/LocationManager.swift",
-                "Managers/MapStateManager.swift",
-                "Models/BusModel.swift",
-                "Models/MapItem.swift",
-                "Secrets.swift",
-                "Secrets.swift",
-                "Theme.swift"
+                "bussit_icon.icon",
+                // Development artifacts
+                "RT Bus 2025-12-30 20-16-49",
+                "architecture",
+                "swftui26.md",
+                // Example/template files
+                "Secrets-Example.swift",
             ],
             resources: [
                 .process("Localizable.xcstrings")
