@@ -15,6 +15,54 @@
       },
       "shouldTranslate" : false
     },
+    "access.action.addFavorite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add %@ to favorites"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää %@ suosikkeihin"
+          }
+        }
+      }
+    },
+    "access.action.removeFavorite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove %@ from favorites"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista %@ suosikeista"
+          }
+        }
+      }
+    },
+    "access.button.addLine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add New Line"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää uusi linja"
+          }
+        }
+      }
+    },
     "access.button.centerStation" : {
       "localizations" : {
         "en" : {

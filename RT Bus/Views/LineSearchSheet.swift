@@ -240,6 +240,7 @@ struct LineSearchRow: View {
                 AddButtonView(isFavorite: isFavorite)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text(String(format: NSLocalizedString(isFavorite ? "access.action.removeFavorite" : "access.action.addFavorite", comment: ""), line.shortName)))
             .accessibilityIdentifier("LineSearchToggle_\(safeLineId)")
         }
         .padding(16)
