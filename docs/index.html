@@ -1,0 +1,590 @@
+<html lang="fi">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Linjalla — Reaaliaikainen joukkoliikenne taskussasi</title>
+  <meta name="description"
+    content="Linjalla on kevyt iOS-sovellus bussien ja raitiovaunujen reaaliaikaiseen seurantaan sekä tarkkoihin juna-aikatauluihin." />
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #0b0d12;
+      --bg-soft: #141824;
+      --card: #171b26;
+      --text: #f5f7ff;
+      --muted: #a7b0c5;
+      --accent: #007ac9;
+      /* HSL Blue */
+      --accent-strong: #005eb8;
+      /* Darker HSL Blue */
+      --accent-warm: #f9d976;
+      --border: rgba(255, 255, 255, 0.08);
+
+      /* HSL Identity */
+      --hsl-blue: #007ac9;
+      --hsl-purple: #8c4799;
+      --hsl-green: #00985f;
+      --hsl-orange: #ff6319;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", "SF Pro Text", system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1c2435 0%, var(--bg) 55%, #07090e 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 24px 96px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0 40px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .logo-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: block;
+      object-fit: cover;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 40px;
+      align-items: center;
+      padding: 32px 0 56px;
+    }
+
+    .hero-text h1 {
+      font-size: clamp(2.2rem, 3vw + 1rem, 3.6rem);
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
+    .hero-text p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      margin-bottom: 28px;
+    }
+
+    .cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .button {
+      padding: 12px 22px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, var(--hsl-blue) 0%, var(--accent-strong) 80%);
+      color: #04131f;
+      box-shadow: 0 10px 30px rgba(47, 177, 255, 0.35);
+    }
+
+    .button.secondary {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .trust {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 24px;
+    }
+
+    .hero-card {
+      background: linear-gradient(160deg, rgba(0, 122, 201, 0.16), rgba(0, 94, 184, 0.05));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      display: grid;
+      gap: 20px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .hero-card header {
+      padding: 0;
+      justify-content: space-between;
+    }
+
+    .status-pill {
+      background: rgba(0, 122, 201, 0.2);
+      color: var(--accent);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .arrival-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .arrival-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .arrival-item.bus-item strong {
+      color: var(--hsl-blue);
+    }
+
+    .arrival-item.tram-item strong {
+      color: var(--hsl-green);
+    }
+
+
+
+    .arrival-item span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .arrival-item strong {
+      font-size: 1.1rem;
+    }
+
+    .section {
+      margin-top: 64px;
+      display: grid;
+      gap: 32px;
+    }
+
+    .section-title {
+      font-size: 2rem;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.15rem;
+    }
+
+    .feature-card p {
+      color: var(--muted);
+    }
+
+    .highlight {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .highlight-card {
+      border-radius: 20px;
+      padding: 24px;
+      background: linear-gradient(160deg, rgba(249, 217, 118, 0.16), rgba(0, 122, 201, 0.06));
+      border: 1px solid rgba(249, 217, 118, 0.2);
+    }
+
+    .highlight-card p {
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .testimonial {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .testimonial p {
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .cta-band {
+      margin-top: 72px;
+      padding: 32px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(0, 122, 201, 0.2), rgba(0, 122, 201, 0.12));
+      display: grid;
+      gap: 16px;
+      border: 1px solid rgba(0, 122, 201, 0.28);
+      text-align: center;
+    }
+
+    footer {
+      margin-top: 64px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.03);
+      transition: all 0.2s;
+    }
+
+    a.badge:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--muted);
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .badge.highlight {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0, 122, 201, 0.1);
+    }
+
+    @media (max-width: 720px) {
+      header {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .cta-group {
+        justify-content: center;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header>
+      <div class="logo">
+        <img src="bussit_icon.png" alt="Linjalla Icon" class="logo-mark">
+        Linjalla
+      </div>
+      <nav class="nav-links">
+        <a href="#features">Ominaisuudet</a>
+        <a href="#how">Miten se toimii</a>
+        <a href="#get">Lataa sovellus</a>
+        <a href="en.html" style="color: var(--accent);">In English</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Seuraa busseja ja raitiovaunuja livenä kartalla.</h1>
+        <p>
+          Näe kulkuneuvot liikkumassa kartalla reaaliajassa. Linjalla näyttää tarkalleen missä
+          kyytisi on, jotta tiedät milloin pitää lähteä pysäkille.
+        </p>
+        <div class="cta-group">
+          <a href="https://apps.apple.com/fi/app/linjalla/id6757194796" target="_blank"
+            style="display: inline-block; transition: opacity 0.2s;">
+            <img src="app-store-badge.svg" alt="Download on the App Store" style="height: 52px; display: block;">
+          </a>
+        </div>
+        <div class="trust">
+          <span>📍 Reaaliaikainen kartta</span>
+          <span>🔎 Nopea linjahaku</span>
+          <span>🗺️ Yksinertainen käyttö</span>
+        </div>
+      </div>
+      <div class="hero-card" style="padding: 0; overflow: hidden; height: 480px; position: relative;">
+        <!-- Live Badge Overlay -->
+        <div style="position: absolute; top: 16px; left: 16px; z-index: 10; pointer-events: none;">
+          <span class="status-pill"
+            style="background: rgba(11, 13, 18, 0.85); backdrop-filter: blur(8px); padding: 8px 16px; border: 1px solid rgba(255,255,255,0.1);">
+            <span
+              style="width: 8px; height: 8px; background: #00985f; border-radius: 50%; display: inline-block; margin-right: 6px;"></span>
+            Esikatselu
+          </span>
+        </div>
+        <div id="map" style="width: 100%; height: 100%;"></div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div>
+        <h2 class="section-title">Miksi matkustajat valitsevat Linjan</h2>
+        <p class="trust">Suunniteltu nopeaksi ja luotettavaksi kiireisinä päivinä.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h3>Reaaliaikainen seuranta</h3>
+          <p>Seuraa busseja ja ratikoita kartalla reaaliajassa ja näe kaikkien rautatieasemalta lähtevien junien
+            aikataulut ja lähtölaiturit.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Omat suosikit</h3>
+          <p>Merkitse eniten käytetyt linjat ja pysäkit suosikeiksi yhdellä napautuksella.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Suunniteltu keskittymiseen</h3>
+          <p>Minimalistinen käyttöliittymä,</br> kaikki parin napautuksen päässä.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="how" class="section">
+      <div>
+        <h2 class="section-title">Miten se toimii</h2>
+        <p class="trust">Kolme napautusta ovelta perille.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h3>1. Salli sijainnin käyttö</h3>
+          <p>Kartta näyttää lähelläsi liikkuvat kulkuneuvot ja pysäkit.</p>
+        </article>
+        <article class="feature-card">
+          <h3>2. Tallenna suosikkilinjasi</h3>
+          <p>Merkitse eniten käyttämäsi linjat ja pysäkit suosikeiksi.</p>
+        </article>
+        <article class="feature-card">
+          <h3>3. Matkusta luottavaisin mielin</h3>
+          <p>Reaaliaikaiset saapumisajat pitävät sinut ajan tasalla mahdollisista viivästyksistä.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="get" class="cta-band">
+      <h2>Valmiina matkaan?</h2>
+      <p>Lataa Linjalla ilmaiseksi App Storesta ja helpota matkaasi jo tänään.</p>
+      <div class="cta-group" style="justify-content: center;">
+        <a href="https://apps.apple.com/fi/app/linjalla/id6757194796" target="_blank"
+          style="display: inline-block; transition: opacity 0.2s;">
+          <img src="app-store-badge.svg" alt="Download on the App Store" style="height: 52px; display: block;">
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <div>© 2026 Lintu Developer Solutions.</div>
+      <div class="badge-row">
+        <a href="privacy.html" class="badge">Yksityisyys edellä</a>
+        <span class="badge">Reaaliaikainen HSL-data</span>
+        <span class="badge">iOS 18+</span>
+      </div>
+    </footer>
+  </div>
+</body>
+
+</html>
+<script>
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    center: [24.9414, 60.1718], // Helsinki Central Railway Station
+    zoom: 14,
+    pitch: 0,
+    attributionControl: false,
+    interactive: false // Disable all interactions (scroll, drag, etc)
+  });
+
+  map.addControl(new maplibregl.AttributionControl({ compact: true }));
+
+  // Verified OSRM routes - focused on Central Railway Station area
+  const ROUTES = {
+    // Route 1: Kamppi to Kaisaniemi via Mannerheimintie
+    kamppi_kaisaniemi: [[24.937551, 60.168552], [24.937421, 60.168502], [24.937297, 60.168458], [24.937161, 60.168409], [24.937109, 60.168401], [24.937074, 60.168389], [24.937022, 60.168368], [24.936829, 60.168507], [24.936736, 60.168574], [24.936705, 60.168596], [24.936414, 60.168806], [24.93627, 60.16891], [24.936241, 60.168931], [24.936154, 60.168989], [24.936305, 60.169031], [24.937128, 60.169339], [24.937289, 60.169399], [24.937454, 60.169461], [24.938135, 60.169705], [24.938196, 60.169728], [24.938296, 60.169765], [24.938348, 60.169782], [24.938392, 60.169796], [24.938496, 60.169821], [24.938532, 60.169829], [24.938581, 60.169841], [24.938606, 60.169847], [24.938731, 60.169878], [24.93891, 60.169945], [24.939486, 60.170163], [24.939615, 60.170214], [24.939702, 60.17024], [24.939839, 60.170271], [24.939918, 60.170274], [24.940093, 60.170279], [24.940155, 60.17028], [24.940229, 60.170282], [24.940416, 60.170287], [24.941383, 60.17031], [24.941539, 60.170314], [24.942395, 60.170335], [24.942542, 60.170339], [24.94278, 60.170346], [24.943018, 60.170361], [24.943429, 60.170374], [24.943874, 60.170382], [24.944192, 60.170391], [24.94432, 60.170399], [24.944433, 60.170412], [24.944534, 60.170435], [24.944649, 60.170463], [24.944832, 60.170519], [24.944917, 60.170545], [24.945005, 60.170575], [24.945043, 60.170588], [24.945173, 60.170639], [24.94541, 60.170716], [24.94615, 60.17094], [24.946341, 60.170995], [24.946521, 60.171051], [24.946826, 60.171166], [24.947015, 60.171236], [24.947216, 60.171317], [24.947324, 60.171364], [24.94743, 60.171428], [24.947434, 60.171432], [24.947485, 60.171482], [24.947523, 60.17153], [24.947629, 60.171716], [24.947798, 60.17193], [24.947869, 60.172], [24.947911, 60.172041], [24.948135, 60.172233], [24.94851, 60.172565], [24.948541, 60.172594], [24.948569, 60.172621], [24.948668, 60.172708], [24.94877, 60.172797], [24.948928, 60.172931], [24.94906, 60.173043], [24.949197, 60.173136], [24.949246, 60.173176], [24.949342, 60.17325], [24.949753, 60.173609], [24.949845, 60.173689], [24.949884, 60.173714], [24.949963, 60.173751], [24.950047, 60.173797], [24.950126, 60.173839], [24.950188, 60.173873], [24.950244, 60.173904], [24.950296, 60.173942], [24.950334, 60.173975], [24.950359, 60.174004], [24.950372, 60.174019], [24.950377, 60.17403], [24.95039, 60.174058], [24.950407, 60.174096], [24.950411, 60.174106], [24.950416, 60.174137], [24.950443, 60.174306], [24.95044, 60.174427], [24.950434, 60.17454], [24.950415, 60.174731], [24.95037, 60.175155], [24.950327, 60.175518], [24.950212, 60.175005]],
+    // Route 2: Antinkatu to Kaisaniemenkatu
+    antinkatu_kaisaniemi: [[24.932392, 60.170136], [24.932275, 60.170219], [24.931804, 60.170565], [24.931758, 60.170601], [24.931682, 60.170654], [24.931576, 60.170725], [24.93176, 60.17078], [24.932261, 60.170948], [24.932364, 60.170998], [24.932381, 60.171013], [24.932412, 60.171061], [24.93244, 60.17113], [24.932444, 60.17114], [24.932652, 60.171141], [24.93273, 60.171142], [24.932917, 60.171142], [24.933111, 60.171142], [24.934263, 60.171145], [24.934559, 60.171147], [24.935072, 60.171151], [24.935486, 60.171151], [24.935611, 60.171151], [24.935775, 60.171148], [24.93583, 60.171138], [24.935963, 60.171114], [24.936138, 60.171083], [24.936273, 60.171023], [24.936403, 60.170974], [24.936631, 60.170885], [24.936908, 60.170815], [24.936978, 60.170807], [24.937027, 60.170807], [24.93706, 60.170809], [24.937121, 60.170812], [24.937197, 60.170817], [24.937308, 60.170827], [24.937554, 60.170845], [24.937632, 60.17085], [24.938443, 60.170901], [24.93889, 60.170929], [24.939005, 60.170937], [24.939128, 60.170942], [24.939168, 60.170942], [24.939216, 60.170934], [24.939252, 60.170922], [24.939279, 60.170898], [24.9393, 60.170858], [24.93934, 60.170627], [24.939363, 60.170548], [24.939392, 60.170496], [24.939448, 60.170449], [24.939521, 60.170394], [24.939588, 60.170361], [24.939651, 60.170333], [24.939701, 60.170315], [24.939743, 60.170301], [24.939835, 60.170284], [24.939918, 60.170274], [24.940093, 60.170279], [24.940155, 60.17028], [24.940229, 60.170282], [24.940416, 60.170287], [24.941383, 60.17031], [24.941539, 60.170314], [24.942395, 60.170335], [24.942542, 60.170339], [24.94278, 60.170346], [24.943018, 60.170361], [24.943429, 60.170374], [24.943874, 60.170382], [24.944192, 60.170391], [24.94432, 60.170399], [24.944433, 60.170412], [24.944534, 60.170435], [24.944649, 60.170463], [24.944832, 60.170519], [24.944917, 60.170545], [24.945005, 60.170575], [24.945043, 60.170588], [24.945173, 60.170639], [24.94541, 60.170716], [24.94615, 60.17094], [24.946341, 60.170995], [24.946521, 60.171051], [24.946826, 60.171166], [24.947015, 60.171236], [24.947216, 60.171317], [24.947324, 60.171364], [24.94743, 60.171428], [24.947434, 60.171432], [24.947485, 60.171482], [24.947523, 60.17153], [24.947629, 60.171716], [24.947798, 60.17193], [24.947869, 60.172], [24.947911, 60.172041], [24.948135, 60.172233], [24.94851, 60.172565], [24.948541, 60.172594], [24.948569, 60.172621], [24.948668, 60.172708], [24.94877, 60.172797], [24.948928, 60.172931], [24.94906, 60.173043], [24.949197, 60.173136], [24.949246, 60.173176], [24.949342, 60.17325], [24.949753, 60.173609], [24.949372, 60.173611]],
+    // Route 3: Annankatu to Mikonkatu (short central route)
+    annankatu_mikonkatu: [[24.935242, 60.168081], [24.935062, 60.168214], [24.935033, 60.168234], [24.934936, 60.1683], [24.934804, 60.168396], [24.934761, 60.168427], [24.934714, 60.168471], [24.934912, 60.168549], [24.93494, 60.16856], [24.935109, 60.16863], [24.935131, 60.168639], [24.935702, 60.168849], [24.935821, 60.168894], [24.935969, 60.16895], [24.935996, 60.168959], [24.936107, 60.16898], [24.936154, 60.168989], [24.936305, 60.169031], [24.937128, 60.169339], [24.937289, 60.169399], [24.937454, 60.169461], [24.938135, 60.169705], [24.938196, 60.169728], [24.938296, 60.169765], [24.938348, 60.169782], [24.938392, 60.169796], [24.938496, 60.169821], [24.938532, 60.169829], [24.938581, 60.169841], [24.938606, 60.169847], [24.938731, 60.169878], [24.93891, 60.169945], [24.939486, 60.170163], [24.939615, 60.170214], [24.939702, 60.17024], [24.939839, 60.170271], [24.939918, 60.170274], [24.940093, 60.170279], [24.940155, 60.17028], [24.940229, 60.170282], [24.940416, 60.170287], [24.941383, 60.17031], [24.941539, 60.170314], [24.942395, 60.170335], [24.942542, 60.170339], [24.94278, 60.170346], [24.943018, 60.170361], [24.943429, 60.170374], [24.943874, 60.170382], [24.944192, 60.170391], [24.94432, 60.170399], [24.944433, 60.170412], [24.944534, 60.170435], [24.944649, 60.170463], [24.944832, 60.170519], [24.944917, 60.170545], [24.945005, 60.170575], [24.945043, 60.170588], [24.945173, 60.170639], [24.945167, 60.170696], [24.945164, 60.170726], [24.945151, 60.170851], [24.945148, 60.170872], [24.945145, 60.170904], [24.945134, 60.170989], [24.945124, 60.171079], [24.945088, 60.171423], [24.945083, 60.171466], [24.945081, 60.171491], [24.945069, 60.171607], [24.945051, 60.171805], [24.945126, 60.17191], [24.945176, 60.171981], [24.945182, 60.171991], [24.945192, 60.172006], [24.945196, 60.172027], [24.945193, 60.172091], [24.945191, 60.172117], [24.945164, 60.172404], [24.945158, 60.172496], [24.945138, 60.172732], [24.945136, 60.172752], [24.945134, 60.172766]]
+  };
+
+  // Flatten logic: Create multiple vehicle instances per route
+  const vehicles = [];
+  let idCounter = 0;
+
+  Object.keys(ROUTES).forEach(routeName => {
+    const coords = ROUTES[routeName];
+    const line = turf.lineString(coords);
+    const length = turf.length(line);
+
+    // 2 vehicles per route = 6 total
+    const count = 2;
+
+    for (let i = 0; i < count; i++) {
+      vehicles.push({
+        id: idCounter++,
+        type: Math.random() > 0.4 ? 'bus' : 'tram',
+        line: line,
+        routeLen: length,
+        progress: Math.random() * length, // Start at random position
+        speed: 0.0003 + (Math.random() * 0.0002), // random speed km/frame approx
+        direction: Math.random() > 0.5 ? 1 : -1
+      });
+    }
+  });
+
+  map.on('load', () => {
+
+    map.addSource('vehicles', {
+      type: 'geojson',
+      data: getGeoJson(vehicles)
+    });
+
+    // Halo
+    map.addLayer({
+      id: 'vehicle-glow',
+      type: 'circle',
+      source: 'vehicles',
+      paint: {
+        'circle-radius': 12,
+        'circle-color': [
+          'match', ['get', 'type'],
+          'bus', '#007AFF',
+          'tram', '#00985F',
+          '#888'
+        ],
+        'circle-opacity': 0.3,
+        'circle-blur': 0.5
+      }
+    });
+
+    // Core
+    map.addLayer({
+      id: 'vehicle-core',
+      type: 'circle',
+      source: 'vehicles',
+      paint: {
+        'circle-radius': 5,
+        'circle-color': [
+          'match', ['get', 'type'],
+          'bus', '#007AFF',
+          'tram', '#00985F',
+          '#fff'
+        ],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff'
+      }
+    });
+
+    animate();
+  });
+
+  function getGeoJson(data) {
+    return {
+      type: 'FeatureCollection',
+      features: data.map(v => {
+        // Calculate current position along line
+        const point = turf.along(v.line, v.progress);
+        return {
+          type: 'Feature',
+          geometry: point.geometry,
+          properties: {
+            type: v.type,
+            id: v.id
+          }
+        };
+      })
+    };
+  }
+
+  function animate() {
+    vehicles.forEach(v => {
+      v.progress += v.speed * v.direction;
+
+      // Bounce at ends of route
+      if (v.progress >= v.routeLen) {
+        v.progress = v.routeLen;
+        v.direction = -1;
+      } else if (v.progress <= 0) {
+        v.progress = 0;
+        v.direction = 1;
+      }
+    });
+
+    const source = map.getSource('vehicles');
+    if (source) {
+      source.setData(getGeoJson(vehicles));
+    }
+
+    requestAnimationFrame(animate);
+  }
+</script>

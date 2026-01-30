@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Linjalla — Live transit in your pocket</title>
   <meta name="description"
-    content="Linjalla is a lightweight iOS app for live bus and tram tracking with reliable train schedules." />
+    content="Linjalla is a lightweight iOS app for live bus and tram tracking with accurate train schedules." />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
@@ -74,12 +74,9 @@
     .logo-mark {
       width: 40px;
       height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--hsl-blue) 0%, var(--accent-strong) 60%);
-      display: grid;
-      place-items: center;
-      color: #04131f;
-      font-weight: 800;
+      border-radius: 10px;
+      display: block;
+      object-fit: cover;
     }
 
     .nav-links {
@@ -304,6 +301,14 @@
       border: 1px solid var(--border);
       font-size: 0.85rem;
       background: rgba(255, 255, 255, 0.03);
+      transition: all 0.2s;
+    }
+
+    a.badge:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--muted);
+      text-decoration: none;
+      color: var(--text);
     }
 
     .badge.highlight {
@@ -340,22 +345,22 @@
   <div class="page">
     <header>
       <div class="logo">
-        <div class="logo-mark">L</div>
+        <img src="bussit_icon.png" alt="Linjalla Icon" class="logo-mark">
         Linjalla
       </div>
       <nav class="nav-links">
         <a href="#features">Features</a>
         <a href="#how">How it works</a>
-        <a href="#stories">Rider stories</a>
         <a href="#get">Get the app</a>
+        <a href="index.html" style="color: var(--accent);">Suomeksi</a>
       </nav>
     </header>
 
     <section class="hero">
       <div class="hero-text">
-        <h1>Track every bus and tram live.</h1>
+        <h1>Track buses and trams live on the map.</h1>
         <p>
-          See vehicles moving in real time on the map. Linjalla shows you exactly where your
+          See vehicles moving on the map in real time. Linjalla shows you exactly where your
           ride is, so you know when to leave.
         </p>
         <div class="cta-group">
@@ -365,9 +370,9 @@
           </a>
         </div>
         <div class="trust">
-          <span>📍 Live map view</span>
-          <span>🔎 Quick line search</span>
-          <span>🌙 Dark-mode ready</span>
+          <span>📍 Real-time map</span>
+          <span>🔎 Fast line search</span>
+          <span>🗺️ Simple to use</span>
         </div>
       </div>
       <div class="hero-card" style="padding: 0; overflow: hidden; height: 480px; position: relative;">
@@ -386,21 +391,22 @@
 
     <section id="features" class="section">
       <div>
-        <h2 class="section-title">Why riders pick Linjalla</h2>
-        <p class="trust">Designed to be fast, clear, and reliable on busy days.</p>
+        <h2 class="section-title">Why riders choose Linjalla</h2>
+        <p class="trust">Designed to be fast and reliable for busy days.</p>
       </div>
       <div class="feature-grid">
         <article class="feature-card">
-          <h3>Live vehicle tracking</h3>
-          <p>Watch buses and trams move on the map in real time, and get reliable schedules for all trains.</p>
+          <h3>Real-time tracking</h3>
+          <p>Follow buses and trams on the map in real time and see schedules and platforms for all trains from the
+            Central Station.</p>
         </article>
         <article class="feature-card">
-          <h3>Personalized Favorites</h3>
+          <h3>Personal Favorites</h3>
           <p>Star your most-used lines and stops for one-tap access.</p>
         </article>
         <article class="feature-card">
           <h3>Designed for focus</h3>
-          <p>Minimal UI, clear typography, and contrast tuned for night rides.</p>
+          <p>Minimal UI, everything just a few taps away.</p>
         </article>
       </div>
     </section>
@@ -408,20 +414,20 @@
     <section id="how" class="section">
       <div>
         <h2 class="section-title">How it works</h2>
-        <p class="trust">Three taps to get from door to destination.</p>
+        <p class="trust">Three taps from door to destination.</p>
       </div>
       <div class="feature-grid">
         <article class="feature-card">
-          <h3>1. Set your home stop</h3>
-          <p>Choose your closest stop or station so Linjalla knows your default view.</p>
+          <h3>1. Allow location access</h3>
+          <p>The map shows nearby vehicles and stops around your current position.</p>
         </article>
         <article class="feature-card">
-          <h3>2. Pin the lines you love</h3>
-          <p>Save the routes you use most and reorder them for quick access.</p>
+          <h3>2. Pin your favorites</h3>
+          <p>Save the lines and stops you use most as favorites for quick access.</p>
         </article>
         <article class="feature-card">
           <h3>3. Ride with confidence</h3>
-          <p>Live arrival updates keep you ahead of delays.</p>
+          <p>Live arrival updates keep you ahead of any potential delays.</p>
         </article>
       </div>
     </section>
@@ -438,11 +444,11 @@
     </section>
 
     <footer>
-      <div>© 2024 Linjalla. Built for Helsinki riders.</div>
+      <div>© 2026 Lintu Developer Solutions.</div>
       <div class="badge-row">
-        <span class="badge">Privacy-first</span>
-        <span class="badge">Realtime HSL data</span>
-        <span class="badge">iOS 17 ready</span>
+        <a href="privacy.html" class="badge">Privacy-first</a>
+        <span class="badge">Real-time HSL data</span>
+        <span class="badge">iOS 18+</span>
       </div>
     </footer>
   </div>
