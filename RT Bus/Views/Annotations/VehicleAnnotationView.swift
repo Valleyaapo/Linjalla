@@ -88,7 +88,7 @@ final class VehicleAnnotationView: MKAnnotationView {
         addSubview(containerView)
         containerView.addSubview(lineLabel)
     }
-    
+
     // MARK: - Reuse
     
     override func prepareForReuse() {
