@@ -79,6 +79,13 @@ public actor DigitransitService {
     public func searchRoutes(query: String, transportMode: String) async throws -> [BusLine] {
         guard !query.isEmpty else { return [] }
 
+        // SECURITY: Prevent GraphQL injection
+        let allowedCharacters = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        guard transportMode.unicodeScalars.allSatisfy({ allowedCharacters.contains($0) }) else {
+            Logger.digitransit.fault("Security Risk: Invalid transport mode detected: \(transportMode, privacy: .public)")
+            throw AppError.unknown("Invalid transport mode")
+        }
+
         let searchQuery = """
             query SearchRoutes($name: String!) {
               routes(name: $name, transportModes: [\(transportMode)]) {
