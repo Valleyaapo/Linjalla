@@ -98,6 +98,42 @@ struct DigitransitServiceTests {
     }
 
     @Test
+    func fetchStopsMergesPatternsUniquely() async throws {
+        let (service, _) = makeService()
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            {
+              "data": {
+                "route": {
+                  "patterns": [
+                    {
+                      "stops": [
+                        { "gtfsId": "HSL:STOP1", "name": "Stop 1", "lat": 60.1, "lon": 24.9 },
+                        { "gtfsId": "HSL:STOP2", "name": "Stop 2", "lat": 60.2, "lon": 24.8 }
+                      ]
+                    },
+                    {
+                      "stops": [
+                        { "gtfsId": "HSL:STOP1", "name": "Stop 1", "lat": 60.1, "lon": 24.9 }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        let stops = try await service.fetchStops(routeId: "HSL:123")
+        let ids = Set(stops.map(\.id))
+        #expect(ids == ["HSL:STOP1", "HSL:STOP2"])
+        #expect(stops.count == 2)
+    }
+
+    @Test
     func fetchDeparturesMapsToDepartures() async throws {
         let (service, _) = makeService()
 
