@@ -56,6 +56,10 @@ class BaseVehicleManager {
     var activeLines: [BusLine] = []
     var currentSubscriptions: Set<String> = []
 
+    private var vehicleUpdateStream: AsyncStream<BusModel>?
+    private var vehicleUpdateContinuation: AsyncStream<BusModel>.Continuation?
+    private var consumerTask: Task<Void, Never>?
+
     // MARK: - Dependencies
 
     private let graphQLService: DigitransitService
@@ -73,7 +77,7 @@ class BaseVehicleManager {
         }
     }
 
-    private let stream = VehicleStream()
+    let stream = VehicleStream()
     private var updateTimer: Timer?
     private var cleanupTimer: Timer?
     private var mockSimulationTimer: Timer?
@@ -108,10 +112,13 @@ class BaseVehicleManager {
         mockSimulationTimer?.invalidate()
         subscriptionTask?.cancel()
         reconnectTask?.cancel()
+        consumerTask?.cancel()
+        vehicleUpdateContinuation?.finish()
     }
 
     func setup() {
         loadFavorites()
+        setupVehicleUpdateStream()
         if isMQTTDisabled {
         } else if connectOnStart {
             setupConnection()
@@ -145,6 +152,19 @@ class BaseVehicleManager {
                 self.isConnected = false
                 self.currentSubscriptions.removeAll()
                 self.isConnecting = false
+            }
+        }
+    }
+
+    private func setupVehicleUpdateStream() {
+        let (stream, continuation) = AsyncStream.makeStream(of: BusModel.self)
+        self.vehicleUpdateStream = stream
+        self.vehicleUpdateContinuation = continuation
+
+        self.consumerTask = Task { [weak self] in
+            for await vehicle in stream {
+                guard let self else { break }
+                await self.stream.buffer(vehicle)
             }
         }
     }
@@ -354,7 +374,7 @@ class BaseVehicleManager {
                     timestamp: vp.tsi ?? Date().timeIntervalSince1970,
                     type: vehicleType
                 )
-                Task { await stream.buffer(vehicle) }
+                vehicleUpdateContinuation?.yield(vehicle)
             }
         } catch {
         }
