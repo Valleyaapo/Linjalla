@@ -192,13 +192,8 @@ struct LineSearchSheet: View {
     }
 
     private func errorMessageKey(for error: Error) -> String {
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost:
-                return NSLocalizedString("ui.error.offline", comment: "")
-            default:
-                break
-            }
+        if NetworkErrorMapper.isOffline(error) {
+            return NSLocalizedString("ui.error.offline", comment: "")
         }
         return NSLocalizedString("ui.error.searchFailed", comment: "")
     }

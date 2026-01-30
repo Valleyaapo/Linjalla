@@ -76,13 +76,7 @@ public actor NetworkService {
         return false
     }
 
-    private func mapError(_ error: Error) -> AppError {
-        if let appError = error as? AppError {
-            return appError
-        }
-        if error is DecodingError {
-            return AppError.decodingError(error.localizedDescription)
-        }
-        return AppError.networkError(error.localizedDescription)
+    private func mapError(_ error: Error) -> Error {
+        NetworkErrorMapper.map(error)
     }
 }

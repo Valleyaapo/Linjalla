@@ -125,12 +125,9 @@ actor GraphQLClient {
         return false
     }
 
-    private func mapError(_ error: Error) -> AppError {
+    private func mapError(_ error: Error) -> Error {
         if let appError = error as? AppError {
             return appError
-        }
-        if let urlError = error as? URLError {
-            return AppError.networkError(urlError.localizedDescription)
         }
         if let clientError = error as? ClientError {
             switch clientError {
@@ -138,9 +135,6 @@ actor GraphQLClient {
                 return AppError.apiError("HTTP \(statusCode)")
             }
         }
-        if error is DecodingError {
-            return AppError.decodingError(error.localizedDescription)
-        }
-        return AppError.networkError(error.localizedDescription)
+        return NetworkErrorMapper.map(error)
     }
 }
