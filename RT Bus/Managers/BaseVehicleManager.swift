@@ -512,7 +512,9 @@ class BaseVehicleManager {
                 guard let self = self, !Task.isCancelled else { return }
                 let hasActiveLines = await MainActor.run { !self.activeLines.isEmpty }
                 guard hasActiveLines else { continue }
-                await self.cleanupStaleVehicles()
+                await MainActor.run {
+                    self.cleanupStaleVehicles()
+                }
             }
         }
     }
