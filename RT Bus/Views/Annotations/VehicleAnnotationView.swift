@@ -14,12 +14,6 @@ final class VehicleAnnotationView: MKAnnotationView {
     static let reuseIdentifier = "VehicleAnnotationView"
     
     // MARK: - UI Components
-
-    private let contentView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
-        return view
-    }()
     
     private let containerView: UIView = {
         let view = UIView()
@@ -89,10 +83,9 @@ final class VehicleAnnotationView: MKAnnotationView {
         centerOffset = .zero
         backgroundColor = .clear
 
-        addSubview(contentView)
-        contentView.addSubview(arrowContainer)
+        addSubview(arrowContainer)
         arrowContainer.layer.addSublayer(arrowShapeLayer)
-        contentView.addSubview(containerView)
+        addSubview(containerView)
         containerView.addSubview(lineLabel)
     }
     
@@ -115,8 +108,6 @@ final class VehicleAnnotationView: MKAnnotationView {
         // Reset the VIEW's own transform and alpha (exit animation targets self)
         transform = .identity
         alpha = 1
-        contentView.transform = .identity
-        contentView.alpha = 1
         
         // Reset subview state
         arrowContainer.transform = .identity
@@ -165,8 +156,6 @@ final class VehicleAnnotationView: MKAnnotationView {
         if frame.width != totalSize {
             frame = CGRect(x: 0, y: 0, width: totalSize, height: totalSize)
         }
-
-        contentView.frame = bounds
         
         // Layout container (circle)
         containerView.frame = CGRect(
@@ -229,8 +218,8 @@ final class VehicleAnnotationView: MKAnnotationView {
         
         // Set initial small state without animation
         UIView.performWithoutAnimation {
-            self.contentView.alpha = 1
-            self.contentView.transform = scale
+            self.alpha = 1
+            self.transform = scale
             self.containerView.alpha = 1
             self.arrowContainer.alpha = 1
             self.containerView.transform = .identity
@@ -242,7 +231,7 @@ final class VehicleAnnotationView: MKAnnotationView {
         
         // Spring animation to full size
         entryAnimator = UIViewPropertyAnimator(duration: 0.25, dampingRatio: 0.8) {
-            self.contentView.transform = .identity
+            self.transform = .identity
         }
         
         entryAnimator?.addCompletion { _ in
@@ -296,8 +285,8 @@ final class VehicleAnnotationView: MKAnnotationView {
             delay: 0,
             options: .curveEaseIn
         ) {
-            self.contentView.transform = CGAffineTransform(scaleX: 0.3, y: 0.3)
-            self.contentView.alpha = 0
+            self.transform = CGAffineTransform(scaleX: 0.3, y: 0.3)
+            self.alpha = 0
         } completion: { _ in
             completion()
         }
