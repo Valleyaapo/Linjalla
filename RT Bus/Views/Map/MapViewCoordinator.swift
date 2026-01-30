@@ -330,43 +330,33 @@ extension MapViewCoordinator: MKMapViewDelegate {
         guard !latestStops.isEmpty else { return [stop] }
         let target = CLLocation(latitude: stop.latitude, longitude: stop.longitude)
 
-        // Calculate bounding boxes for generic vs name-based merge distances
+        // Calculate bounding box for the maximum possible merge distance
+        let maxDistance = max(MapConstants.stopMergeDistanceMeters, MapConstants.stopNameMergeDistanceMeters)
+        // 1 degree latitude is approx 111km
+        let latDelta = maxDistance / 111_111.0
+        // 1 degree longitude is approx 111km * cos(latitude)
+        // Ensure we don't divide by zero near poles
         let cosLat = abs(cos(stop.latitude * .pi / 180.0))
-        let lonScale = 111_111.0 * max(cosLat, 0.0001)
-        let genericLatDelta = MapConstants.stopMergeDistanceMeters / 111_111.0
-        let genericLonDelta = MapConstants.stopMergeDistanceMeters / lonScale
-        let nameLatDelta = MapConstants.stopNameMergeDistanceMeters / 111_111.0
-        let nameLonDelta = MapConstants.stopNameMergeDistanceMeters / lonScale
+        let lonDelta = maxDistance / (111_111.0 * max(cosLat, 0.0001))
 
-        let genericMinLat = stop.latitude - genericLatDelta
-        let genericMaxLat = stop.latitude + genericLatDelta
-        let genericMinLon = stop.longitude - genericLonDelta
-        let genericMaxLon = stop.longitude + genericLonDelta
-
-        let nameMinLat = stop.latitude - nameLatDelta
-        let nameMaxLat = stop.latitude + nameLatDelta
-        let nameMinLon = stop.longitude - nameLonDelta
-        let nameMaxLon = stop.longitude + nameLonDelta
+        let minLat = stop.latitude - latDelta
+        let maxLat = stop.latitude + latDelta
+        let minLon = stop.longitude - lonDelta
+        let maxLon = stop.longitude + lonDelta
 
         let nearby = latestStops.filter { candidate in
-            let isSameName = candidate.name == stop.name
-            // Bounding box check to avoid expensive distance calculation
-            if isSameName {
-                if candidate.latitude < nameMinLat || candidate.latitude > nameMaxLat ||
-                   candidate.longitude < nameMinLon || candidate.longitude > nameMaxLon {
-                    return false
-                }
-            } else {
-                if candidate.latitude < genericMinLat || candidate.latitude > genericMaxLat ||
-                   candidate.longitude < genericMinLon || candidate.longitude > genericMaxLon {
-                    return false
-                }
+            // Fast bounding box check to avoid expensive distance calculation
+            if candidate.latitude < minLat || candidate.latitude > maxLat ||
+               candidate.longitude < minLon || candidate.longitude > maxLon {
+                return false
             }
 
             let location = CLLocation(latitude: candidate.latitude, longitude: candidate.longitude)
             let distance = target.distance(from: location)
-            let threshold = isSameName ? MapConstants.stopNameMergeDistanceMeters : MapConstants.stopMergeDistanceMeters
-            return distance <= threshold
+            if distance <= MapConstants.stopMergeDistanceMeters {
+                return true
+            }
+            return candidate.name == stop.name && distance <= MapConstants.stopNameMergeDistanceMeters
         }
         let stops = nearby.isEmpty ? [stop] : nearby
         let sortedStops = stops.sorted { lhs, rhs in
