@@ -89,11 +89,6 @@ final class VehicleAnnotationView: MKAnnotationView {
         containerView.addSubview(lineLabel)
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        contentView.frame = bounds
-    }
-
     // MARK: - Reuse
     
     override func prepareForReuse() {
@@ -293,8 +288,6 @@ final class VehicleAnnotationView: MKAnnotationView {
             self.transform = CGAffineTransform(scaleX: 0.3, y: 0.3)
             self.alpha = 0
         } completion: { _ in
-            self.contentView.transform = .identity
-            self.contentView.alpha = 1
             completion()
         }
     }
