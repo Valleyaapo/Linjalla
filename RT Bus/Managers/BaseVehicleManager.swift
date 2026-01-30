@@ -80,8 +80,8 @@ class BaseVehicleManager {
     }
 
     let stream = VehicleStream()
-    private var updateTimer: Timer?
-    private var cleanupTimer: Timer?
+    private var updateLoopTask: Task<Void, Never>?
+    private var cleanupLoopTask: Task<Void, Never>?
     private var mockSimulationTimer: Timer?
     private var subscriptionTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
@@ -109,8 +109,8 @@ class BaseVehicleManager {
     }
 
     func cleanup() {
-        updateTimer?.invalidate()
-        cleanupTimer?.invalidate()
+        updateLoopTask?.cancel()
+        cleanupLoopTask?.cancel()
         mockSimulationTimer?.invalidate()
         subscriptionTask?.cancel()
         reconnectTask?.cancel()
@@ -119,6 +119,8 @@ class BaseVehicleManager {
         consumerTask = nil
         vehicleUpdateContinuation = nil
         vehicleUpdateStream = nil
+        updateLoopTask = nil
+        cleanupLoopTask = nil
     }
 
     func setup() {
@@ -130,8 +132,8 @@ class BaseVehicleManager {
         } else if connectOnStart {
             setupConnection()
         }
-        startCleanupTimer()
-        startUpdateTimer()
+        startCleanupLoop()
+        startUpdateLoop()
     }
 
     // MARK: - Connection Management
@@ -144,8 +146,8 @@ class BaseVehicleManager {
         if vehicleUpdateContinuation == nil {
             setupVehicleUpdateStream()
         }
-        startCleanupTimer()
-        startUpdateTimer()
+        startCleanupLoop()
+        startUpdateLoop()
         setupConnection()
     }
 
@@ -445,13 +447,15 @@ class BaseVehicleManager {
 
     // MARK: - Update Timer
 
-    private func startUpdateTimer() {
-        updateTimer?.invalidate()
+    private func startUpdateLoop() {
+        updateLoopTask?.cancel()
 
-        updateTimer = Timer.scheduledTimer(withTimeInterval: VehicleManagerConstants.updateInterval, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            Task { @MainActor in
-                guard !self.activeLines.isEmpty else { return }
+        updateLoopTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(VehicleManagerConstants.updateInterval))
+                guard let self = self, !Task.isCancelled else { return }
+                let hasActiveLines = await MainActor.run { !self.activeLines.isEmpty }
+                guard hasActiveLines else { continue }
                 await self.flushUpdates()
             }
         }
@@ -500,13 +504,15 @@ class BaseVehicleManager {
 
     // MARK: - Cleanup Timer
 
-    private func startCleanupTimer() {
-        cleanupTimer?.invalidate()
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: VehicleManagerConstants.cleanupInterval, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            Task { @MainActor in
-                guard !self.activeLines.isEmpty else { return }
-                self.cleanupStaleVehicles()
+    private func startCleanupLoop() {
+        cleanupLoopTask?.cancel()
+        cleanupLoopTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(VehicleManagerConstants.cleanupInterval))
+                guard let self = self, !Task.isCancelled else { return }
+                let hasActiveLines = await MainActor.run { !self.activeLines.isEmpty }
+                guard hasActiveLines else { continue }
+                await self.cleanupStaleVehicles()
             }
         }
     }
