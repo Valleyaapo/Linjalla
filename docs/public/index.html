@@ -5,7 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Linjalla — Reaaliaikainen joukkoliikenne taskussasi</title>
   <meta name="description"
-    content="Linjalla on kevyt iOS-sovellus bussien ja raitiovaunujen reaaliaikaiseen seurantaan sekä tarkkoihin juna-aikatauluihin." />
+    content="Linjalla on kevyt iOS-sovellus Helsingin bussien ja raitiovaunujen reaaliaikaiseen seurantaan sekä tarkkoihin juna-aikatauluihin. Näe pysäkit ja kulkuneuvot kartalla." />
+  <meta name="keywords"
+    content="Helsinki, HSL, bussi, raitiovaunu, metro, juna, joukkoliikenne, reaaliaikainen, pysäkki, aikataulu, Linjalla, iOS, sovellus, pääkaupunkiseutu" />
+  <link rel="canonical" href="https://www.linjalla.lintu.dev/" />
+  <link rel="alternate" hreflang="fi" href="https://www.linjalla.lintu.dev/" />
+  <link rel="alternate" hreflang="en" href="https://www.linjalla.lintu.dev/en.html" />
+  <link rel="icon" type="image/png" href="bussit_icon.png" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.linjalla.lintu.dev/" />
+  <meta property="og:title" content="Linjalla — Reaaliaikainen joukkoliikenne taskussasi" />
+  <meta property="og:description"
+    content="Linjalla on kevyt iOS-sovellus Helsingin bussien ja raitiovaunujen reaaliaikaiseen seurantaan sekä tarkkoihin juna-aikatauluihin. Näe pysäkit ja kulkuneuvot kartalla." />
+  <meta property="og:image" content="https://www.linjalla.lintu.dev/bussit_icon.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://www.linjalla.lintu.dev/" />
+  <meta property="twitter:title" content="Linjalla — Reaaliaikainen joukkoliikenne taskussasi" />
+  <meta property="twitter:description"
+    content="Linjalla on kevyt iOS-sovellus Helsingin bussien ja raitiovaunujen reaaliaikaiseen seurantaan sekä tarkkoihin juna-aikatauluihin. Näe pysäkit ja kulkuneuvot kartalla." />
+  <meta property="twitter:image" content="https://www.linjalla.lintu.dev/bussit_icon.png" />
+
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
@@ -357,10 +380,9 @@
 
     <section class="hero">
       <div class="hero-text">
-        <h1>Seuraa busseja ja raitiovaunuja livenä kartalla.</h1>
+        <h1>Näe Helsingin bussit ja raitiovaunut livenä kartalla</h1>
         <p>
-          Näe kulkuneuvot liikkumassa kartalla reaaliajassa. Linjalla näyttää tarkalleen missä
-          kyytisi on, jotta tiedät milloin pitää lähteä pysäkille.
+          Linjalla näyttää tarkalleen missä kulkuvälineet ovat, jotta tiedät milloin pitää lähteä pysäkille.
         </p>
         <div class="cta-group">
           <a href="https://apps.apple.com/fi/app/linjalla/id6757194796" target="_blank"
@@ -375,22 +397,13 @@
         </div>
       </div>
       <div class="hero-card" style="padding: 0; overflow: hidden; height: 480px; position: relative;">
-        <!-- Live Badge Overlay -->
-        <div style="position: absolute; top: 16px; left: 16px; z-index: 10; pointer-events: none;">
-          <span class="status-pill"
-            style="background: rgba(11, 13, 18, 0.85); backdrop-filter: blur(8px); padding: 8px 16px; border: 1px solid rgba(255,255,255,0.1);">
-            <span
-              style="width: 8px; height: 8px; background: #00985f; border-radius: 50%; display: inline-block; margin-right: 6px;"></span>
-            Esikatselu
-          </span>
-        </div>
         <div id="map" style="width: 100%; height: 100%;"></div>
       </div>
     </section>
 
     <section id="features" class="section">
       <div>
-        <h2 class="section-title">Miksi matkustajat valitsevat Linjan</h2>
+        <h2 class="section-title">Miksi matkustajat valitsevat Linjalla</h2>
         <p class="trust">Suunniteltu nopeaksi ja luotettavaksi kiireisinä päivinä.</p>
       </div>
       <div class="feature-grid">
@@ -443,7 +456,7 @@
     </section>
 
     <footer>
-      <div>© 2026 Lintu Developer Solutions.</div>
+      <div>© 2026 Lintu Developer Solutions. Tehty Helsingin matkustajille.</div>
       <div class="badge-row">
         <a href="privacy.html" class="badge">Yksityisyys edellä</a>
         <span class="badge">Reaaliaikainen HSL-data</span>
