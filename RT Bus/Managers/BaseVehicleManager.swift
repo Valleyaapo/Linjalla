@@ -114,11 +114,16 @@ class BaseVehicleManager {
         reconnectTask?.cancel()
         consumerTask?.cancel()
         vehicleUpdateContinuation?.finish()
+        consumerTask = nil
+        vehicleUpdateContinuation = nil
+        vehicleUpdateStream = nil
     }
 
     func setup() {
         loadFavorites()
-        setupVehicleUpdateStream()
+        if vehicleUpdateContinuation == nil {
+            setupVehicleUpdateStream()
+        }
         if isMQTTDisabled {
         } else if connectOnStart {
             setupConnection()
@@ -133,6 +138,9 @@ class BaseVehicleManager {
         guard !isConnected else { return }
         guard !isMQTTDisabled else {
             return
+        }
+        if vehicleUpdateContinuation == nil {
+            setupVehicleUpdateStream()
         }
         startCleanupTimer()
         startUpdateTimer()
@@ -157,7 +165,10 @@ class BaseVehicleManager {
     }
 
     private func setupVehicleUpdateStream() {
-        let (stream, continuation) = AsyncStream.makeStream(of: BusModel.self)
+        let (stream, continuation) = AsyncStream.makeStream(
+            of: BusModel.self,
+            bufferingPolicy: .bufferingNewest(1_000)
+        )
         self.vehicleUpdateStream = stream
         self.vehicleUpdateContinuation = continuation
 

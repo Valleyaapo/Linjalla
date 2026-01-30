@@ -24,13 +24,14 @@ struct VehicleManagerPerformanceTests {
         }
 
         let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(20))
+        var processedCount = 0
         let elapsed = await clock.measure {
             for payload in payloads {
                 manager.processMessage(topicName: "/hfp/v2/journey/ongoing/vp/bus/HSL/1/10/1001/1", payload: payload)
             }
 
-            var processedCount = 0
-            while processedCount < iterations {
+            while processedCount < iterations && clock.now < deadline {
                 await Task.yield()
                 // Small sleep to allow async tasks to complete
                 try? await Task.sleep(for: .milliseconds(10))
@@ -39,6 +40,7 @@ struct VehicleManagerPerformanceTests {
                 processedCount += drained.count
             }
         }
+        #expect(processedCount == iterations)
         print("PERFORMANCE_METRIC: Processed \(iterations) messages in \(elapsed)")
     }
 }
