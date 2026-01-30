@@ -325,11 +325,32 @@ extension MapViewCoordinator: MKMapViewDelegate {
         }
     }
 
-    private func mergedStops(around annotation: StopAnnotation) -> [BusStop] {
+    func mergedStops(around annotation: StopAnnotation) -> [BusStop] {
         let stop = stopFromLatest(for: annotation)
         guard !latestStops.isEmpty else { return [stop] }
         let target = CLLocation(latitude: stop.latitude, longitude: stop.longitude)
+
+        // Calculate bounding box for the maximum possible merge distance
+        let maxDistance = max(MapConstants.stopMergeDistanceMeters, MapConstants.stopNameMergeDistanceMeters)
+        // 1 degree latitude is approx 111km
+        let latDelta = maxDistance / 111_111.0
+        // 1 degree longitude is approx 111km * cos(latitude)
+        // Ensure we don't divide by zero near poles
+        let cosLat = abs(cos(stop.latitude * .pi / 180.0))
+        let lonDelta = maxDistance / (111_111.0 * max(cosLat, 0.0001))
+
+        let minLat = stop.latitude - latDelta
+        let maxLat = stop.latitude + latDelta
+        let minLon = stop.longitude - lonDelta
+        let maxLon = stop.longitude + lonDelta
+
         let nearby = latestStops.filter { candidate in
+            // Fast bounding box check to avoid expensive distance calculation
+            if candidate.latitude < minLat || candidate.latitude > maxLat ||
+               candidate.longitude < minLon || candidate.longitude > maxLon {
+                return false
+            }
+
             let location = CLLocation(latitude: candidate.latitude, longitude: candidate.longitude)
             let distance = target.distance(from: location)
             if distance <= MapConstants.stopMergeDistanceMeters {
