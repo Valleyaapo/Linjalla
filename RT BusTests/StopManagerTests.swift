@@ -45,6 +45,32 @@ struct StopManagerTests {
         override func stopLoading() {}
     }
 
+    final class CancellableURLProtocol: URLProtocol {
+        nonisolated(unsafe) static var didStart = false
+        nonisolated(unsafe) static var didStop = false
+
+        static func reset() {
+            didStart = false
+            didStop = false
+        }
+
+        override class func canInit(with request: URLRequest) -> Bool {
+            true
+        }
+
+        override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+            request
+        }
+
+        override func startLoading() {
+            Self.didStart = true
+        }
+
+        override func stopLoading() {
+            Self.didStop = true
+        }
+    }
+
     @Test
     func fetchDepartures() async throws {
         // Setup
@@ -164,6 +190,23 @@ struct StopManagerTests {
         #expect(stopManager.allStops.first?.id == "HSL:STOPA")
         #expect(requestedLineIds.contains("HSL:LINEA"))
         #expect(requestedLineIds.contains("HSL:LINEB"))
+    }
+
+    @Test
+    func updateStopsCancelsInFlightFetch() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [CancellableURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let stopManager = StopManager(urlSession: session)
+
+        let lineA = BusLine(id: "HSL:LINEA", shortName: "A", longName: "Line A")
+        CancellableURLProtocol.reset()
+
+        stopManager.updateStops(for: [lineA])
+        try await waitUntil { CancellableURLProtocol.didStart }
+
+        stopManager.updateStops(for: [])
+        try await waitUntil { CancellableURLProtocol.didStop }
     }
 
     private func waitUntil(

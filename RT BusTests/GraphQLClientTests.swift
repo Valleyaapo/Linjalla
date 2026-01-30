@@ -81,6 +81,27 @@ struct GraphQLClientTests {
         }
     }
 
+    @Test
+    func offlineURLErrorPassesThrough() async {
+        let client = makeClient()
+        GraphQLClientTestURLProtocol.requestHandler = { _ in
+            throw URLError(.notConnectedToInternet)
+        }
+
+        do {
+            let _: GraphQLRouteResponse = try await client.request(
+                query: "query",
+                variables: SearchRoutesVars(name: "x"),
+                as: GraphQLRouteResponse.self
+            )
+            Issue.record("Expected offline error")
+        } catch {
+            let urlError = error as? URLError
+            #expect(urlError != nil)
+            #expect(urlError?.code == .notConnectedToInternet)
+        }
+    }
+
     private func makeClient() -> GraphQLClient {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [GraphQLClientTestURLProtocol.self]
