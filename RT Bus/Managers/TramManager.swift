@@ -18,7 +18,7 @@ final class TramManager: BaseVehicleManager {
 
     nonisolated override var vehicleType: BusModel.VehicleType { .tram }
     nonisolated override var topicPrefix: String { "tram" }
-    nonisolated override var transportMode: String { "TRAM" }
+    nonisolated override var transportMode: TransportMode { .tram }
     nonisolated override var favoritesKey: String { "FavoriteTramLines" }
 
     override var defaultFavorites: [BusLine] {
