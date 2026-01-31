@@ -32,7 +32,7 @@ class BaseVehicleManager {
     nonisolated var topicPrefix: String { "bus" }
 
     /// The GraphQL transport mode filter (e.g., "BUS" or "TRAM")
-    nonisolated var transportMode: String { "BUS" }
+    nonisolated var transportMode: TransportMode { .bus }
 
     /// The UserDefaults key for storing favorites
     nonisolated var favoritesKey: String { "FavoriteLines" }
