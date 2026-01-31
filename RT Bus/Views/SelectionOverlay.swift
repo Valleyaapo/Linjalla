@@ -220,6 +220,7 @@ struct SelectionOverlay: View {
                         .background(Circle().fill(.white.opacity(0.2)))
                     }
                     .accessibilityIdentifier("AddLineButton")
+                    .accessibilityLabel(Text("ui.title.search"))
                     .padding(.trailing, 20)
                 }
                 .background(.ultraThinMaterial)
