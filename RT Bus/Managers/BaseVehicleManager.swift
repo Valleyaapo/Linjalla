@@ -64,6 +64,8 @@ class BaseVehicleManager {
 
     private let graphQLService: DigitransitService
     private let connectOnStart: Bool
+    // Shared decoder to reduce allocation overhead in high-frequency updates
+    private let decoder = JSONDecoder()
 
     private var _clientContainer: MQTTClientContainer?
     var client: MQTTClient? {
@@ -370,8 +372,7 @@ class BaseVehicleManager {
         let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
 
         do {
-            let decoder = JSONDecoder()
-            let response = try decoder.decode(LocalResponse.self, from: payload)
+            let response = try self.decoder.decode(LocalResponse.self, from: payload)
             let vp = response.VP
 
             if let lat = vp.lat, let long = vp.long, let desi = vp.desi {
