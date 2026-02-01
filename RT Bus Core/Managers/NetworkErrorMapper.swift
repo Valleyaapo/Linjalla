@@ -20,11 +20,10 @@ public enum NetworkErrorMapper {
 
     public static func isOffline(_ error: Error) -> Bool {
         guard let urlError = error as? URLError else {
-            if let nsError = error as NSError?, nsError.domain == NSURLErrorDomain,
-               let code = URLError.Code(rawValue: nsError.code) {
-                return offlineCodes.contains(code)
-            }
-            return false
+            let nsError = error as NSError
+            guard nsError.domain == NSURLErrorDomain else { return false }
+            let code = URLError.Code(rawValue: nsError.code)
+            return offlineCodes.contains(code)
         }
         return offlineCodes.contains(urlError.code)
     }
