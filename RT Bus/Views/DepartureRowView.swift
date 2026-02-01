@@ -11,6 +11,15 @@ import RTBusCore
 struct DepartureRowView: View {
     let departure: Departure
     
+    private var accessibilityString: String {
+        var components = ["\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign)"]
+        if let platform = departure.platform {
+            components.append(String(format: NSLocalizedString("ui.label.platform", comment: ""), platform))
+        }
+        components.append(DepartureFormatting.timeUntil(departure.departureDate))
+        return components.joined(separator: ". ")
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Text(departure.lineName)
@@ -52,9 +61,7 @@ struct DepartureRowView: View {
                 .foregroundStyle(.green)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign). \(DepartureFormatting.timeUntil(departure.departureDate))"
-        )
+        .accessibilityLabel(accessibilityString)
         .accessibilityIdentifier("DepartureRow_\(departure.lineName)")
     }
 }
