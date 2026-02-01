@@ -31,6 +31,9 @@ final class TrainStationAnnotationView: MKAnnotationView {
         canShowCallout = false
         isUserInteractionEnabled = true
         backgroundColor = .clear
+        isAccessibilityElement = false
+        actionButton.isAccessibilityElement = true
+        actionButton.accessibilityTraits = .button
 
         actionButton.addTarget(self, action: #selector(handleTap), for: .touchDown)
         addSubview(actionButton)
@@ -41,6 +44,7 @@ final class TrainStationAnnotationView: MKAnnotationView {
         tapHandler = nil
         actionButton.accessibilityIdentifier = nil
         actionButton.accessibilityLabel = nil
+        actionButton.accessibilityHint = nil
     }
 
     func configure(with station: TrainStation, zoomLevel: Double, onTap: @escaping () -> Void) {
@@ -51,15 +55,24 @@ final class TrainStationAnnotationView: MKAnnotationView {
             applyDotStyle()
             actionButton.isUserInteractionEnabled = false
             isUserInteractionEnabled = false
+            actionButton.isAccessibilityElement = false
+            accessibilityElementsHidden = true
         } else {
             applyIconStyle()
             actionButton.isUserInteractionEnabled = true
             isUserInteractionEnabled = true
+            actionButton.isAccessibilityElement = true
+            accessibilityElementsHidden = false
         }
 
         let safeId = station.id.replacingOccurrences(of: ":", with: "_")
+        let label = String(
+            format: NSLocalizedString("access.annotation.trainStation", comment: ""),
+            station.name
+        )
         actionButton.accessibilityIdentifier = "TrainStation_\(safeId)"
-        actionButton.accessibilityLabel = station.name
+        actionButton.accessibilityLabel = label
+        actionButton.accessibilityHint = NSLocalizedString("access.annotation.trainStation.hint", comment: "")
 
         layoutButtonForCurrentStyle()
 

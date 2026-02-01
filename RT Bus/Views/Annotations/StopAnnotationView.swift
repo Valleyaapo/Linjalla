@@ -20,17 +20,22 @@ final class StopAnnotationView: MKAnnotationView {
         view.backgroundColor = .white
         view.layer.borderWidth = 1
         view.layer.borderColor = UIColor.gray.cgColor
+        view.isAccessibilityElement = false
         return view
     }()
     
     private let nameLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 10, weight: .medium)
+        label.font = UIFontMetrics(forTextStyle: .caption2).scaledFont(
+            for: .systemFont(ofSize: 10, weight: .medium)
+        )
+        label.adjustsFontForContentSizeCategory = true
         label.textColor = .label // Adapts to light/dark mode
         label.textAlignment = .center
         label.backgroundColor = .systemBackground.withAlphaComponent(0.9)
         label.layer.cornerRadius = 4
         label.layer.masksToBounds = true
+        label.isAccessibilityElement = false
         return label
     }()
     
@@ -54,6 +59,7 @@ final class StopAnnotationView: MKAnnotationView {
     
     private func setupView() {
         canShowCallout = false
+        isAccessibilityElement = true
         // Default frame, will be adjusted in configure
         frame = CGRect(x: 0, y: 0, width: 30, height: 30)
         
@@ -95,6 +101,13 @@ final class StopAnnotationView: MKAnnotationView {
         // Z-Priority: STOPS UNDERNEATH
         displayPriority = .defaultLow
         zPriority = .min
+
+        accessibilityLabel = String(
+            format: NSLocalizedString("access.annotation.stop", comment: ""),
+            annotation.stopName
+        )
+        accessibilityHint = NSLocalizedString("access.annotation.stop.hint", comment: "")
+        accessibilityTraits = .button
     }
 
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {

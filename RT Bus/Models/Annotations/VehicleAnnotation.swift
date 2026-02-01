@@ -34,6 +34,8 @@ final class VehicleAnnotation: NSObject, MKAnnotation {
     
     private(set) var vehicleId: Int
     private(set) var lineName: String
+    private(set) var headsign: String?
+    private(set) var lastUpdated: TimeInterval
     
     // Using @objc dynamic to allow KVO observation in the View
     // Using Double for easier CoreGraphics rotation conversion
@@ -49,6 +51,8 @@ final class VehicleAnnotation: NSObject, MKAnnotation {
         self.coordinate = model.coordinate
         self.vehicleId = model.id
         self.lineName = model.lineName
+        self.headsign = model.headsign
+        self.lastUpdated = model.timestamp
         self.headingDegrees = Double(model.heading ?? -1)
         self.vehicleType = type
         self.needsEntryAnimation = true
@@ -64,6 +68,8 @@ final class VehicleAnnotation: NSObject, MKAnnotation {
     /// Update annotation data with smooth animation to new position.
     func update(from model: BusModel) {
         lineName = model.lineName
+        headsign = model.headsign
+        lastUpdated = model.timestamp
         headingDegrees = Double(model.heading ?? -1)
 
         let latDelta = abs(model.coordinate.latitude - coordinate.latitude)

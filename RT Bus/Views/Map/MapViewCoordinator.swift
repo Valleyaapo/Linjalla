@@ -237,6 +237,7 @@ final class MapViewCoordinator: NSObject {
                 // Entry animation handled via viewFor/prepareForDisplay.
                 continue
             } else {
+                view.updateAccessibility(for: annotation)
                 // Update animation (heading)
                 let generation = state.beginUpdating(to: annotation.coordinate, heading: annotation.headingDegrees)
                 view.animateUpdate(
@@ -352,6 +353,13 @@ extension MapViewCoordinator: MKMapViewDelegate {
             view.markerTintColor = .gray
             view.glyphText = "\(cluster.memberAnnotations.count)"
             view.displayPriority = .defaultLow
+            view.isAccessibilityElement = true
+            view.accessibilityTraits = .button
+            view.accessibilityLabel = String(
+                format: NSLocalizedString("access.annotation.cluster", comment: ""),
+                cluster.memberAnnotations.count
+            )
+            view.accessibilityHint = NSLocalizedString("access.annotation.stop.hint", comment: "")
             return view
         }
         

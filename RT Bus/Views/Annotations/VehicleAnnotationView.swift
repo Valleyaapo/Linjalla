@@ -31,7 +31,10 @@ final class VehicleAnnotationView: MKAnnotationView {
     
     private let lineLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .bold)
+        label.font = UIFontMetrics(forTextStyle: .caption1).scaledFont(
+            for: .systemFont(ofSize: 12, weight: .bold)
+        )
+        label.adjustsFontForContentSizeCategory = true
         label.textColor = .white
         label.textAlignment = .center
         return label
@@ -91,6 +94,7 @@ final class VehicleAnnotationView: MKAnnotationView {
         frame = CGRect(x: 0, y: 0, width: 60, height: 60)
         centerOffset = .zero
         backgroundColor = .clear
+        isAccessibilityElement = true
 
         addSubview(arrowContainer)
         arrowContainer.layer.addSublayer(arrowShapeLayer)
@@ -179,6 +183,7 @@ final class VehicleAnnotationView: MKAnnotationView {
         // Z-Priority: VEHICLES ON TOP
         displayPriority = .required
         zPriority = .max
+        updateAccessibility(for: annotation)
     }
 
     override func layoutSubviews() {
@@ -315,5 +320,49 @@ final class VehicleAnnotationView: MKAnnotationView {
         } else {
             arrowContainer.isHidden = true
         }
+    }
+
+    func updateAccessibility(for annotation: VehicleAnnotation) {
+        configureAccessibility(with: annotation)
+    }
+
+    private func configureAccessibility(with annotation: VehicleAnnotation) {
+        let labelKey = annotation.vehicleType == .bus ? "access.annotation.bus" : "access.annotation.tram"
+        accessibilityLabel = String(
+            format: NSLocalizedString(labelKey, comment: ""),
+            annotation.lineName
+        )
+
+        var valueParts: [String] = []
+        if let headsign = annotation.headsign, !headsign.isEmpty {
+            let destination = String(
+                format: NSLocalizedString("access.annotation.vehicleDestination", comment: ""),
+                headsign
+            )
+            valueParts.append(destination)
+        }
+        if let updated = accessibilityUpdatedText(since: annotation.lastUpdated) {
+            valueParts.append(updated)
+        }
+        accessibilityValue = valueParts.isEmpty ? nil : valueParts.joined(separator: ", ")
+        accessibilityTraits = [.staticText, .updatesFrequently]
+    }
+
+    private func accessibilityUpdatedText(since timestamp: TimeInterval) -> String? {
+        guard timestamp > 0 else { return nil }
+        let elapsed = max(0, Date().timeIntervalSince1970 - timestamp)
+        if elapsed < 5 {
+            return NSLocalizedString("access.annotation.updated.justNow", comment: "")
+        }
+        if elapsed < 60 {
+            return String(
+                format: NSLocalizedString("access.annotation.updated.seconds", comment: ""),
+                Int(elapsed)
+            )
+        }
+        return String(
+            format: NSLocalizedString("access.annotation.updated.minutes", comment: ""),
+            Int(elapsed / 60)
+        )
     }
 }

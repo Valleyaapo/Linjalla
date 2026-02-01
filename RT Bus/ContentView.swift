@@ -89,6 +89,7 @@ struct ContentView: View {
                 },
                 onBusDepartures: { presentDepartures() }
             )
+            .accessibilitySortPriority(0)
             
             SelectionOverlay(
                 busLines: busManager.favoriteLines,
@@ -102,6 +103,7 @@ struct ContentView: View {
                 onCenterUser: { centerOnUser() },
                 onTickets: { openTickets() }
             )
+            .accessibilitySortPriority(1)
         }
         .sheet(isPresented: $isSearchPresented) {
             LineSearchSheet()

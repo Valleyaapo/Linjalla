@@ -30,9 +30,15 @@ final class MapAnchorAnnotationView: MKAnnotationView {
         canShowCallout = false
         isUserInteractionEnabled = true
         backgroundColor = .clear
+        isAccessibilityElement = false
+        actionButton.isAccessibilityElement = true
+        actionButton.accessibilityTraits = .button
 
         actionButton.addTarget(self, action: #selector(handleTap), for: .touchDown)
-        actionButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
+        actionButton.titleLabel?.font = UIFontMetrics(forTextStyle: .caption1).scaledFont(
+            for: .systemFont(ofSize: 13, weight: .semibold)
+        )
+        actionButton.titleLabel?.adjustsFontForContentSizeCategory = true
         addSubview(actionButton)
     }
 
@@ -91,7 +97,9 @@ final class MapAnchorAnnotationView: MKAnnotationView {
         config.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 10, bottom: 5, trailing: 10)
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 11, weight: .semibold)
+            outgoing.font = UIFontMetrics(forTextStyle: .caption1).scaledFont(
+                for: .systemFont(ofSize: 11, weight: .semibold)
+            )
             return outgoing
         }
         applyConfiguration(
