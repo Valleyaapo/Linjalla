@@ -8,6 +8,7 @@ struct EmptyVars: Encodable, Sendable {}
 
 struct SearchRoutesVars: Encodable, Sendable {
     let name: String
+    let modes: [String]
 }
 
 struct DeparturesVars: Encodable, Sendable {

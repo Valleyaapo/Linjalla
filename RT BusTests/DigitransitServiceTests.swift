@@ -230,6 +230,36 @@ struct DigitransitServiceTests {
         }
     }
 
+    @Test
+    func searchRoutesEncodesTypedVariables() async throws {
+        let (service, _) = makeService()
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let body = try requestBodyData(request)
+            let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+
+            // Verify query string structure
+            let query = try #require(json["query"] as? String)
+            #expect(query.contains("$modes: [Mode]!"))
+            #expect(query.contains("transportModes: $modes"))
+
+            // Verify variables
+            let variables = try #require(json["variables"] as? [String: Any])
+            #expect(variables["name"] as? String == "123")
+
+            let modes = try #require(variables["modes"] as? [String])
+            #expect(modes == ["BUS"])
+
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            { "data": { "routes": [] } }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        _ = try await service.searchRoutes(query: "123", transportMode: .bus)
+    }
+
     private func makeService() -> (DigitransitService, String) {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [DigitransitServiceTestURLProtocol.self]
