@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RT Bus Codebase Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f1e8;
+      --ink: #1b1b1b;
+      --ink-soft: #2f2f2f;
+      --accent: #0f766e;
+      --accent-warm: #e07a5f;
+      --paper: #fff7ec;
+      --grid: #e7dccb;
+      --code-bg: #2f2f2f;
+      --code-ink: #f5efe6;
+      --shadow: 0 8px 24px rgba(16, 16, 16, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      line-height: 1.6;
+    }
+
+    body {
+      background-image:
+        radial-gradient(circle at 20% 10%, rgba(15, 118, 110, 0.06), transparent 40%),
+        radial-gradient(circle at 85% 15%, rgba(224, 122, 95, 0.08), transparent 45%),
+        linear-gradient(transparent 29px, rgba(231, 220, 203, 0.6) 30px),
+        linear-gradient(90deg, transparent 29px, rgba(231, 220, 203, 0.6) 30px);
+      background-size: auto, auto, 30px 30px, 30px 30px;
+    }
+
+    .page {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      gap: 28px;
+      padding: 28px;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+
+    .toc {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      padding: 18px;
+      border: 1px solid var(--grid);
+      background: var(--paper);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+    }
+
+    .toc h2 {
+      font-family: "Fraunces", serif;
+      font-size: 20px;
+      margin: 0 0 12px;
+    }
+
+    .toc a {
+      display: block;
+      text-decoration: none;
+      color: var(--ink-soft);
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .toc a.active {
+      background: rgba(15, 118, 110, 0.1);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .toc a:hover {
+      background: rgba(224, 122, 95, 0.1);
+      color: var(--accent-warm);
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .hero {
+      padding: 28px 32px;
+      background: var(--paper);
+      border-radius: 20px;
+      border: 1px solid var(--grid);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 45%);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-family: "Fraunces", serif;
+      font-size: 44px;
+      margin: 0 0 8px;
+    }
+
+    .hero p {
+      max-width: 760px;
+      font-size: 17px;
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      padding: 6px 10px;
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+
+    section {
+      padding: 22px 28px;
+      background: var(--paper);
+      border-radius: 18px;
+      border: 1px solid var(--grid);
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.6s ease both;
+    }
+
+    h2 {
+      font-family: "Fraunces", serif;
+      font-size: 28px;
+      margin-top: 0;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .callout {
+      background: rgba(224, 122, 95, 0.12);
+      border-left: 4px solid var(--accent-warm);
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .file-ref {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      color: var(--code-ink);
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .diagram {
+      margin: 18px 0;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px dashed var(--grid);
+      background: #fff;
+    }
+
+    .diagram svg { width: 100%; height: auto; }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .card {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #fffaf3;
+      border: 1px solid var(--grid);
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .table th, .table td {
+      border-bottom: 1px solid var(--grid);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .table th {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .pill-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .codeblock {
+      background: var(--code-bg);
+      color: var(--code-ink);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      overflow-x: auto;
+    }
+
+    code { font-family: "IBM Plex Mono", monospace; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      .toc { position: static; max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="toc">
+      <h2>Atlas Contents</h2>
+      <a href="#overview">Overview</a>
+      <a href="#boot">Boot Sequence</a>
+      <a href="#system-map">System Map</a>
+      <a href="#data-sources">Data Sources</a>
+      <a href="#core-models">Core Models</a>
+      <a href="#state-managers">State & Managers</a>
+      <a href="#mqtt">MQTT Vehicle Pipeline</a>
+      <a href="#stops">Stops & Departures Pipeline</a>
+      <a href="#trains">Train Pipeline</a>
+      <a href="#map-pipeline">Map Rendering Pipeline</a>
+      <a href="#animation">Animation System</a>
+      <a href="#user-flows">User Flows</a>
+      <a href="#performance">Concurrency & Performance</a>
+      <a href="#errors">Error Handling</a>
+      <a href="#testing">Testing Strategy</a>
+      <a href="#extending">Extending the App</a>
+      <a href="#glossary">Glossary</a>
+    </aside>
+
+    <main class="content">
+      <header class="hero">
+        <div class="badge">RT Bus • Codebase Atlas</div>
+        <h1>How this codebase works (deep technical)</h1>
+        <p>This guide explains RT Bus from the inside out: data sources, manager layers, MapKit bridge, concurrency and caching strategies, and the UI flows that connect them.</p>
+      </header>
+
+      <section id="overview">
+        <h2>Overview</h2>
+        <p>RT Bus is a MapKit‑driven SwiftUI app that renders high‑frequency vehicle updates (MQTT) and stop/station metadata (GraphQL + Digitraffic). The app’s key constraint is performance under constant streams.</p>
+        <div class="callout"><strong>Why it exists:</strong> maintain real‑time responsiveness while avoiding SwiftUI invalidation storms and MapKit churn.</div>
+        <ul>
+          <li>App root + environment managers: <span class="file-ref">RT Bus/RT_BusApp.swift</span></li>
+          <li>UI orchestration: <span class="file-ref">RT Bus/ContentView.swift</span></li>
+          <li>Architecture notes: <span class="file-ref">docs/ARCHITECTURE.md</span></li>
+        </ul>
+      </section>
+
+      <section id="boot">
+        <h2>Boot Sequence</h2>
+        <p>Startup wires managers into SwiftUI environment, then kicks off location + station fetch.</p>
+        <div class="two-col">
+          <div class="card">
+            <h3>Initialization</h3>
+            <ul>
+              <li>Create <code>BusManager</code>, <code>TramManager</code>, <code>StopManager</code></li>
+              <li>Inject via <code>@Environment</code></li>
+              <li>SelectionStore created with managers</li>
+            </ul>
+            <p><span class="file-ref">RT Bus/RT_BusApp.swift</span></p>
+          </div>
+          <div class="card">
+            <h3>First tasks</h3>
+            <ul>
+              <li>Request location auth</li>
+              <li>Load selected lines</li>
+              <li>Fetch train stations (Digitransit + metadata)</li>
+            </ul>
+            <p><span class="file-ref">RT Bus/ContentView.swift</span></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="system-map">
+        <h2>System Map</h2>
+        <p>Data flows from external APIs into managers, coalesces into map items, and renders via a UIKit bridge.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 900 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="System map">
+            <defs>
+              <style>
+                .box { fill: #fffaf3; stroke: #0f766e; stroke-width: 2; rx: 12; }
+                .box-warm { fill: #fff3ef; stroke: #e07a5f; stroke-width: 2; rx: 12; }
+                .label { font: 14px 'IBM Plex Sans', sans-serif; fill: #1b1b1b; }
+                .mono { font: 12px 'IBM Plex Mono', monospace; fill: #1b1b1b; }
+                .arrow { stroke: #1b1b1b; stroke-width: 2; marker-end: url(#arrow); }
+              </style>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6" fill="#1b1b1b" />
+              </marker>
+            </defs>
+            <rect class="box" x="40" y="40" width="180" height="70" />
+            <text class="label" x="60" y="72">MQTT</text>
+            <text class="mono" x="60" y="92">vehicle stream</text>
+
+            <rect class="box" x="40" y="140" width="180" height="70" />
+            <text class="label" x="60" y="172">Digitransit</text>
+            <text class="mono" x="60" y="192">GraphQL API</text>
+
+            <rect class="box" x="40" y="240" width="180" height="70" />
+            <text class="label" x="60" y="272">Digitraffic</text>
+            <text class="mono" x="60" y="292">station metadata</text>
+
+            <rect class="box-warm" x="300" y="80" width="220" height="80" />
+            <text class="label" x="318" y="118">Managers</text>
+            <text class="mono" x="318" y="138">Bus/Tram/Stop/Train</text>
+
+            <rect class="box-warm" x="300" y="200" width="220" height="80" />
+            <text class="label" x="318" y="238">SelectionStore</text>
+            <text class="mono" x="318" y="258">line selection orchestration</text>
+
+            <rect class="box" x="580" y="140" width="220" height="80" />
+            <text class="label" x="598" y="178">MapStateManager</text>
+            <text class="mono" x="598" y="198">coalesced map items</text>
+
+            <rect class="box" x="580" y="250" width="220" height="80" />
+            <text class="label" x="598" y="288">MapKit + SwiftUI</text>
+            <text class="mono" x="598" y="308">annotations + sheets</text>
+
+            <line class="arrow" x1="220" y1="75" x2="300" y2="110" />
+            <line class="arrow" x1="220" y1="175" x2="300" y2="120" />
+            <line class="arrow" x1="220" y1="275" x2="300" y2="130" />
+            <line class="arrow" x1="520" y1="120" x2="580" y2="170" />
+            <line class="arrow" x1="520" y1="240" x2="580" y2="170" />
+            <line class="arrow" x1="690" y1="220" x2="690" y2="250" />
+          </svg>
+        </div>
+      </section>
+
+      <section id="data-sources">
+        <h2>Data Sources</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Protocol</th>
+              <th>Used By</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>HSL MQTT (HFP)</td>
+              <td>MQTTNIO</td>
+              <td><span class="file-ref">BaseVehicleManager</span></td>
+              <td>Topic routing extracts routeId from segment index 8.</td>
+            </tr>
+            <tr>
+              <td>Digitransit GraphQL</td>
+              <td>HTTP POST</td>
+              <td><span class="file-ref">DigitransitService</span></td>
+              <td>Routes, stops, station departures, rail stations. Endpoint: <code>api.digitransit.fi/routing/v2/hsl/gtfs/v1</code>.</td>
+            </tr>
+            <tr>
+              <td>Digitraffic API</td>
+              <td>HTTP JSON</td>
+              <td><span class="file-ref">TrainManager</span></td>
+              <td>Station metadata + base-form naming.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Why it exists:</strong> keeping protocol specifics in Core/Manager layers prevents UI coupling and makes retries centralized.</div>
+      </section>
+
+      <section id="core-models">
+        <h2>Core Models</h2>
+        <p>Models are split between App (UI-facing) and Core (shared network models). App layer favors lightweight Swift structs with computed coords.</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Purpose</th>
+              <th>File</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>BusModel</td>
+              <td>Vehicle position + heading + line</td>
+              <td><span class="file-ref">RT Bus/Models/BusModel.swift</span></td>
+            </tr>
+            <tr>
+              <td>BusStop</td>
+              <td>Stop identity + coordinate</td>
+              <td><span class="file-ref">RT Bus Core/Models/Models.swift</span></td>
+            </tr>
+            <tr>
+              <td>Departure</td>
+              <td>Departure time + platform</td>
+              <td><span class="file-ref">RT Bus Core/Models/Models.swift</span></td>
+            </tr>
+            <tr>
+              <td>MapItem</td>
+              <td>Unified map enum (.bus/.tram/.stop)</td>
+              <td><span class="file-ref">RT Bus/Models/MapItem.swift</span></td>
+            </tr>
+            <tr>
+              <td>TrainStation</td>
+              <td>Station id + name + coord</td>
+              <td><span class="file-ref">RT Bus/Models/TrainStation.swift</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Perf detail:</strong> <code>BusModel</code> equality ignores timestamps to avoid UI jitter for stationary vehicles.</div>
+      </section>
+
+      <section id="state-managers">
+        <h2>State & Managers</h2>
+        <p>Managers are <code>@Observable</code> and own a single responsibility. Internal caches are <code>@ObservationIgnored</code> to reduce view invalidation.</p>
+        <div class="two-col">
+          <div class="card">
+            <h3>SelectionStore</h3>
+            <ul>
+              <li>Persists selected lines in UserDefaults</li>
+              <li>Debounces updates (300ms)</li>
+              <li>Splits selections into bus/tram subsets</li>
+            </ul>
+            <p><span class="file-ref">RT Bus/Managers/SelectionStore.swift</span></p>
+          </div>
+          <div class="card">
+            <h3>MapStateManager</h3>
+            <ul>
+              <li>Coalesces buses/trams/stops into <code>mapItems</code></li>
+              <li>CADisplayLink flush to avoid per-update invalidation</li>
+              <li>Orders stops before vehicles for z‑layering</li>
+              <li>Exposes <code>vehicles</code> + <code>stopsList</code></li>
+            </ul>
+            <p><span class="file-ref">RT Bus/Managers/MapStateManager.swift</span></p>
+          </div>
+          <div class="card">
+            <h3>BaseVehicleManager</h3>
+            <ul>
+              <li>MQTT connect + subscription updates</li>
+              <li>AsyncStream buffer + VehicleStream actor</li>
+              <li>Updates filtered by selected routes</li>
+            </ul>
+            <p><span class="file-ref">RT Bus/Managers/BaseVehicleManager.swift</span></p>
+          </div>
+        </div>
+        <div class="callout"><strong>Why it exists:</strong> manager boundaries keep async data streams isolated and testable.</div>
+      </section>
+
+      <section id="mqtt">
+        <h2>MQTT Vehicle Pipeline</h2>
+        <p>Vehicles flow from MQTT into an AsyncStream, then into a buffered actor, and finally into a throttled update loop.</p>
+        <ul>
+          <li>MQTT connect + listener: <span class="file-ref">RT Bus/Managers/BaseVehicleManager.swift</span></li>
+          <li>Buffering: AsyncStream with <code>.bufferingNewest(1000)</code></li>
+          <li>VehicleStream actor keeps last update per vehicle id</li>
+          <li>Update loop every 1s; cleanup loop every 5s</li>
+        </ul>
+        <div class="codeblock">
+          /hfp/v2/journey/ongoing/vp/{prefix}/+/+/{routeId}/#<br>
+          /hfp/v2/journey/ongoing/vp/{prefix}/+/+/+/{routeId}/#
+        </div>
+        <div class="callout"><strong>Subscription logic:</strong> <code>VehicleStream.subscriptionChange</code> builds topic sets for each selected line and applies them with a requestId guard to avoid races.</div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th>Mechanism</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Decode</td>
+              <td><code>processMessage</code></td>
+              <td>Extracts routeId from topic index 8; builds <code>BusModel</code>.</td>
+            </tr>
+            <tr>
+              <td>Buffer</td>
+              <td><code>AsyncStream</code> + <code>VehicleStream</code></td>
+              <td>Last-write-wins per vehicle id.</td>
+            </tr>
+            <tr>
+              <td>Flush</td>
+              <td><code>flushUpdates()</code></td>
+              <td>Filters to active lines + prunes stale >300s.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Timing:</strong> updates every 1s, cleanup every 5s, stale threshold 300s.</div>
+      </section>
+
+      <section id="stops">
+        <h2>Stops & Departures Pipeline</h2>
+        <p>StopManager caches per-line stops, cancels in-flight fetches when deselected, and rebuilds the flattened stop list via CADisplayLink.</p>
+        <ul>
+          <li>Route stops query: <span class="file-ref">RT Bus Core/Managers/DigitransitService.swift</span></li>
+          <li>Fetch tokens avoid stale task cleanup: <span class="file-ref">RT Bus/Managers/StopManager.swift</span></li>
+          <li>Departures via GraphQL; filters out pickupType NONE</li>
+        </ul>
+        <div class="two-col">
+          <div class="card">
+            <h3>Cache rules</h3>
+            <ul>
+              <li>Cache keyed by lineId: <code>stops[lineId]</code></li>
+              <li>Deduped by gtfsId on fetch</li>
+              <li>Error does not clear cache</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Rebuild</h3>
+            <ul>
+              <li>CADisplayLink coalesces rebuild</li>
+              <li>All stops flattened + sorted</li>
+              <li>Animated update only on change</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout"><strong>Why it exists:</strong> prevents refetch storms when line selections toggle rapidly and keeps stop updates atomically consistent.</div>
+      </section>
+
+      <section id="trains">
+        <h2>Train Pipeline</h2>
+        <p>TrainManager merges Digitransit station coordinates with Digitraffic metadata for base‑form naming. Departures use Digitraffic live trains.</p>
+        <ul>
+          <li>Station metadata fetch: <span class="file-ref">RT Bus/Managers/TrainManager.swift</span></li>
+          <li>Rail stations query (GraphQL): <span class="file-ref">RT Bus Core/Managers/DigitransitService.swift</span></li>
+          <li>Naming: match via station code or nearest metadata (within 800m)</li>
+          <li>Departure filter: commuter trains only; reject past departures; ring‑rail headsign override</li>
+        </ul>
+        <div class="two-col">
+          <div class="card">
+            <h3>Naming resolution</h3>
+            <ul>
+              <li>Try station code from gtfsId</li>
+              <li>Fallback: nearest Digitraffic station by coord</li>
+              <li>Strip “ asema” suffix for base form</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Departure rules</h3>
+            <ul>
+              <li>Require commercialStop + DEPARTURE row</li>
+              <li>Skip last timetable row (not a real departure)</li>
+              <li>Ring rail (I/P) uses custom headsign at HKI</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="map-pipeline">
+        <h2>Map Rendering Pipeline</h2>
+        <p>MapKit rendering happens through <code>UIKitMapView</code> and <code>MapViewCoordinator</code>. The coordinator diffs annotations to minimize churn.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Map rendering pipeline">
+            <defs>
+              <style>
+                .stage { fill: #ffffff; stroke: #0f766e; stroke-width: 2; rx: 14; }
+                .text { font: 13px 'IBM Plex Sans', sans-serif; fill: #1b1b1b; }
+                .mono { font: 12px 'IBM Plex Mono', monospace; fill: #1b1b1b; }
+                .arrow { stroke: #1b1b1b; stroke-width: 2; marker-end: url(#arrow2); }
+              </style>
+              <marker id="arrow2" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6" fill="#1b1b1b" />
+              </marker>
+            </defs>
+            <rect class="stage" x="30" y="40" width="180" height="60" />
+            <text class="text" x="50" y="72">MapStateManager</text>
+            <text class="mono" x="50" y="90">mapItems[]</text>
+
+            <rect class="stage" x="250" y="40" width="200" height="60" />
+            <text class="text" x="270" y="72">MapViewCoordinator</text>
+            <text class="mono" x="270" y="90">diff + throttle</text>
+
+            <rect class="stage" x="500" y="40" width="160" height="60" />
+            <text class="text" x="520" y="72">Annotations</text>
+            <text class="mono" x="520" y="90">stop/train/vehicle</text>
+
+            <rect class="stage" x="700" y="40" width="160" height="60" />
+            <text class="text" x="720" y="72">Annotation Views</text>
+            <text class="mono" x="720" y="90">anim + layout</text>
+
+            <line class="arrow" x1="210" y1="70" x2="250" y2="70" />
+            <line class="arrow" x1="450" y1="70" x2="500" y2="70" />
+            <line class="arrow" x1="660" y1="70" x2="700" y2="70" />
+          </svg>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Annotation</th>
+              <th>View</th>
+              <th>Behavior</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>VehicleAnnotation</td>
+              <td>VehicleAnnotationView</td>
+              <td>Entry/exit animations, heading arrow rotation.</td>
+            </tr>
+            <tr>
+              <td>StopAnnotation</td>
+              <td>StopAnnotationView</td>
+              <td>Circle size by zoom; label hit area extends touch target; clustering.</td>
+            </tr>
+            <tr>
+              <td>TrainStationAnnotation</td>
+              <td>TrainStationAnnotationView</td>
+              <td>Icon vs dot (zoom threshold); haptic on tap.</td>
+            </tr>
+            <tr>
+              <td>MapAnchorAnnotation</td>
+              <td>MapAnchorAnnotationView</td>
+              <td>Bus anchor button at fixed coord.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="two-col">
+          <div class="card">
+            <h3>Diff + removal</h3>
+            <ul>
+              <li><code>AnnotationSnapshot</code> short‑circuits identical updates</li>
+              <li>Vehicles animate exit; removal validated by generation</li>
+              <li>Off‑screen vehicles removed immediately</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Stops & merge</h3>
+            <ul>
+              <li>Stops clustered via <code>clusteringIdentifier = \"stops\"</code></li>
+              <li>Nearby stops merged by distance (25m / 70m if same name)</li>
+              <li>Bounding box prefilter uses cos(lat) to scale lon</li>
+              <li>Title uses “nearby” if multiple names</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Anchors</h3>
+            <ul>
+              <li>Bus anchor at fixed coord (Rautatientori)</li>
+              <li>Icon/text style depends on zoom</li>
+              <li>Tap‑down interaction for instant response</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout"><strong>Zoom thresholds:</strong> stops visible at <code>latitudeDelta &lt; 0.05</code>; names at <code>latitudeDelta &lt; 0.005</code>. Train stations show icon vs dot based on the same stop threshold.</div>
+        <p><strong>Touch latency:</strong> <code>UIKitMapView</code> disables <code>delaysContentTouches</code> and gesture recognizer delays to make annotation taps feel instant.</p>
+        <p><strong>MapViewState:</strong> <code>handleCameraChange</code> toggles <code>showStops</code> and <code>showStopNames</code> with short animations when zoom thresholds cross.</p>
+      </section>
+
+      <section id="animation">
+        <h2>Animation System</h2>
+        <p>Vehicles have a state machine with generation counters to prevent stale completion handlers from mutating state after a rapid update.</p>
+        <ul>
+          <li>Central registry: <span class="file-ref">RT Bus/Models/Animations/AnimationStateManager.swift</span></li>
+          <li>Per‑vehicle state: <span class="file-ref">RT Bus/Models/Animations/VehicleAnimationState.swift</span></li>
+          <li>Entry/exit/update animations: <span class="file-ref">RT Bus/Views/Annotations/VehicleAnnotationView.swift</span></li>
+        </ul>
+        <div class="two-col">
+          <div class="card">
+            <h3>Entry / exit</h3>
+            <ul>
+              <li>Entry: scale 0.3 → 1.0 spring</li>
+              <li>Exit: scale down + fade</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Heading update</h3>
+            <ul>
+              <li>Arrow rotates linearly to heading</li>
+              <li>Hidden when heading &lt; 0</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout"><strong>Why it exists:</strong> prevents race conditions when vehicles disappear and reappear between frames.</div>
+      </section>
+
+      <section id="user-flows">
+        <h2>User Flows</h2>
+        <p>User interactions map directly to manager calls and sheet presentations.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="User flow diagram">
+            <defs>
+              <style>
+                .node { fill: #fff; stroke: #e07a5f; stroke-width: 2; rx: 12; }
+                .text { font: 13px 'IBM Plex Sans', sans-serif; fill: #1b1b1b; }
+                .mono { font: 12px 'IBM Plex Mono', monospace; fill: #1b1b1b; }
+                .arrow { stroke: #1b1b1b; stroke-width: 2; marker-end: url(#arrow3); }
+              </style>
+              <marker id="arrow3" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6" fill="#1b1b1b" />
+              </marker>
+            </defs>
+            <rect class="node" x="40" y="40" width="200" height="60" />
+            <text class="text" x="60" y="72">Select Lines</text>
+            <text class="mono" x="60" y="90">SelectionOverlay</text>
+
+            <rect class="node" x="280" y="40" width="200" height="60" />
+            <text class="text" x="300" y="72">Fetch Stops</text>
+            <text class="mono" x="300" y="90">StopManager</text>
+
+            <rect class="node" x="520" y="40" width="200" height="60" />
+            <text class="text" x="540" y="72">Map Update</text>
+            <text class="mono" x="540" y="90">MapStateManager</text>
+
+            <rect class="node" x="280" y="140" width="200" height="60" />
+            <text class="text" x="300" y="172">Tap Stop/Station</text>
+            <text class="mono" x="300" y="190">MapViewCoordinator</text>
+
+            <rect class="node" x="520" y="140" width="200" height="60" />
+            <text class="text" x="540" y="172">Departures Sheet</text>
+            <text class="mono" x="540" y="190">ContentView</text>
+
+            <line class="arrow" x1="240" y1="70" x2="280" y2="70" />
+            <line class="arrow" x1="480" y1="70" x2="520" y2="70" />
+            <line class="arrow" x1="380" y1="100" x2="380" y2="140" />
+            <line class="arrow" x1="480" y1="170" x2="520" y2="170" />
+          </svg>
+        </div>
+        <ul>
+          <li>Tap stop → merge nearby stops → <code>StopSelection</code> → departures sheet</li>
+          <li>Tap train station → station departures (GraphQL station query)</li>
+          <li>Bus anchor → fixed station departures (Rautatientori)</li>
+        </ul>
+      </section>
+
+      <section id="performance">
+        <h2>Concurrency & Performance</h2>
+        <p>The system limits update frequency at multiple points to keep MapKit smooth.</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Mechanism</th>
+              <th>Location</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>AsyncStream buffering</td>
+              <td><span class="file-ref">BaseVehicleManager</span></td>
+              <td>Drop older vehicle updates when bursty.</td>
+            </tr>
+            <tr>
+              <td>CADisplayLink coalescing</td>
+              <td><span class="file-ref">MapStateManager</span></td>
+              <td>Atomic mapItems rebuild once per frame.</td>
+            </tr>
+            <tr>
+              <td>Camera debounce (0.12s)</td>
+              <td><span class="file-ref">MapViewCoordinator</span></td>
+              <td>Reduce zoom recalculation while panning.</td>
+            </tr>
+            <tr>
+              <td>Stop visual throttle (0.15s)</td>
+              <td><span class="file-ref">MapViewCoordinator</span></td>
+              <td>Avoid relayout spam for label changes.</td>
+            </tr>
+            <tr>
+              <td>Selection debounce (300ms)</td>
+              <td><span class="file-ref">SelectionStore</span></td>
+              <td>Batch line selection changes before refetch.</td>
+            </tr>
+            <tr>
+              <td>Annotation snapshot guard</td>
+              <td><span class="file-ref">MapViewCoordinator</span></td>
+              <td>Skip update when inputs unchanged.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Key constants:</strong> <code>MapConstants.showStopsThreshold</code> = 0.05, <code>showStopNamesThreshold</code> = 0.005, <code>staleThreshold</code> = 300s.</div>
+      </section>
+
+      <section id="errors">
+        <h2>Error Handling</h2>
+        <p>Errors are mapped to AppError and retried via RetryPolicy where appropriate.</p>
+        <ul>
+          <li>Network retry + mapping: <span class="file-ref">RT Bus Core/Managers/NetworkService.swift</span></li>
+          <li>GraphQL error probe: <span class="file-ref">RT Bus Core/Managers/GraphQLClient.swift</span></li>
+          <li>Offline detection: <span class="file-ref">RT Bus Core/Managers/NetworkErrorMapper.swift</span></li>
+          <li>MQTT reconnect: exponential backoff (0.5s base, max 30s, max 3 attempts)</li>
+        </ul>
+        <div class="callout"><strong>RetryPolicy default:</strong> 3 attempts, base 0.5s, max 6s, jitter enabled.</div>
+      </section>
+
+      <section id="testing">
+        <h2>Testing Strategy</h2>
+        <p>Unit tests focus on manager behavior, parsing, caching, and performance; UI tests exercise core flows.</p>
+        <ul>
+          <li>StopManager caching: <span class="file-ref">RT BusTests/StopManagerTests.swift</span></li>
+          <li>TrainManager edge cases: <span class="file-ref">RT BusTests/TrainManagerTests.swift</span></li>
+          <li>MapState coalescing: <span class="file-ref">RT BusTests/MapStateManagerTests.swift</span></li>
+          <li>MQTT parsing + topics: <span class="file-ref">RT BusTests/TopicParsingTests.swift</span></li>
+          <li>Performance throughput: <span class="file-ref">RT BusTests/VehicleManagerPerformanceTests.swift</span></li>
+          <li>UI flows: <span class="file-ref">RT BusUITests/RT_BusUITests.swift</span></li>
+        </ul>
+      </section>
+
+      <section id="extending">
+        <h2>Extending the App</h2>
+        <p>Follow the manager‑first pattern. Add a new manager, connect it to SelectionStore, then create annotations + views.</p>
+        <ul>
+          <li>New transport mode: subclass <span class="file-ref">BaseVehicleManager</span></li>
+          <li>New map entity: add annotation class + annotation view</li>
+          <li>New sheet: wire in <span class="file-ref">ContentView.swift</span></li>
+        </ul>
+      </section>
+
+      <section id="glossary">
+        <h2>Glossary</h2>
+        <ul>
+          <li><strong>Annotation</strong>: MapKit model displayed on the map (vehicle, stop, station).</li>
+          <li><strong>Departure</strong>: Derived scheduled/realtime time used in sheets.</li>
+          <li><strong>GTFS ID</strong>: Stable identifier for routes/stops/stations.</li>
+          <li><strong>SelectionStore</strong>: State hub for selected lines and manager updates.</li>
+          <li><strong>MapStateManager</strong>: Aggregates map items with display-linked coalescing.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const links = Array.from(document.querySelectorAll('.toc a'));
+    const sections = links.map(link => document.querySelector(link.getAttribute('href')));
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            links.forEach(link => link.classList.remove('active'));
+            const idx = sections.indexOf(entry.target);
+            if (links[idx]) {
+              links[idx].classList.add('active');
+            }
+          }
+        });
+      },
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
+    );
+
+    sections.forEach(section => {
+      if (section) observer.observe(section);
+    });
+  </script>
+</body>
+</html>

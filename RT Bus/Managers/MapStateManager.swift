@@ -7,7 +7,6 @@
 
 import Foundation
 import Observation
-import OSLog
 import QuartzCore
 import RTBusCore
 
@@ -44,16 +43,16 @@ final class MapStateManager {
     }
     
     // Internal caches
-    private var buses: [Int: BusModel] = [:]
-    private var trams: [Int: BusModel] = [:]
-    private var stops: [String: BusStop] = [:]
+    @ObservationIgnored private var buses: [Int: BusModel] = [:]
+    @ObservationIgnored private var trams: [Int: BusModel] = [:]
+    @ObservationIgnored private var stops: [String: BusStop] = [:]
     
     // CADisplayLink for display-synced coalescing
-    private var displayLink: CADisplayLink?
-    private var needsRebuild: Bool = false
+    @ObservationIgnored private var displayLink: CADisplayLink?
+    @ObservationIgnored private var needsRebuild: Bool = false
     
     init() {}
-    
+
     // MARK: - Public Update Methods
     
     /// Updates stops. Usually called when line selection changes.

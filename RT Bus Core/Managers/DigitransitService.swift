@@ -63,6 +63,20 @@ private enum Queries {
           }
         }
         """
+
+    static let railStations = """
+        query GetRailStations {
+          stations {
+            gtfsId
+            name
+            lat
+            lon
+            stops {
+              vehicleMode
+            }
+          }
+        }
+        """
 }
 
 public actor DigitransitService {
@@ -182,5 +196,25 @@ public actor DigitransitService {
             )
         }
         return DepartureFiltering.apply(departures, filter: filter)
+    }
+
+    public func fetchRailStations() async throws -> [BusStop] {
+        let response: GraphQLStationsResponse = try await client.request(
+            query: Queries.railStations,
+            variables: EmptyVars(),
+            as: GraphQLStationsResponse.self
+        )
+        let stations = response.data.stations
+        let railStations = stations.filter { station in
+            station.stops?.contains { $0.vehicleMode == "RAIL" } == true
+        }
+        return railStations.map { station in
+            BusStop(
+                id: station.gtfsId,
+                name: station.name,
+                latitude: station.lat,
+                longitude: station.lon
+            )
+        }
     }
 }

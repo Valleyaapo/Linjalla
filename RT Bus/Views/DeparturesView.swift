@@ -16,6 +16,8 @@ struct DeparturesView: View {
     let fetchAction: @MainActor () async throws -> [Departure]
     
     @State private var viewState: ViewState = .idle
+    @State private var loadInFlight = false
+    @State private var loadTask: Task<Void, Never>?
     
     // Auto-refresh every 30 seconds
     private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
@@ -100,9 +102,7 @@ struct DeparturesView: View {
                 await loadDepartures()
             }
             .onReceive(refreshTimer) { _ in
-                Task { @MainActor in
-                    await loadDepartures()
-                }
+                triggerLoad()
             }
             .refreshable {
                 await loadDepartures()
@@ -112,6 +112,9 @@ struct DeparturesView: View {
     
     @MainActor
     private func loadDepartures() async {
+        guard !loadInFlight else { return }
+        loadInFlight = true
+        defer { loadInFlight = false }
         // If specific lines are required but none selected, do nothing (handled by UI)
         if let selected = selectedLines, selected.isEmpty {
             viewState = .idle
@@ -131,6 +134,13 @@ struct DeparturesView: View {
             Logger.ui.error("Error loading departures: \(error)")
             let message = errorMessageKey(for: error)
             viewState = .error(message, currentDepartures)
+        }
+    }
+
+    private func triggerLoad() {
+        loadTask?.cancel()
+        loadTask = Task { @MainActor in
+            await loadDepartures()
         }
     }
 

@@ -193,6 +193,153 @@ struct StopManagerTests {
     }
 
     @Test
+    func updateStopsUsesCache() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StopManagerTestURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let stopManager = StopManager(urlSession: session)
+
+        let lineA = BusLine(id: "HSL:LINEA", shortName: "A", longName: "Line A")
+        var requestCount = 0
+        StopManagerTestURLProtocol.requestHandler = { request in
+            requestCount += 1
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            {
+              "data": {
+                "route": {
+                  "patterns": [
+                    {
+                      "stops": [
+                        { "gtfsId": "HSL:STOPA", "name": "Stop A", "lat": 60.1, "lon": 24.9 }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        stopManager.updateStops(for: [lineA])
+        try await waitUntil {
+            stopManager.allStops.count == 1
+        }
+
+        stopManager.updateStops(for: [lineA])
+        try await Task.sleep(for: .milliseconds(80))
+        #expect(requestCount == 1)
+    }
+
+    @Test
+    func updateStopsDedupesSharedStops() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StopManagerTestURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let stopManager = StopManager(urlSession: session)
+
+        let lineA = BusLine(id: "HSL:LINEA", shortName: "A", longName: "Line A")
+        let lineB = BusLine(id: "HSL:LINEB", shortName: "B", longName: "Line B")
+
+        StopManagerTestURLProtocol.requestHandler = { request in
+            let lineId = extractVariable(name: "id", from: request) ?? "HSL:LINEA"
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data: Data
+            if lineId == "HSL:LINEA" {
+                data = """
+                {
+                  "data": {
+                    "route": {
+                      "patterns": [
+                        {
+                          "stops": [
+                            { "gtfsId": "HSL:STOP1", "name": "Stop 1", "lat": 60.1, "lon": 24.9 },
+                            { "gtfsId": "HSL:STOP2", "name": "Stop 2", "lat": 60.2, "lon": 25.0 }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+                """.data(using: .utf8)!
+            } else {
+                data = """
+                {
+                  "data": {
+                    "route": {
+                      "patterns": [
+                        {
+                          "stops": [
+                            { "gtfsId": "HSL:STOP2", "name": "Stop 2", "lat": 60.2, "lon": 25.0 },
+                            { "gtfsId": "HSL:STOP3", "name": "Stop 3", "lat": 60.3, "lon": 25.1 }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+                """.data(using: .utf8)!
+            }
+            return (response, data)
+        }
+
+        stopManager.updateStops(for: [lineA, lineB])
+        try await waitUntil {
+            stopManager.allStops.count == 3
+        }
+        #expect(stopManager.allStops.map(\.id) == ["HSL:STOP1", "HSL:STOP2", "HSL:STOP3"])
+    }
+
+    @Test
+    func updateStopsPreservesCacheOnError() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StopManagerTestURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let stopManager = StopManager(urlSession: session)
+
+        let lineA = BusLine(id: "HSL:LINEA", shortName: "A", longName: "Line A")
+        let lineB = BusLine(id: "HSL:LINEB", shortName: "B", longName: "Line B")
+
+        StopManagerTestURLProtocol.requestHandler = { request in
+            let lineId = extractVariable(name: "id", from: request) ?? "HSL:LINEA"
+            if lineId == "HSL:LINEB" {
+                throw URLError(.notConnectedToInternet)
+            }
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            {
+              "data": {
+                "route": {
+                  "patterns": [
+                    {
+                      "stops": [
+                        { "gtfsId": "HSL:STOPA", "name": "Stop A", "lat": 60.1, "lon": 24.9 }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        stopManager.updateStops(for: [lineA])
+        try await waitUntil {
+            stopManager.allStops.count == 1
+        }
+
+        stopManager.updateStops(for: [lineA, lineB])
+        try await waitUntil {
+            stopManager.error != nil
+        }
+
+        #expect(stopManager.allStops.count == 1)
+        #expect(stopManager.allStops.first?.id == "HSL:STOPA")
+    }
+
+    @Test
     func updateStopsCancelsInFlightFetch() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [CancellableURLProtocol.self]

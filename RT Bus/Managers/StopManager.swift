@@ -20,14 +20,15 @@ final class StopManager {
     private(set) var error: AppError? // User-facing error
     private(set) var isLoading: Bool = false
     
-    private var activeFetchCount = 0 {
+    @ObservationIgnored private var activeFetchCount = 0 {
         didSet { isLoading = activeFetchCount > 0 }
     }
     
     // Internal cache
-    private var stops: [String: [BusStop]] = [:]
-    private var fetchTasks: [String: Task<Void, Never>] = [:]
-    private let graphQLService: DigitransitService
+    @ObservationIgnored private var stops: [String: [BusStop]] = [:]
+    @ObservationIgnored private var fetchTasks: [String: Task<Void, Never>] = [:]
+    @ObservationIgnored private var fetchTokens: [String: UUID] = [:]
+    @ObservationIgnored private let graphQLService: DigitransitService
     
     @ObservationIgnored private var displayLink: CADisplayLink?
     @ObservationIgnored private var needsRebuild = false
@@ -59,14 +60,17 @@ final class StopManager {
         for lineId in tasksToCancel {
             fetchTasks[lineId]?.cancel()
             fetchTasks.removeValue(forKey: lineId)
+            fetchTokens.removeValue(forKey: lineId)
         }
         
         // 2. Fetch missing stops
         for line in lines {
             if stops[line.id] == nil {
                 fetchTasks[line.id]?.cancel()
+                let token = UUID()
+                fetchTokens[line.id] = token
                 let task = Task {
-                    await fetchStops(for: line)
+                    await fetchStops(for: line, token: token)
                 }
                 fetchTasks[line.id] = task
             }
@@ -76,11 +80,14 @@ final class StopManager {
         scheduleRebuildAllStops()
     }
     
-    private func fetchStops(for line: BusLine) async {
+    private func fetchStops(for line: BusLine, token: UUID) async {
         activeFetchCount += 1
         defer {
             activeFetchCount -= 1
-            fetchTasks.removeValue(forKey: line.id)
+            if fetchTokens[line.id] == token {
+                fetchTasks.removeValue(forKey: line.id)
+                fetchTokens.removeValue(forKey: line.id)
+            }
         }
         
         do {

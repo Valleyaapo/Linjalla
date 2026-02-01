@@ -14,6 +14,9 @@ struct BusMapView: View {
     @Bindable var mapViewState: MapViewState
     let vehicles: [MapItem]
     let stops: [BusStop]
+    let trainStations: [TrainStation]
+    let onTrainStationTap: (TrainStation) -> Void
+    let onBusDepartures: () -> Void
 
     var body: some View {
         UIKitMapView(
@@ -22,8 +25,12 @@ struct BusMapView: View {
             stops: stops,
             showStops: mapViewState.showStops,
             showStopNames: mapViewState.showStopNames,
-            mapViewState: mapViewState
+            mapViewState: mapViewState,
+            trainStations: trainStations,
+            onTrainStationTap: onTrainStationTap,
+            onBusDepartures: onBusDepartures
         )
+        .accessibilityIdentifier("MainMapView")
         .ignoresSafeArea()
     }
 }
@@ -38,6 +45,11 @@ struct BusMapView: View {
         ],
         stops: [
             BusStop(id: "1", name: "Test Stop", latitude: 60.17, longitude: 24.94)
-        ]
+        ],
+        trainStations: [
+            TrainStation(id: "HKI", name: "Helsinki", latitude: 60.17188819980838, longitude: 24.94138140521009)
+        ],
+        onTrainStationTap: { _ in },
+        onBusDepartures: {}
     )
 }

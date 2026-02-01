@@ -20,6 +20,8 @@ final class RT_BusUITests: XCTestCase {
         app.launch()
         
         handleLocationDialog(app)
+
+        XCTAssertTrue(app.otherElements["MainMapView"].waitForExistence(timeout: 10))
         
         // Ensure map is centered
         if app.buttons["CenterStationButton"].exists {
@@ -89,6 +91,11 @@ final class RT_BusUITests: XCTestCase {
         
         let searchField = app.searchFields.firstMatch
         XCTAssertTrue(searchField.waitForExistence(timeout: 5))
+        searchField.tap()
+        searchField.typeText("9999")
+
+        let emptyState = app.otherElements["LineSearchNoResults"]
+        XCTAssertTrue(emptyState.waitForExistence(timeout: 10))
         
         takeScreenshot(named: "Search_Empty")
     }
@@ -128,9 +135,9 @@ final class RT_BusUITests: XCTestCase {
             app.buttons["CenterStationButton"].tap()
         }
         
-        let trainsButton = app.buttons["TrainDeparturesButton"]
-        if trainsButton.waitForExistence(timeout: 5) {
-            trainsButton.tap()
+        let stationButton = app.buttons["TrainStation_HSL_STATION_HKI"]
+        if stationButton.waitForExistence(timeout: 10) {
+            stationButton.tap()
             
             assertElementExists(app, identifier: "DepartureRow_I", timeout: 15)
             takeScreenshot(named: "Train_Departures")

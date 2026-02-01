@@ -82,6 +82,7 @@ struct LineSearchSheet: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                             .frame(maxWidth: .infinity, minHeight: 200)
+                            .accessibilityIdentifier(searchText.isEmpty ? "LineSearchEmptyFavorites" : "LineSearchNoResults")
                         }
                         
                         ForEach(linesToShow) { line in

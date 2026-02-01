@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Combine
+import CoreLocation
 import Observation
 import OSLog
 import RTBusCore
@@ -15,7 +15,10 @@ import RTBusCore
 @Observable
 final class TrainManager {
     var error: AppError?
-    private var stationNames: [String: String] = [:]
+    var stations: [TrainStation] = []
+    @ObservationIgnored var stationNames: [String: String] = [:]
+    @ObservationIgnored private var metadataStations: [DigitrafficStation] = []
+    @ObservationIgnored private let graphQLService: DigitransitService
     private var isUITesting: Bool {
         ProcessInfo.processInfo.arguments.contains("UITesting")
     }
@@ -26,7 +29,12 @@ final class TrainManager {
         return decoder
     }()
     
-    init() {}
+    init(urlSession: URLSession = .shared) {
+        self.graphQLService = DigitransitService(
+            urlSession: urlSession,
+            digitransitKey: Secrets.digitransitKey
+        )
+    }
     
     func fetchMetadata() async {
         if isUITesting {
@@ -49,6 +57,7 @@ final class TrainManager {
 
             let stations: [DigitrafficStation] = try await NetworkService.shared.fetch(request, decoder: decoder)
             self.error = nil
+            self.metadataStations = stations
 
             for station in stations {
                 // Clean up name (e.g., "Helsinki asema" -> "Helsinki")
@@ -59,6 +68,59 @@ final class TrainManager {
             Logger.network.error("Failed to fetch station metadata: \(error)")
             self.error = AppError.networkError(error.localizedDescription)
         }
+    }
+
+    func fetchStations() async {
+        if isUITesting {
+            stations = [
+                TrainStation(
+                    id: "HKI",
+                    name: "Helsinki",
+                    latitude: 60.17188819980838,
+                    longitude: 24.94138140521009
+                )
+            ]
+            error = nil
+            return
+        }
+
+        await fetchMetadata()
+
+        do {
+            let railStations = try await graphQLService.fetchRailStations()
+            stations = railStations
+                .map { station in
+                    let codeName = stationCode(from: station.id).flatMap { stationNames[$0] }
+                    let nearestName = nearestStationName(for: station)
+                    let name = codeName ?? nearestName ?? station.name
+                    return TrainStation(
+                        id: station.id,
+                        name: name,
+                        latitude: station.latitude,
+                        longitude: station.longitude
+                    )
+                }
+                .sorted { $0.name < $1.name }
+        } catch {
+            Logger.network.error("Failed to fetch rail stations: \(error)")
+            self.error = AppError.networkError(error.localizedDescription)
+        }
+    }
+
+    private func nearestStationName(for station: BusStop) -> String? {
+        let target = CLLocation(latitude: station.latitude, longitude: station.longitude)
+        var best: (name: String, distance: CLLocationDistance)?
+
+        for metadata in metadataStations {
+            guard let lat = metadata.latitude, let lon = metadata.longitude else { continue }
+            let distance = target.distance(from: CLLocation(latitude: lat, longitude: lon))
+            if best == nil || distance < best!.distance {
+                best = (metadata.stationName, distance)
+            }
+        }
+
+        guard let best, best.distance < 800 else { return nil }
+        return best.name.replacingOccurrences(of: " asema", with: "")
     }
     
     func fetchDepartures(stationCode: String = "HKI") async throws -> [Departure] {
@@ -98,7 +160,7 @@ final class TrainManager {
         .sorted { $0.departureDate < $1.departureDate }
     }
     
-    private func processTrain(_ train: DigitrafficTrain, for stationCode: String, at now: Date) -> Departure? {
+    func processTrain(_ train: DigitrafficTrain, for stationCode: String, at now: Date) -> Departure? {
         // Filter for Commuter trains only (Regional)
         guard train.trainCategory == "Commuter" else { return nil }
         
@@ -183,4 +245,16 @@ struct DigitrafficTimeTableRow: Codable {
 struct DigitrafficStation: Codable {
     let stationName: String
     let stationShortCode: String
+    let latitude: Double?
+    let longitude: Double?
+}
+
+private func stationCode(from gtfsId: String) -> String? {
+    if let underscore = gtfsId.split(separator: "_").last, underscore != gtfsId[...] {
+        return String(underscore)
+    }
+    if let colon = gtfsId.split(separator: ":").last {
+        return String(colon)
+    }
+    return nil
 }

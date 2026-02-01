@@ -52,22 +52,24 @@ class BaseVehicleManager {
 
     // MARK: - Internal State
     
-    var vehicles: [Int: BusModel] = [:]
-    var activeLines: [BusLine] = []
-    var currentSubscriptions: Set<String> = []
+    @ObservationIgnored var vehicles: [Int: BusModel] = [:]
+    @ObservationIgnored var activeLines: [BusLine] = []
+    @ObservationIgnored var currentSubscriptions: Set<String> = []
 
-    private var vehicleUpdateStream: AsyncStream<BusModel>?
-    private var vehicleUpdateContinuation: AsyncStream<BusModel>.Continuation?
-    private var consumerTask: Task<Void, Never>?
+    @ObservationIgnored private var vehicleUpdateStream: AsyncStream<BusModel>?
+    @ObservationIgnored private var vehicleUpdateContinuation: AsyncStream<BusModel>.Continuation?
+    @ObservationIgnored private var consumerTask: Task<Void, Never>?
+    @ObservationIgnored var vehicleUpdateBufferLimit = 1_000
+
+    // Shared decoder to reduce allocation overhead in high-frequency updates
+    @ObservationIgnored private let decoder = JSONDecoder()
 
     // MARK: - Dependencies
 
-    private let graphQLService: DigitransitService
-    private let connectOnStart: Bool
-    // Shared decoder to reduce allocation overhead in high-frequency updates
-    private let decoder = JSONDecoder()
+    @ObservationIgnored private let graphQLService: DigitransitService
+    @ObservationIgnored private let connectOnStart: Bool
 
-    private var _clientContainer: MQTTClientContainer?
+    @ObservationIgnored private var _clientContainer: MQTTClientContainer?
     var client: MQTTClient? {
         get { _clientContainer?.client }
         set {
@@ -79,14 +81,14 @@ class BaseVehicleManager {
         }
     }
 
-    let stream = VehicleStream()
-    private var updateLoopTask: Task<Void, Never>?
-    private var cleanupLoopTask: Task<Void, Never>?
-    private var mockSimulationTimer: Timer?
-    private var subscriptionTask: Task<Void, Never>?
-    private var reconnectTask: Task<Void, Never>?
-    private var isConnecting = false
-    private var connectionAttempts = 0
+    @ObservationIgnored let stream = VehicleStream()
+    @ObservationIgnored private var updateLoopTask: Task<Void, Never>?
+    @ObservationIgnored private var cleanupLoopTask: Task<Void, Never>?
+    @ObservationIgnored private var mockSimulationTimer: Timer?
+    @ObservationIgnored private var subscriptionTask: Task<Void, Never>?
+    @ObservationIgnored private var reconnectTask: Task<Void, Never>?
+    @ObservationIgnored private var isConnecting = false
+    @ObservationIgnored private var connectionAttempts = 0
 
     private var isMQTTDisabled: Bool {
         false
@@ -169,17 +171,17 @@ class BaseVehicleManager {
     }
 
     private func setupVehicleUpdateStream() {
-        let (stream, continuation) = AsyncStream.makeStream(
+        let (updateStream, continuation) = AsyncStream.makeStream(
             of: BusModel.self,
-            bufferingPolicy: .bufferingNewest(1_000)
+            bufferingPolicy: .bufferingNewest(vehicleUpdateBufferLimit)
         )
-        self.vehicleUpdateStream = stream
+        self.vehicleUpdateStream = updateStream
         self.vehicleUpdateContinuation = continuation
 
-        self.consumerTask = Task { [weak self] in
-            for await vehicle in stream {
-                guard let self else { break }
-                await self.stream.buffer(vehicle)
+        let bufferStream = stream
+        self.consumerTask = Task {
+            for await vehicle in updateStream {
+                await bufferStream.buffer(vehicle)
             }
         }
     }
@@ -287,6 +289,12 @@ class BaseVehicleManager {
 
     func updateSubscriptions(selectedLines: [BusLine]) {
         self.activeLines = selectedLines
+        if selectedLines.isEmpty {
+            stopLoops()
+        } else {
+            startUpdateLoop()
+            startCleanupLoop()
+        }
 
         guard let client = client, self.isConnected else { return }
 
@@ -374,7 +382,7 @@ class BaseVehicleManager {
         let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
 
         do {
-            let response = try self.decoder.decode(LocalResponse.self, from: payload)
+            let response = try decoder.decode(LocalResponse.self, from: payload)
             let vp = response.VP
 
             if let lat = vp.lat, let long = vp.long, let desi = vp.desi {
@@ -391,6 +399,7 @@ class BaseVehicleManager {
                 vehicleUpdateContinuation?.yield(vehicle)
             }
         } catch {
+            Logger.busManager.error("\(String(describing: Self.self)): Failed to decode MQTT payload: \(error)")
         }
     }
 
@@ -423,7 +432,7 @@ class BaseVehicleManager {
 
     private func loadFavorites() {
         if let data = UserDefaults.standard.data(forKey: favoritesKey),
-           let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
+           let decoded = try? decoder.decode([BusLine].self, from: data) {
             self.favoriteLines = decoded
         } else {
             self.favoriteLines = defaultFavorites
@@ -448,6 +457,8 @@ class BaseVehicleManager {
     // MARK: - Update Timer
 
     private func startUpdateLoop() {
+        guard !activeLines.isEmpty else { return }
+        if let task = updateLoopTask, !task.isCancelled { return }
         updateLoopTask?.cancel()
 
         updateLoopTask = Task { [weak self] in
@@ -505,6 +516,8 @@ class BaseVehicleManager {
     // MARK: - Cleanup Timer
 
     private func startCleanupLoop() {
+        guard !activeLines.isEmpty else { return }
+        if let task = cleanupLoopTask, !task.isCancelled { return }
         cleanupLoopTask?.cancel()
         cleanupLoopTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -528,6 +541,13 @@ class BaseVehicleManager {
         if vehicles.count != beforeCount {
             self.vehicleList = self.vehicles.values.sorted { $0.id < $1.id }
         }
+    }
+
+    private func stopLoops() {
+        updateLoopTask?.cancel()
+        cleanupLoopTask?.cancel()
+        updateLoopTask = nil
+        cleanupLoopTask = nil
     }
 
     // MARK: - MQTT Client Container

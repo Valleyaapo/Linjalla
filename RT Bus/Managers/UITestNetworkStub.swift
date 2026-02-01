@@ -97,6 +97,27 @@ private final class UITestURLProtocol: URLProtocol {
             return (200, data)
         }
 
+        if query.contains("GetRailStations") || query.contains("stations") {
+            let data = """
+            {
+              "data": {
+                "stations": [
+                  {
+                    "gtfsId": "HSL:STATION_HKI",
+                    "name": "Helsinki asema",
+                    "lat": 60.1719,
+                    "lon": 24.9414,
+                    "stops": [
+                      { "vehicleMode": "RAIL" }
+                    ]
+                  }
+                ]
+              }
+            }
+            """.data(using: .utf8)
+            return (200, data)
+        }
+
         if query.contains("GetDepartures") || query.contains("stop(id") {
             let data = departuresResponseJSON()
             return (200, data)

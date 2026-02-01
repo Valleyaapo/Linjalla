@@ -7,7 +7,7 @@
 
 import MapKit
 import CoreLocation
-import OSLog
+import QuartzCore
 import RTBusCore
 
 /// Coordinates between SwiftUI and MKMapView
@@ -17,24 +17,37 @@ final class MapViewCoordinator: NSObject {
     // MARK: - Callbacks
 
     private let mapViewState: MapViewState
+    private let onTrainStationTap: (TrainStation) -> Void
+    private let onBusTap: () -> Void
     
     // MARK: - State
 
     private var vehicleAnnotations: [String: VehicleAnnotation] = [:]
     private var stopAnnotations: [String: StopAnnotation] = [:]
+    private var trainStationAnnotations: [String: TrainStationAnnotation] = [:]
     private var currentZoomLevel: Double = 0.05
     private var latestStops: [BusStop] = []
+    private let busAnchor: MapAnchorAnnotation
+    private var lastAnnotationSnapshot: AnnotationSnapshot?
 
     // Debouncing for stop updates
     private var lastStopRefreshZoom: Double = 0.05
+    private var lastStopRefreshTime: TimeInterval = 0
+    private var cameraUpdateWorkItem: DispatchWorkItem?
+    private var pendingZoomLevel: Double?
 
     // Centralized animation state management
     private let animationStateManager = AnimationStateManager()
     
     // MARK: - Initialization
     
-    init(mapViewState: MapViewState) {
+    init(mapViewState: MapViewState, onTrainStationTap: @escaping (TrainStation) -> Void, onBusTap: @escaping () -> Void) {
         self.mapViewState = mapViewState
+        self.onTrainStationTap = onTrainStationTap
+        self.onBusTap = onBusTap
+        self.busAnchor = MapAnchorAnnotation(
+            coordinate: CLLocationCoordinate2D(latitude: 60.171209145837814, longitude: 24.943844610559452)
+        )
         super.init()
     }
     
@@ -44,10 +57,23 @@ final class MapViewCoordinator: NSObject {
         mapView: MKMapView,
         vehicles: [MapItem],
         stops: [BusStop],
+        trainStations: [TrainStation],
         showStops: Bool,
         showStopNames: Bool
     ) {
+        let snapshot = AnnotationSnapshot(
+            vehicles: vehicles,
+            stops: stops,
+            trainStations: trainStations,
+            showStops: showStops,
+            showStopNames: showStopNames
+        )
+        if snapshot == lastAnnotationSnapshot {
+            return
+        }
+        lastAnnotationSnapshot = snapshot
         latestStops = stops
+        ensureAnchorAnnotations(mapView: mapView)
         // MARK: Process Vehicles
         
         var newVehicleAnnotations: [String: VehicleAnnotation] = [:]
@@ -104,6 +130,29 @@ final class MapViewCoordinator: NSObject {
         
         // Trigger animations for new/updated vehicles after view is assigned
         triggerVehicleAnimations(mapView: mapView, vehicles: vehiclesToAnimate)
+
+        // MARK: Process Train Stations
+
+        var newTrainAnnotations: [String: TrainStationAnnotation] = [:]
+        for station in trainStations {
+            let key = station.id
+            if let existing = trainStationAnnotations[key] {
+                if existing.coordinate.latitude != station.latitude || existing.coordinate.longitude != station.longitude {
+                    existing.coordinate = station.coordinate
+                }
+                newTrainAnnotations[key] = existing
+            } else {
+                let annotation = TrainStationAnnotation(station: station)
+                newTrainAnnotations[key] = annotation
+                mapView.addAnnotation(annotation)
+            }
+        }
+
+        let trainStationsToRemove = trainStationAnnotations.filter { newTrainAnnotations[$0.key] == nil }
+        if !trainStationsToRemove.isEmpty {
+            mapView.removeAnnotations(Array(trainStationsToRemove.values))
+        }
+        trainStationAnnotations = newTrainAnnotations
         
         // MARK: Process Stops
         
@@ -132,6 +181,14 @@ final class MapViewCoordinator: NSObject {
             mapView.removeAnnotations(Array(stopsToRemove.values))
         }
         stopAnnotations = newStopAnnotations
+    }
+
+    private struct AnnotationSnapshot: Equatable {
+        let vehicles: [MapItem]
+        let stops: [BusStop]
+        let trainStations: [TrainStation]
+        let showStops: Bool
+        let showStopNames: Bool
     }
     
     // MARK: - Vehicle Processing Helpers
@@ -191,6 +248,16 @@ final class MapViewCoordinator: NSObject {
             }
         }
     }
+
+    private func ensureAnchorAnnotations(mapView: MKMapView) {
+        var toAdd: [MapAnchorAnnotation] = []
+        if !mapView.annotations.contains(where: { $0 === busAnchor }) {
+            toAdd.append(busAnchor)
+        }
+        if !toAdd.isEmpty {
+            mapView.addAnnotations(toAdd)
+        }
+    }
     
 }
 
@@ -202,6 +269,38 @@ extension MapViewCoordinator: MKMapViewDelegate {
         // User location uses default blue dot
         if annotation is MKUserLocation {
             return nil
+        }
+
+        // Map-anchored action buttons
+        if annotation is MapAnchorAnnotation {
+            guard let view = mapView.dequeueReusableAnnotationView(
+                withIdentifier: MapAnchorAnnotationView.reuseIdentifier,
+                for: annotation
+            ) as? MapAnchorAnnotationView else {
+                return nil
+            }
+            view.configure(zoomLevel: currentZoomLevel, onTap: onBusTap)
+            return view
+        }
+
+        // Train station annotations
+        if let station = annotation as? TrainStationAnnotation {
+            guard let view = mapView.dequeueReusableAnnotationView(
+                withIdentifier: TrainStationAnnotationView.reuseIdentifier,
+                for: annotation
+            ) as? TrainStationAnnotationView else {
+                return nil
+            }
+            let model = TrainStation(
+                id: station.stationId,
+                name: station.stationName,
+                latitude: station.coordinate.latitude,
+                longitude: station.coordinate.longitude
+            )
+            view.configure(with: model, zoomLevel: currentZoomLevel) { [weak self] in
+                self?.onTrainStationTap(model)
+            }
+            return view
         }
         
         // Vehicle annotations
@@ -306,12 +405,13 @@ extension MapViewCoordinator: MKMapViewDelegate {
         let zoomLevel = mapView.region.span.latitudeDelta
         
         if abs(currentZoomLevel - zoomLevel) > 0.001 {
-            currentZoomLevel = zoomLevel
-            mapViewState.handleCameraChange(zoomLevel)
+            scheduleCameraUpdate(zoomLevel: zoomLevel, mapView: mapView)
         }
         
-        if abs(lastStopRefreshZoom - zoomLevel) > 0.005 {
+        let now = CACurrentMediaTime()
+        if abs(lastStopRefreshZoom - zoomLevel) > 0.005, now - lastStopRefreshTime > 0.15 {
             lastStopRefreshZoom = zoomLevel
+            lastStopRefreshTime = now
             refreshStopVisuals(mapView: mapView, zoomLevel: zoomLevel)
         }
     }
@@ -321,6 +421,51 @@ extension MapViewCoordinator: MKMapViewDelegate {
             if let stop = annotation as? StopAnnotation,
                let view = mapView.view(for: stop) as? StopAnnotationView {
                 view.configure(with: stop, zoomLevel: zoomLevel)
+            }
+        }
+    }
+
+    private func refreshAnchorVisuals(mapView: MKMapView) {
+        if let view = mapView.view(for: busAnchor) as? MapAnchorAnnotationView {
+            view.configure(zoomLevel: currentZoomLevel, onTap: onBusTap)
+        }
+    }
+
+    private func scheduleCameraUpdate(zoomLevel: Double, mapView: MKMapView) {
+        pendingZoomLevel = zoomLevel
+        cameraUpdateWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self, weak mapView] in
+            guard let self, let mapView else { return }
+            guard let pendingZoomLevel = self.pendingZoomLevel else { return }
+            self.pendingZoomLevel = nil
+            self.applyCameraUpdate(zoomLevel: pendingZoomLevel, mapView: mapView)
+        }
+        cameraUpdateWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12, execute: item)
+    }
+
+    private func applyCameraUpdate(zoomLevel: Double, mapView: MKMapView) {
+        guard abs(currentZoomLevel - zoomLevel) > 0.001 else { return }
+        currentZoomLevel = zoomLevel
+        mapViewState.handleCameraChange(zoomLevel)
+        refreshAnchorVisuals(mapView: mapView)
+        refreshTrainStationVisuals(mapView: mapView)
+    }
+
+    private func refreshTrainStationVisuals(mapView: MKMapView) {
+        for annotation in mapView.annotations(in: mapView.visibleMapRect) {
+            guard let station = annotation as? TrainStationAnnotation,
+                  let view = mapView.view(for: station) as? TrainStationAnnotationView else {
+                continue
+            }
+            let model = TrainStation(
+                id: station.stationId,
+                name: station.stationName,
+                latitude: station.coordinate.latitude,
+                longitude: station.coordinate.longitude
+            )
+            view.configure(with: model, zoomLevel: currentZoomLevel) { [weak self] in
+                self?.onTrainStationTap(model)
             }
         }
     }

@@ -47,6 +47,15 @@ final class VehicleAnnotationView: MKAnnotationView {
         layer.contentsScale = UIScreen.main.scale
         return layer
     }()
+
+    private struct LayoutMetrics: Equatable {
+        let diameter: CGFloat
+        let totalSize: CGFloat
+        let orbitSize: CGFloat
+        let arrowSize: CGFloat
+    }
+
+    private var layoutMetrics: LayoutMetrics?
     
     // MARK: - Animation State
     
@@ -119,6 +128,7 @@ final class VehicleAnnotationView: MKAnnotationView {
         currentHeadingRadians = 0
         pendingEntryHeading = nil
         pendingEntryCompletion = nil
+        layoutMetrics = nil
     }
     
     override func prepareForDisplay() {
@@ -136,9 +146,6 @@ final class VehicleAnnotationView: MKAnnotationView {
     /// Configure the view for an annotation WITHOUT animations
     /// Animations are triggered separately via animate* methods
     func configure(with annotation: VehicleAnnotation) {
-        // Reset arrow transform before layout
-        arrowContainer.transform = .identity
-        
         // Badge text
         lineLabel.text = annotation.lineName
         
@@ -152,53 +159,55 @@ final class VehicleAnnotationView: MKAnnotationView {
         let textSize = lineLabel.intrinsicContentSize
         let diameter = max(38, textSize.width + 14)
         let totalSize: CGFloat = diameter + 32
-        
-        if frame.width != totalSize {
-            frame = CGRect(x: 0, y: 0, width: totalSize, height: totalSize)
-        }
-        
-        // Layout container (circle)
-        containerView.frame = CGRect(
-            x: (totalSize - diameter) / 2,
-            y: (totalSize - diameter) / 2,
-            width: diameter,
-            height: diameter
-        )
-        containerView.layer.cornerRadius = diameter / 2
-        
-        // Layout label
-        lineLabel.frame = containerView.bounds
-        
-        // Layout orbit container
         let orbitSize = diameter + 24
-        arrowContainer.frame = CGRect(
-            x: (totalSize - orbitSize) / 2,
-            y: (totalSize - orbitSize) / 2,
-            width: orbitSize,
-            height: orbitSize
-        )
-        
-        // Position arrow at top of orbit
         let arrowSize: CGFloat = 30
-        let arrowX = (orbitSize - arrowSize) / 2
-        arrowShapeLayer.frame = CGRect(
-            x: arrowX,
-            y: 0,
-            width: arrowSize,
-            height: arrowSize
+
+        let metrics = LayoutMetrics(
+            diameter: diameter,
+            totalSize: totalSize,
+            orbitSize: orbitSize,
+            arrowSize: arrowSize
         )
-        let inset = arrowShapeLayer.lineWidth / 2
-        let bounds = arrowShapeLayer.bounds.insetBy(dx: inset, dy: inset)
-        let path = UIBezierPath()
-        path.move(to: CGPoint(x: bounds.midX, y: bounds.minY))
-        path.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY))
-        path.addLine(to: CGPoint(x: bounds.minX, y: bounds.maxY))
-        path.close()
-        arrowShapeLayer.path = path.cgPath
+        if layoutMetrics != metrics {
+            layoutMetrics = metrics
+            UIView.performWithoutAnimation {
+                bounds = CGRect(origin: .zero, size: CGSize(width: totalSize, height: totalSize))
+            }
+            setNeedsLayout()
+        }
         
         // Z-Priority: VEHICLES ON TOP
         displayPriority = .required
         zPriority = .max
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard let metrics = layoutMetrics else { return }
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        UIView.performWithoutAnimation {
+            containerView.bounds = CGRect(origin: .zero, size: CGSize(width: metrics.diameter, height: metrics.diameter))
+            containerView.center = CGPoint(x: bounds.midX, y: bounds.midY)
+            containerView.layer.cornerRadius = metrics.diameter / 2
+            lineLabel.frame = containerView.bounds
+
+            arrowContainer.bounds = CGRect(origin: .zero, size: CGSize(width: metrics.orbitSize, height: metrics.orbitSize))
+            arrowContainer.center = CGPoint(x: bounds.midX, y: bounds.midY)
+
+            arrowShapeLayer.bounds = CGRect(origin: .zero, size: CGSize(width: metrics.arrowSize, height: metrics.arrowSize))
+            arrowShapeLayer.position = CGPoint(x: metrics.orbitSize / 2, y: metrics.arrowSize / 2)
+            let inset = arrowShapeLayer.lineWidth / 2
+            let bounds = arrowShapeLayer.bounds.insetBy(dx: inset, dy: inset)
+            let path = UIBezierPath()
+            path.move(to: CGPoint(x: bounds.midX, y: bounds.minY))
+            path.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY))
+            path.addLine(to: CGPoint(x: bounds.minX, y: bounds.maxY))
+            path.close()
+            arrowShapeLayer.path = path.cgPath
+        }
+        CATransaction.commit()
     }
     
     // MARK: - Entry Queue

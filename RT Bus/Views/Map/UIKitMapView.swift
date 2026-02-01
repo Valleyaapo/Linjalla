@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import UIKit
 import RTBusCore
 
 /// UIViewRepresentable wrapper for MKMapView with proper z-index control
@@ -23,6 +24,9 @@ struct UIKitMapView: UIViewRepresentable {
     var showStops: Bool
     var showStopNames: Bool
     let mapViewState: MapViewState
+    let trainStations: [TrainStation]
+    let onTrainStationTap: (TrainStation) -> Void
+    let onBusDepartures: () -> Void
     
     // MARK: - UIViewRepresentable
     
@@ -34,6 +38,7 @@ struct UIKitMapView: UIViewRepresentable {
         mapView.showsUserLocation = true
         mapView.pointOfInterestFilter = .excludingAll
         mapView.mapType = .standard
+        configureTouchHandling(for: mapView)
         
         // Start centered on Helsinki; user can recenter on their location manually.
         let helsinkiCentral = CLLocationCoordinate2D(latitude: 60.1710, longitude: 24.9410)
@@ -53,6 +58,14 @@ struct UIKitMapView: UIViewRepresentable {
             forAnnotationViewWithReuseIdentifier: StopAnnotationView.reuseIdentifier
         )
         mapView.register(
+            MapAnchorAnnotationView.self,
+            forAnnotationViewWithReuseIdentifier: MapAnchorAnnotationView.reuseIdentifier
+        )
+        mapView.register(
+            TrainStationAnnotationView.self,
+            forAnnotationViewWithReuseIdentifier: TrainStationAnnotationView.reuseIdentifier
+        )
+        mapView.register(
             MKMarkerAnnotationView.self,
             forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier
         )
@@ -66,6 +79,7 @@ struct UIKitMapView: UIViewRepresentable {
             mapView: mapView,
             vehicles: vehicles,
             stops: showStops ? stops : [],
+            trainStations: trainStations,
             showStops: showStops,
             showStopNames: showStopNames
         )
@@ -81,6 +95,22 @@ struct UIKitMapView: UIViewRepresentable {
     }
     
     func makeCoordinator() -> MapViewCoordinator {
-        MapViewCoordinator(mapViewState: mapViewState)
+        MapViewCoordinator(
+            mapViewState: mapViewState,
+            onTrainStationTap: onTrainStationTap,
+            onBusTap: onBusDepartures
+        )
+    }
+
+    private func configureTouchHandling(for mapView: MKMapView) {
+        // Reduce tap delay on annotation buttons by disabling scroll-view touch delay.
+        if let scrollView = mapView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView {
+            scrollView.delaysContentTouches = false
+            scrollView.canCancelContentTouches = true
+        }
+        mapView.gestureRecognizers?.forEach { recognizer in
+            recognizer.delaysTouchesBegan = false
+            recognizer.delaysTouchesEnded = false
+        }
     }
 }

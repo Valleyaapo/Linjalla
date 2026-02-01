@@ -8,12 +8,14 @@ struct VehicleManagerPerformanceTests {
     @Test("Process Message Throughput")
     func processMessageThroughput() async throws {
         let manager = BaseVehicleManager(connectOnStart: false)
+        manager.vehicleUpdateBufferLimit = 10_000
         manager.setup()
         // Ensure stream is drained
         _ = await manager.stream.drain()
 
         let iterations = 10_000
         var payloads: [Data] = []
+        let batchSize = 200
 
         // Pre-generate payloads
         for i in 0..<iterations {
@@ -27,8 +29,14 @@ struct VehicleManagerPerformanceTests {
         let deadline = clock.now.advanced(by: .seconds(20))
         var processedCount = 0
         let elapsed = await clock.measure {
-            for payload in payloads {
-                manager.processMessage(topicName: "/hfp/v2/journey/ongoing/vp/bus/HSL/1/10/1001/1", payload: payload)
+            for chunkStart in stride(from: 0, to: payloads.count, by: batchSize) {
+                let chunkEnd = min(chunkStart + batchSize, payloads.count)
+                for payload in payloads[chunkStart..<chunkEnd] {
+                    manager.processMessage(topicName: "/hfp/v2/journey/ongoing/vp/bus/HSL/1/10/1001/1", payload: payload)
+                }
+                await Task.yield()
+                let drained = await manager.stream.drain()
+                processedCount += drained.count
             }
 
             while processedCount < iterations && clock.now < deadline {
@@ -41,6 +49,6 @@ struct VehicleManagerPerformanceTests {
             }
         }
         #expect(processedCount == iterations)
-        print("PERFORMANCE_METRIC: Processed \(iterations) messages in \(elapsed)")
+        #expect(elapsed < .seconds(10))
     }
 }

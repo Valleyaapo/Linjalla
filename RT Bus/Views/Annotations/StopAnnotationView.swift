@@ -72,7 +72,7 @@ final class StopAnnotationView: MKAnnotationView {
         centerOffset = .zero
         
         // Layout circle (centered)
-        let circleOrigin = (frame.width - circleSize) / 2
+        let circleOrigin = (bounds.width - circleSize) / 2
         circleView.frame = CGRect(x: circleOrigin, y: circleOrigin, width: circleSize, height: circleSize)
         circleView.layer.cornerRadius = circleSize / 2
         
@@ -80,13 +80,12 @@ final class StopAnnotationView: MKAnnotationView {
         if annotation.showName {
             nameLabel.text = " \(annotation.stopName) " // Padding
             nameLabel.sizeToFit()
-            
             // Re-center label below the stop
             // X: Center of frame - half label width
             // Y: Below circle
             nameLabel.frame.origin = CGPoint(
-                x: (frame.width - nameLabel.frame.width) / 2,
-                y: frame.height / 2 + circleSize / 2 + 4 // 4pt padding below circle
+                x: (bounds.width - nameLabel.frame.width) / 2,
+                y: bounds.height / 2 + circleSize / 2 + 4 // 4pt padding below circle
             )
             nameLabel.isHidden = false
         } else {
@@ -96,6 +95,15 @@ final class StopAnnotationView: MKAnnotationView {
         // Z-Priority: STOPS UNDERNEATH
         displayPriority = .defaultLow
         zPriority = .min
+    }
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        if super.point(inside: point, with: event) {
+            return true
+        }
+        guard !nameLabel.isHidden else { return false }
+        let labelRect = nameLabel.frame.insetBy(dx: -6, dy: -4)
+        return labelRect.contains(point)
     }
     
     private func calculateCircleSize(for zoomLevel: Double) -> CGFloat {

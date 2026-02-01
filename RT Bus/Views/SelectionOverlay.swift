@@ -16,8 +16,6 @@ struct SelectionOverlay: View {
     let onToggle: (BusLine) -> Void
     let onSelectAll: () -> Void
     let onAdd: () -> Void
-    let onDepartures: () -> Void
-    let onTrainDepartures: () -> Void
     let onCenter: () -> Void
     let onCenterUser: () -> Void
     let onTickets: () -> Void
@@ -31,15 +29,11 @@ struct SelectionOverlay: View {
                 HStack(spacing: 12) {
                     Spacer()
                     ticketButton
-                    trainButton
-                    busButton
                         .padding(.trailing, 20)
                 }
                 
                 VStack(alignment: .trailing, spacing: 12) {
                     ticketButton
-                    trainButton
-                    busButton
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.trailing, 20)
@@ -253,51 +247,6 @@ struct SelectionOverlay: View {
         }
         .accessibilityIdentifier("TicketsButton")
     }
-    
-    private var trainButton: some View {
-        Button(action: {
-            bumpHaptic()
-            onTrainDepartures()
-        }) {
-            HStack {
-                Image(systemName: "tram.fill")
-                Text("ui.button.trains")
-            }
-            .font(.subheadline.bold())
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.hslPurple.opacity(0.75))
-            .clipShape(Capsule())
-            .shadow(radius: 4)
-        }
-        .accessibilityIdentifier("TrainDeparturesButton")
-    }
-    
-    private var busButton: some View {
-        Button(action: {
-            bumpHaptic()
-            onDepartures()
-        }) {
-            HStack {
-                Image(systemName: "bus.fill")
-                Text("Rautatientori")
-            }
-            .font(.subheadline.bold())
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.hslBlue.opacity(0.75))
-            .clipShape(Capsule())
-            .shadow(radius: 4)
-        }
-        .accessibilityIdentifier("DeparturesButton")
-        .accessibilityLabel(Text(
-            String(format: NSLocalizedString("access.button.departures", comment: ""), 
-                   NSLocalizedString("Rautatientori", comment: ""))
-        ))
-        .accessibilityHint(Text("ui.departures.selectHint"))
-    }
 }
 
 struct LineToggleView: View {
@@ -382,8 +331,6 @@ private extension SelectionOverlay {
             onToggle: { _ in },
             onSelectAll: {},
             onAdd: {},
-            onDepartures: {},
-            onTrainDepartures: {},
             onCenter: {},
             onCenterUser: {},
             onTickets: {}

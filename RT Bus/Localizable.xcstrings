@@ -523,22 +523,6 @@
         }
       }
     },
-    "ui.button.trains" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trains"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Junat"
-          }
-        }
-      }
-    },
     "ui.departures.noLines" : {
       "localizations" : {
         "en" : {
@@ -711,22 +695,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Laituri %@"
-          }
-        }
-      }
-    },
-    "ui.location.helsinkiCentral" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Helsinki Central"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Päärautatieasema"
           }
         }
       }

@@ -76,3 +76,23 @@ public enum TransportMode: String, Sendable, CaseIterable {
     case subway = "SUBWAY"
     case ferry = "FERRY"
 }
+
+struct GraphQLStationsResponse: Codable, Sendable {
+    let data: GraphQLStationsData
+}
+
+struct GraphQLStationsData: Codable, Sendable {
+    let stations: [GraphQLStationLocation]
+}
+
+struct GraphQLStationLocation: Codable, Sendable {
+    let gtfsId: String
+    let name: String
+    let lat: Double
+    let lon: Double
+    let stops: [GraphQLStopMode]?
+}
+
+struct GraphQLStopMode: Codable, Sendable {
+    let vehicleMode: String?
+}

@@ -10,6 +10,10 @@ import Foundation
 import RTBusCore
 @testable import RT_Bus
 
+private func pumpMainRunLoop(_ seconds: TimeInterval = 0.06) {
+    RunLoop.main.run(until: Date().addingTimeInterval(seconds))
+}
+
 @MainActor
 @Suite(.serialized)
 struct MapStateManagerTests {
@@ -23,7 +27,7 @@ struct MapStateManagerTests {
         manager.updateBuses([bus1])
         
         // Wait for coalescing (32ms interval + buffer)
-        try await Task.sleep(for: .milliseconds(50))
+        pumpMainRunLoop()
         
         #expect(manager.vehicles.count == 1)
         if case .bus(let b) = manager.vehicles.first {
@@ -42,7 +46,7 @@ struct MapStateManagerTests {
         manager.updateTrams([tram1])
         
         // Wait for coalescing
-        try await Task.sleep(for: .milliseconds(50))
+        pumpMainRunLoop()
         
         #expect(manager.vehicles.count == 1)
         if case .tram(let t) = manager.vehicles.first {
@@ -63,7 +67,7 @@ struct MapStateManagerTests {
         manager.updateBuses([bus2])
         
         // Wait for coalescing
-        try await Task.sleep(for: .milliseconds(50))
+        pumpMainRunLoop()
         
         // Should only have the latest state
         #expect(manager.vehicles.count == 1)
@@ -82,7 +86,7 @@ struct MapStateManagerTests {
         manager.updateTrams([tram])
         
         // Wait for coalescing
-        try await Task.sleep(for: .milliseconds(50))
+        pumpMainRunLoop()
         
         #expect(manager.vehicles.count == 2)
     }
@@ -98,7 +102,7 @@ struct MapStateManagerTests {
         manager.updateTrams([tram])
         manager.updateStops([stop])
 
-        try await Task.sleep(for: .milliseconds(50))
+        pumpMainRunLoop()
 
         #expect(manager.mapItems.count == 3)
         if case .bus = manager.mapItems.first {

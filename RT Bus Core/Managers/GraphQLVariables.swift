@@ -4,6 +4,8 @@ struct RouteStopsVars: Encodable, Sendable {
     let id: String
 }
 
+struct EmptyVars: Encodable, Sendable {}
+
 struct SearchRoutesVars: Encodable, Sendable {
     let name: String
 }

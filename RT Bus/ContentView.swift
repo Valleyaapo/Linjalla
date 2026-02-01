@@ -28,9 +28,10 @@ struct ContentView: View {
     
     @State private var isSearchPresented = false
     @State private var isDeparturesPresented = false
-    @State private var isTrainDeparturesPresented = false
+    @State private var selectedTrainStation: TrainStation?
     @State private var showHslAppMissingAlert = false
     @State private var didCenterOnUser = false
+    @State private var showLocationErrorAlert = false
 
     var body: some View {
         @Bindable var mapViewState = mapViewState
@@ -47,6 +48,7 @@ struct ContentView: View {
                 guard !didCenterOnUser, let location = newValue else { return }
                 didCenterOnUser = true
                 centerOnLocation(location)
+                showLocationErrorAlert = false
             }
             .sheet(item: $mapViewState.selectedStop) { selection in
                 if selection.stops.count >= 2 {
@@ -68,7 +70,6 @@ struct ContentView: View {
                     .presentationDetents([.medium, .large])
                 }
             }
-            .alert("ui.error.title", isPresented: stopErrorBinding, actions: stopErrorActions, message: stopErrorMessage)
             .alert("ui.error.title", isPresented: locationErrorBinding, actions: locationErrorActions, message: locationErrorMessage)
     }
     
@@ -81,7 +82,12 @@ struct ContentView: View {
                 cameraTrigger: $cameraTrigger,
                 mapViewState: mapViewState,
                 vehicles: currentVehicles,
-                stops: mapStateManager.stopsList
+                stops: mapStateManager.stopsList,
+                trainStations: trainManager.stations,
+                onTrainStationTap: { station in
+                    presentTrainDepartures(for: station)
+                },
+                onBusDepartures: { presentDepartures() }
             )
             
             SelectionOverlay(
@@ -92,8 +98,6 @@ struct ContentView: View {
                 onToggle: { selectionStore.toggleSelection(for: $0) },
                 onSelectAll: { selectionStore.selectAllFavorites() },
                 onAdd: { isSearchPresented = true },
-                onDepartures: { isDeparturesPresented = true },
-                onTrainDepartures: { isTrainDeparturesPresented = true },
                 onCenter: { centerOnHelsinkiCentral() },
                 onCenterUser: { centerOnUser() },
                 onTickets: { openTickets() }
@@ -117,12 +121,12 @@ struct ContentView: View {
             }
             .presentationDetents([.medium, .large])
         }
-        .sheet(isPresented: $isTrainDeparturesPresented) {
+        .sheet(item: $selectedTrainStation) { station in
             DeparturesView(
-                title: NSLocalizedString("ui.location.helsinkiCentral", comment: ""),
+                title: station.name,
                 selectedLines: nil
             ) { @MainActor in
-                try await trainManager.fetchDepartures(stationCode: "HKI")
+                try await selectionStore.stopManager.fetchStationDepartures(for: station.id)
             }
             .presentationDetents([.medium, .large])
         }
@@ -157,8 +161,10 @@ extension ContentView {
     }
 
     func centerOnUser() {
+        showLocationErrorAlert = true
         if let location = locationManager.lastLocation {
             centerOnLocation(location)
+            showLocationErrorAlert = false
         } else {
             locationManager.requestAuthorization()
         }
@@ -187,6 +193,7 @@ extension ContentView {
     func startupTask() async {
         locationManager.requestAuthorization()
         selectionStore.loadSelectedLines()
+        await trainManager.fetchStations()
     }
     
     func busListChanged(_ oldList: [BusModel], _ newList: [BusModel]) {
@@ -203,6 +210,26 @@ extension ContentView {
     
     func tramFavoritesChanged(_ oldFavorites: [BusLine], _ newFavorites: [BusLine]) {
         selectionStore.syncFavorites(old: oldFavorites, new: newFavorites)
+    }
+}
+
+// MARK: - Presentation
+
+private extension ContentView {
+    func presentDepartures() {
+        var transaction = Transaction()
+        transaction.animation = .snappy(duration: 0.18)
+        withTransaction(transaction) {
+            isDeparturesPresented = true
+        }
+    }
+
+    func presentTrainDepartures(for station: TrainStation) {
+        var transaction = Transaction()
+        transaction.animation = .snappy(duration: 0.18)
+        withTransaction(transaction) {
+            selectedTrainStation = station
+        }
     }
 }
 
@@ -227,26 +254,16 @@ extension ContentView {
 // MARK: - Alerts (user-action triggered only)
 
 extension ContentView {
-    var stopErrorBinding: Binding<Bool> {
-        Binding(
-            get: { selectionStore.stopManager.error != nil },
-            set: { if !$0 { selectionStore.stopManager.clearError() } }
-        )
-    }
-
     var locationErrorBinding: Binding<Bool> {
         Binding(
-            get: { locationManager.error != nil },
-            set: { if !$0 { locationManager.clearError() } }
+            get: { showLocationErrorAlert && locationManager.error != nil },
+            set: {
+                if !$0 {
+                    locationManager.clearError()
+                    showLocationErrorAlert = false
+                }
+            }
         )
-    }
-
-    func stopErrorActions() -> AnyView {
-        AnyView(Button("ui.button.ok", role: .cancel) { selectionStore.stopManager.clearError() })
-    }
-
-    func stopErrorMessage() -> AnyView {
-        AnyView(Text(selectionStore.stopManager.error?.localizedDescription ?? ""))
     }
 
     func locationErrorActions() -> AnyView {
