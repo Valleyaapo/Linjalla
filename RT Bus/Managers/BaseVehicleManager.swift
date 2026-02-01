@@ -348,8 +348,7 @@ class BaseVehicleManager {
 
                 self.vehicles = self.vehicles.filter { vehicle in
                     if let routeId = vehicle.value.routeId {
-                        let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                        return selectedIds.contains(normalized)
+                        return selectedIds.contains(routeId)
                     } else {
                         return selectedNames.contains(vehicle.value.lineName)
                     }
@@ -485,8 +484,7 @@ class BaseVehicleManager {
         for (id, newVehicle) in updates {
             let isActive: Bool
             if let routeId = newVehicle.routeId {
-                let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                isActive = selectedIds.contains(normalized)
+                isActive = selectedIds.contains(routeId)
             } else {
                 isActive = selectedNames.contains(newVehicle.lineName)
             }
