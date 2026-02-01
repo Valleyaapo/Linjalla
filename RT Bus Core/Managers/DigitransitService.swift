@@ -76,12 +76,12 @@ public actor DigitransitService {
         )
     }
 
-    public func searchRoutes(query: String, transportMode: String) async throws -> [BusLine] {
+    public func searchRoutes(query: String, transportMode: TransportMode) async throws -> [BusLine] {
         guard !query.isEmpty else { return [] }
 
         let searchQuery = """
             query SearchRoutes($name: String!) {
-              routes(name: $name, transportModes: [\(transportMode)]) {
+              routes(name: $name, transportModes: [\(transportMode.rawValue)]) {
                 gtfsId
                 shortName
                 longName

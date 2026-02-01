@@ -18,7 +18,7 @@ final class BusManager: BaseVehicleManager {
 
     nonisolated override var vehicleType: BusModel.VehicleType { .bus }
     nonisolated override var topicPrefix: String { "bus" }
-    nonisolated override var transportMode: String { "BUS" }
+    nonisolated override var transportMode: TransportMode { .bus }
     nonisolated override var favoritesKey: String { "FavoriteLines" }
 
     override var defaultFavorites: [BusLine] {

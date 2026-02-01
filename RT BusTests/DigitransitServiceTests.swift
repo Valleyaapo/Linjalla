@@ -60,7 +60,7 @@ struct DigitransitServiceTests {
             return (response, data)
         }
 
-        let lines = try await service.searchRoutes(query: "123", transportMode: "BUS")
+        let lines = try await service.searchRoutes(query: "123", transportMode: .bus)
         #expect(lines.count == 1)
         #expect(lines.first?.id == "HSL:123")
         #expect(lines.first?.shortName == "123")
@@ -185,7 +185,7 @@ struct DigitransitServiceTests {
             return (response, data)
         }
 
-        _ = try await service.searchRoutes(query: "x", transportMode: "BUS")
+        _ = try await service.searchRoutes(query: "x", transportMode: .bus)
     }
 
     @Test
