@@ -31,6 +31,54 @@
         }
       }
     },
+    "access.time.early" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Early %d min"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etuajassa %d min"
+          }
+        }
+      }
+    },
+    "access.time.late" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Late %d min"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Myöhässä %d min"
+          }
+        }
+      }
+    },
+    "access.time.ontime" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On time"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajallaan"
+          }
+        }
+      }
+    },
     "access.action.removeFavorite" : {
       "localizations" : {
         "en" : {

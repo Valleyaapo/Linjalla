@@ -47,13 +47,13 @@ struct DepartureRowView: View {
                 .bold()
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(Color.green.opacity(0.1))
+                .background(DepartureFormatting.statusColor(for: departure).opacity(0.1))
                 .clipShape(.rect(cornerRadius: 8))
-                .foregroundStyle(.green)
+                .foregroundStyle(DepartureFormatting.statusColor(for: departure))
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign). \(DepartureFormatting.timeUntil(departure.departureDate))"
+            "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign). \(DepartureFormatting.timeUntil(departure.departureDate)). \(DepartureFormatting.accessibilityStatus(for: departure))"
         )
         .accessibilityIdentifier("DepartureRow_\(departure.lineName)")
     }
@@ -77,5 +77,25 @@ enum DepartureFormatting {
             return NSLocalizedString("ui.time.now", comment: "")
         }
         return String(format: NSLocalizedString("ui.time.min", comment: ""), diff)
+    }
+
+    static func statusColor(for departure: Departure) -> Color {
+        let deviation = departure.realtimeTime - departure.scheduledTime
+        if deviation > 120 { // > 2 mins late
+            return .hslOrange
+        }
+        return .green
+    }
+
+    static func accessibilityStatus(for departure: Departure) -> String {
+        let deviation = departure.realtimeTime - departure.scheduledTime
+        let minutes = abs(deviation) / 60
+
+        if deviation > 120 {
+            return String(format: NSLocalizedString("access.time.late", comment: ""), minutes)
+        } else if deviation < -60 {
+            return String(format: NSLocalizedString("access.time.early", comment: ""), minutes)
+        }
+        return NSLocalizedString("access.time.ontime", comment: "")
     }
 }
