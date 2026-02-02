@@ -230,6 +230,32 @@ struct DigitransitServiceTests {
         }
     }
 
+    @Test
+    func searchRoutesSanitizesInput() async throws {
+        let (service, _) = makeService()
+
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let body = try requestBodyData(request)
+            let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+            let variables = try #require(json["variables"] as? [String: Any])
+
+            // Check that whitespace is trimmed and input is truncated
+            let name = try #require(variables["name"] as? String)
+            #expect(name == "12345678901234567890123456789012345678901234567890")
+            #expect(name.count == 50)
+
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            { "data": { "routes": [] } }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        // Input with whitespace and > 50 chars
+        let longInput = "   1234567890123456789012345678901234567890123456789012345   "
+        _ = try await service.searchRoutes(query: longInput, transportMode: .bus)
+    }
+
     private func makeService() -> (DigitransitService, String) {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [DigitransitServiceTestURLProtocol.self]
