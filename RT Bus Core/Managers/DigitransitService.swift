@@ -91,7 +91,9 @@ public actor DigitransitService {
     }
 
     public func searchRoutes(query: String, transportMode: TransportMode) async throws -> [BusLine] {
-        guard !query.isEmpty else { return [] }
+        // Sentinel: Sanitize input to prevent large payloads (DoS) and trim whitespace
+        let sanitizedQuery = String(query.trimmingCharacters(in: .whitespacesAndNewlines).prefix(50))
+        guard !sanitizedQuery.isEmpty else { return [] }
 
         let searchQuery = """
             query SearchRoutes($name: String!) {
@@ -105,7 +107,7 @@ public actor DigitransitService {
 
         let response: GraphQLRouteResponse = try await client.request(
             query: searchQuery,
-            variables: SearchRoutesVars(name: query),
+            variables: SearchRoutesVars(name: sanitizedQuery),
             as: GraphQLRouteResponse.self
         )
         let routes = response.data?.routes ?? []
