@@ -52,10 +52,20 @@ struct DepartureRowView: View {
                 .foregroundStyle(.green)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign). \(DepartureFormatting.timeUntil(departure.departureDate))"
-        )
+        .accessibilityLabel(accessibilityLabelString)
         .accessibilityIdentifier("DepartureRow_\(departure.lineName)")
+    }
+
+    private var accessibilityLabelString: String {
+        var label = "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign)"
+
+        if let platform = departure.platform {
+            let platformString = String(format: NSLocalizedString("ui.label.platform", comment: ""), platform)
+            label += ", \(platformString)"
+        }
+
+        label += ". \(DepartureFormatting.timeUntil(departure.departureDate))"
+        return label
     }
 }
 
