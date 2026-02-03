@@ -348,8 +348,8 @@ class BaseVehicleManager {
 
                 self.vehicles = self.vehicles.filter { vehicle in
                     if let routeId = vehicle.value.routeId {
-                        let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                        return selectedIds.contains(normalized)
+                        // routeId is already normalized in BusModel
+                        return selectedIds.contains(routeId)
                     } else {
                         return selectedNames.contains(vehicle.value.lineName)
                     }
@@ -379,7 +379,18 @@ class BaseVehicleManager {
         // Extract routeId from topic (support multiple HFP layouts)
         let parts = topicName.split(separator: "/")
         let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
-        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
+
+        // Optimized normalization without full string search
+        let normalizedRouteId: String?
+        if let routeId {
+            if routeId.hasPrefix("HSL:") {
+                normalizedRouteId = String(routeId.dropFirst(4))
+            } else {
+                normalizedRouteId = routeId
+            }
+        } else {
+            normalizedRouteId = nil
+        }
 
         do {
             let response = try decoder.decode(LocalResponse.self, from: payload)
@@ -485,8 +496,8 @@ class BaseVehicleManager {
         for (id, newVehicle) in updates {
             let isActive: Bool
             if let routeId = newVehicle.routeId {
-                let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                isActive = selectedIds.contains(normalized)
+                // routeId is already normalized in BusModel
+                isActive = selectedIds.contains(routeId)
             } else {
                 isActive = selectedNames.contains(newVehicle.lineName)
             }
