@@ -29,7 +29,7 @@ struct BusModel: Identifiable, Codable, Equatable, Sendable {
     init(id: Int, lineName: String, routeId: String?, headsign: String? = nil, latitude: Double, longitude: Double, heading: Int?, timestamp: TimeInterval, type: VehicleType = .bus) {
         self.id = id
         self.lineName = lineName
-        self.routeId = routeId
+        self.routeId = routeId?.replacingOccurrences(of: "HSL:", with: "")
         self.headsign = headsign
         self.latitude = latitude
         self.longitude = longitude
