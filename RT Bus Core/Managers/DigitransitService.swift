@@ -94,8 +94,8 @@ public actor DigitransitService {
         guard !query.isEmpty else { return [] }
 
         let searchQuery = """
-            query SearchRoutes($name: String!) {
-              routes(name: $name, transportModes: [\(transportMode.rawValue)]) {
+            query SearchRoutes($name: String!, $modes: [String]!) {
+              routes(name: $name, transportModes: $modes) {
                 gtfsId
                 shortName
                 longName
@@ -105,7 +105,7 @@ public actor DigitransitService {
 
         let response: GraphQLRouteResponse = try await client.request(
             query: searchQuery,
-            variables: SearchRoutesVars(name: query),
+            variables: SearchRoutesVars(name: query, modes: [transportMode]),
             as: GraphQLRouteResponse.self
         )
         let routes = response.data?.routes ?? []

@@ -75,7 +75,7 @@ struct GraphQLClientTests {
         await #expect(throws: AppError.self) {
             let _: GraphQLRouteResponse = try await client.request(
                 query: "query",
-                variables: SearchRoutesVars(name: "x"),
+                variables: SearchRoutesVars(name: "x", modes: []),
                 as: GraphQLRouteResponse.self
             )
         }
@@ -91,7 +91,7 @@ struct GraphQLClientTests {
         do {
             let _: GraphQLRouteResponse = try await client.request(
                 query: "query",
-                variables: SearchRoutesVars(name: "x"),
+                variables: SearchRoutesVars(name: "x", modes: []),
                 as: GraphQLRouteResponse.self
             )
             Issue.record("Expected offline error")

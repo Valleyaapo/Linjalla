@@ -69,7 +69,7 @@ struct GraphQLStop: Codable, Sendable {
     let lon: Double
 }
 
-public enum TransportMode: String, Sendable, CaseIterable {
+public enum TransportMode: String, Sendable, CaseIterable, Encodable {
     case bus = "BUS"
     case tram = "TRAM"
     case train = "RAIL"
