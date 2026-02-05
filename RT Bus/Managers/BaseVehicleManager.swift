@@ -361,6 +361,41 @@ class BaseVehicleManager {
 
     // MARK: - Message Handling
 
+    private func extractRouteId(from topic: String, at targetIndex: Int) -> String? {
+        var componentIndex = 0
+        var startIndex = topic.startIndex
+        let endIndex = topic.endIndex
+
+        while startIndex < endIndex {
+            // Skip slashes (separator)
+            while startIndex < endIndex && topic[startIndex] == "/" {
+                startIndex = topic.index(after: startIndex)
+            }
+
+            guard startIndex < endIndex else { break }
+
+            // Found start of a component
+            var currentIndex = startIndex
+            while currentIndex < endIndex && topic[currentIndex] != "/" {
+                currentIndex = topic.index(after: currentIndex)
+            }
+
+            // Now topic[startIndex..<currentIndex] is the component
+            if componentIndex == targetIndex {
+                let component = topic[startIndex..<currentIndex]
+                if component.hasPrefix("HSL:") {
+                    return String(component.dropFirst(4))
+                }
+                return String(component)
+            }
+
+            componentIndex += 1
+            startIndex = currentIndex
+        }
+
+        return nil
+    }
+
     @MainActor
     func processMessage(topicName: String, payload: Data) {
         let topicRouteIdIndex = 8
@@ -377,9 +412,8 @@ class BaseVehicleManager {
         }
 
         // Extract routeId from topic (support multiple HFP layouts)
-        let parts = topicName.split(separator: "/")
-        let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
-        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
+        // Optimized to avoid array allocation from split() and string allocation from replacingOccurrences()
+        let normalizedRouteId = extractRouteId(from: topicName, at: topicRouteIdIndex)
 
         do {
             let response = try decoder.decode(LocalResponse.self, from: payload)
