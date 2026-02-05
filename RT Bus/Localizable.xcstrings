@@ -1,1056 +1,1088 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "%@" : {
-      "shouldTranslate" : false
+  "sourceLanguage": "en",
+  "strings": {
+    "%@": {
+      "shouldTranslate": false
     },
-    "%@ %@ %@. %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ %2$@ %3$@. %4$@"
+    "%@ %@ %@. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$@ %3$@. %4$@"
           }
         }
       },
-      "shouldTranslate" : false
+      "shouldTranslate": false
     },
-    "access.action.addFavorite" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add %@ to favorites"
+    "access.action.addFavorite": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add %@ to favorites"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lisää %@ suosikkeihin"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää %@ suosikkeihin"
           }
         }
       }
     },
-    "access.action.removeFavorite" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove %@ from favorites"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Poista %@ suosikeista"
-          }
-        }
-      }
-    },
-    "access.button.addLine" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add New Line"
+    "access.action.removeFavorite": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %@ from favorites"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lisää uusi linja"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista %@ suosikeista"
           }
         }
       }
     },
-    "access.button.centerStation" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Center on Railway Station"
+    "access.button.addLine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add New Line"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keskitä rautatieasemalle"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää uusi linja"
           }
         }
       }
     },
-    "access.button.centerUser" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Center on My Location"
+    "access.button.centerStation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Center on Railway Station"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keskitä omaan sijaintiin"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keskitä rautatieasemalle"
           }
         }
       }
     },
-    "access.button.departures" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Departures"
+    "access.button.centerUser": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Center on My Location"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Näytä lähdöt"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keskitä omaan sijaintiin"
           }
         }
       }
     },
-    "access.button.deselectAll" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deselect All Lines"
+    "access.button.departures": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Departures"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Poista kaikki valinnat"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Näytä lähdöt"
           }
         }
       }
     },
-    "access.button.selectAll" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select All Lines"
+    "access.button.deselectAll": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deselect All Lines"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Valitse kaikki linjat"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista kaikki valinnat"
           }
         }
       }
     },
-    "access.line.selected" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Selected"
+    "access.button.selectAll": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select All Lines"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Valittu"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse kaikki linjat"
           }
         }
       }
     },
-    "access.line.unselected" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not Selected"
+    "access.line.selected": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ei valittu"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valittu"
           }
         }
       }
     },
-    "access.annotation.bus" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bus %@"
+    "access.line.unselected": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Selected"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bussi %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei valittu"
           }
         }
       }
     },
-    "access.annotation.tram" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tram %@"
+    "access.annotation.bus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bus %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Raitiovaunu %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bussi %@"
           }
         }
       }
     },
-    "access.annotation.trainStation" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Train station %@"
+    "access.annotation.tram": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tram %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Asema %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raitiovaunu %@"
           }
         }
       }
     },
-    "access.annotation.trainStation.hint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show train departures"
+    "access.annotation.trainStation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Train station %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Näytä junalähdöt"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asema %@"
           }
         }
       }
     },
-    "access.annotation.stop" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stop %@"
+    "access.annotation.trainStation.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show train departures"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pysäkki %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Näytä junalähdöt"
           }
         }
       }
     },
-    "access.annotation.stop.hint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show departures"
+    "access.annotation.stop": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Näytä lähdöt"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pysäkki %@"
           }
         }
       }
     },
-    "access.annotation.vehicleDestination" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "to %@"
+    "access.annotation.stop.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show departures"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "suuntaan %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Näytä lähdöt"
           }
         }
       }
     },
-    "access.annotation.updated.justNow" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Updated just now"
+    "access.annotation.vehicleDestination": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "to %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Päivitetty juuri nyt"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "suuntaan %@"
           }
         }
       }
     },
-    "access.annotation.updated.seconds" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Updated %d sec ago"
+    "access.annotation.updated.justNow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updated just now"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Päivitetty %d s sitten"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päivitetty juuri nyt"
           }
         }
       }
     },
-    "access.annotation.updated.minutes" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Updated %d min ago"
+    "access.annotation.updated.seconds": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updated %d sec ago"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Päivitetty %d min sitten"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päivitetty %d s sitten"
           }
         }
       }
     },
-    "access.annotation.cluster" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d stops"
+    "access.annotation.updated.minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updated %d min ago"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d pysäkkiä"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päivitetty %d min sitten"
           }
         }
       }
     },
-    "Bus %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bussi"
-          }
-        }
-      }
-    },
-    "error.api" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Server Error: %@"
+    "access.annotation.cluster": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d stops"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Palvelinvirhe: %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d pysäkkiä"
           }
         }
       }
     },
-    "error.decoding" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data Error: %@"
+    "Bus %@": {
+      "extractionState": "stale",
+      "localizations": {
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bussi"
+          }
+        }
+      }
+    },
+    "error.api": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server Error: %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Datavirhe: %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Palvelinvirhe: %@"
           }
         }
       }
     },
-    "error.location" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location Error: %@"
+    "error.decoding": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data Error: %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sijaintivirhe: %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datavirhe: %@"
           }
         }
       }
     },
-    "error.location.denied" : {
-      "comment" : "Location access denied",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location access denied. Enable in Settings."
+    "error.location": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location Error: %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sijainnin käyttö estetty. Salli asetuksista."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sijaintivirhe: %@"
           }
         }
       }
     },
-    "error.location.restricted" : {
-      "comment" : "Location access restricted",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location access restricted on this device."
+    "error.location.denied": {
+      "comment": "Location access denied",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location access denied. Enable in Settings."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sijainnin käyttö on rajoitettu tällä laitteella."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sijainnin käyttö estetty. Salli asetuksista."
           }
         }
       }
     },
-    "error.mqtt" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Live Data Connection Error: %@"
+    "error.location.restricted": {
+      "comment": "Location access restricted",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location access restricted on this device."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yhteysvirhe: %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sijainnin käyttö on rajoitettu tällä laitteella."
           }
         }
       }
     },
-    "error.network" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Network Error: %@"
+    "error.mqtt": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live Data Connection Error: %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verkkovirhe: %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yhteysvirhe: %@"
           }
         }
       }
     },
-    "error.unknown" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Error: %@"
+    "error.network": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network Error: %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Virhe: %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verkkovirhe: %@"
           }
         }
       }
     },
-    "Mode" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Mode"
+    "error.unknown": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error: %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tyyppi"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Virhe: %@"
           }
         }
       }
     },
-    "NSLocationWhenInUseUsageDescription" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your location is used to find nearby transit options."
+    "Mode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Mode"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sijaintiasi käytetään etsimään lähelläsi olevat julkisen liikenteen kulkuneuvot."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tyyppi"
           }
         }
       }
     },
-    "Rautatientori" : {
-      "localizations" : {
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rautatientori"
-          }
-        }
-      }
-    },
-    "to" : {
-      "shouldTranslate" : false
-    },
-    "Tram %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Raitiovaunu"
-          }
-        }
-      }
-    },
-    "ui.alert.busError" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bus Error"
+    "NSLocationWhenInUseUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your location is used to find nearby transit options."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bussivirhe"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sijaintiasi käytetään etsimään lähelläsi olevat julkisen liikenteen kulkuneuvot."
           }
         }
       }
     },
-    "ui.alert.hslAppMissing" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HSL App Missing"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HSL-sovellus puuttuu"
+    "Rautatientori": {
+      "localizations": {
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rautatientori"
           }
         }
       }
     },
-    "ui.alert.stopError" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stop Error"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pysäkkivirhe"
+    "to": {
+      "shouldTranslate": false
+    },
+    "Tram %@": {
+      "extractionState": "stale",
+      "localizations": {
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raitiovaunu"
           }
         }
       }
     },
-    "ui.alert.tramError" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tram Error"
+    "ui.alert.busError": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bus Error"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Raitiovaunuvirhe"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bussivirhe"
           }
         }
       }
     },
-    "ui.button.add" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add"
+    "ui.alert.hslAppMissing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HSL App Missing"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lisää"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HSL-sovellus puuttuu"
           }
         }
       }
     },
-    "ui.button.done" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Done"
+    "ui.alert.stopError": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Error"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Valmis"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pysäkkivirhe"
           }
         }
       }
     },
-    "ui.button.ok" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
+    "ui.alert.tramError": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tram Error"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raitiovaunuvirhe"
           }
         }
       }
     },
-    "ui.button.saved" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saved"
+    "ui.button.add": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tallennettu"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää"
           }
         }
       }
     },
-    "ui.button.tickets" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tickets"
+    "ui.button.done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Liput"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valmis"
           }
         }
       }
     },
-    "ui.departures.noLines" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Lines Selected"
+    "ui.button.ok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ei valittuja linjoja"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         }
       }
     },
-    "ui.departures.noneFound" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No departures found."
+    "ui.button.saved": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lähtöjä ei löytynyt."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tallennettu"
           }
         }
       }
     },
-    "ui.departures.selectHint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select lines in the map view to see their departures here."
+    "ui.button.tickets": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tickets"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Valitse linjoja nähdäksesi lähdöt."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liput"
           }
         }
       }
     },
-    "ui.error.fetchFailed" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't load data. Pull to retry."
+    "ui.departures.noLines": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Lines Selected"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tietojen haku epäonnistui. Vedä alas yrittääksesi uudelleen."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei valittuja linjoja"
           }
         }
       }
     },
-    "ui.error.hslNotInstalled" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Please install the HSL app to buy tickets."
+    "ui.departures.noneFound": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No departures found."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Asenna HSL-sovellus ostaaksesi lippuja."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lähtöjä ei löytynyt."
           }
         }
       }
     },
-    "ui.error.offline" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No network connection."
+    "ui.departures.selectHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select lines in the map view to see their departures here."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ei verkkoyhteyttä."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse linjoja nähdäksesi lähdöt."
           }
         }
       }
     },
-    "ui.error.searchFailed" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search failed. Try again."
+    "ui.error.fetchFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load data. Pull to retry."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Haku epäonnistui. Yritä uudelleen."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tietojen haku epäonnistui. Vedä alas yrittääksesi uudelleen."
           }
         }
       }
     },
-    "ui.error.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Error"
+    "ui.error.hslNotInstalled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please install the HSL app to buy tickets."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Virhe"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asenna HSL-sovellus ostaaksesi lippuja."
           }
         }
       }
     },
-    "ui.favorites.empty" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No favorites yet."
+    "ui.error.offline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No network connection."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ei suosikkeja."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei verkkoyhteyttä."
           }
         }
       }
     },
-    "ui.favorites.noFavorites" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Favorites"
+    "ui.error.searchFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search failed. Try again."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ei suosikkeja"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haku epäonnistui. Yritä uudelleen."
           }
         }
       }
     },
-    "ui.label.platform" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Platform %@"
+    "ui.error.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Laituri %@"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Virhe"
           }
         }
       }
     },
-    "ui.location.rautatientori" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Railway Square"
+    "ui.favorites.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No favorites yet."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rautatientori"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei suosikkeja."
           }
         }
       }
     },
-    "ui.placeholder.search" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search line (e.g. 550)"
+    "ui.favorites.noFavorites": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Favorites"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Etsi linja (esim. 550)"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei suosikkeja"
           }
         }
       }
     },
-    "ui.search.empty" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No lines found."
+    "ui.label.platform": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Platform %@"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Linjoja ei löytynyt."
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laituri %@"
           }
         }
       }
     },
-    "ui.search.mode.bus" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Buses"
+    "ui.location.rautatientori": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Railway Square"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bussit"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rautatientori"
           }
         }
       }
     },
-    "ui.search.mode.tram" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trams"
+    "ui.placeholder.search": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search line (e.g. 550)"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Raitiovaunut"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etsi linja (esim. 550)"
           }
         }
       }
     },
-    "ui.search.noResults" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Results"
+    "ui.search.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No lines found."
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ei tuloksia"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linjoja ei löytynyt."
           }
         }
       }
     },
-    "ui.stops.nearby" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nearby stops"
+    "ui.search.mode.bus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buses"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Läheiset pysäkit"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bussit"
           }
         }
       }
     },
-    "ui.time.min" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d min"
+    "ui.search.mode.tram": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trams"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d min"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raitiovaunut"
           }
         }
       }
     },
-    "ui.time.now" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Now"
+    "ui.search.noResults": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Results"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nyt"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei tuloksia"
           }
         }
       }
     },
-    "ui.title.search" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add Lines"
+    "ui.stops.nearby": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nearby stops"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lisää Linjoja"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Läheiset pysäkit"
           }
         }
       }
     },
-    "ui.title.yourLines" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your Lines"
+    "ui.time.min": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d min"
           }
         },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Omat Linjat"
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d min"
+          }
+        }
+      }
+    },
+    "ui.time.now": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nyt"
+          }
+        }
+      }
+    },
+    "ui.title.search": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Lines"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää Linjoja"
+          }
+        }
+      }
+    },
+    "ui.title.yourLines": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Lines"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omat Linjat"
+          }
+        }
+      }
+    },
+    "ui.loading": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ladataan"
+          }
+        }
+      }
+    },
+    "ui.time.minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d minutes"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d minuuttia"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }
