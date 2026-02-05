@@ -62,6 +62,7 @@ struct LineSearchSheet: View {
                             HStack {
                                 Spacer()
                                 ProgressView()
+                                    .accessibilityLabel(Text(NSLocalizedString("ui.loading", comment: "")))
                                 Spacer()
                             }
                             .listRowSeparator(.hidden)
@@ -104,7 +105,7 @@ struct LineSearchSheet: View {
                 }
                 .navigationTitle(searchText.isEmpty ? Text("ui.title.yourLines") : Text("ui.title.search"))
                 .searchable(text: $searchText, isPresented: $isSearchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("ui.placeholder.search"))
-                .keyboardType(.numberPad)
+                .keyboardType(.default)
                 .disableAutocorrection(true)
                 .textInputAutocapitalization(.never)
                 .onChange(of: searchText) { _, newValue in
