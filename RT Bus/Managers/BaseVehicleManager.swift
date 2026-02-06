@@ -363,7 +363,6 @@ class BaseVehicleManager {
 
     @MainActor
     func processMessage(topicName: String, payload: Data) {
-        let topicRouteIdIndex = 8
         struct LocalVP: Decodable {
             let veh: Int
             let desi: String?
@@ -377,9 +376,7 @@ class BaseVehicleManager {
         }
 
         // Extract routeId from topic (support multiple HFP layouts)
-        let parts = topicName.split(separator: "/")
-        let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
-        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
+        let normalizedRouteId = extractRouteId(from: topicName)
 
         do {
             let response = try decoder.decode(LocalResponse.self, from: payload)
@@ -401,6 +398,50 @@ class BaseVehicleManager {
         } catch {
             Logger.busManager.error("\(String(describing: Self.self)): Failed to decode MQTT payload: \(error)")
         }
+    }
+
+    private nonisolated func extractRouteId(from topic: String) -> String? {
+        var componentCount = 0
+        var inComponent = false
+        var componentStart: String.Index?
+
+        var index = topic.startIndex
+        while index < topic.endIndex {
+            let char = topic[index]
+            if char != "/" {
+                if !inComponent {
+                    inComponent = true
+                    componentCount += 1
+                    if componentCount == 9 { // We want the 9th component (index 8)
+                        componentStart = index
+                    }
+                }
+            } else {
+                if inComponent {
+                    inComponent = false
+                    if componentCount == 9 {
+                        // Found end of 9th component
+                        let component = topic[componentStart!..<index]
+                        if component.hasPrefix("HSL:") {
+                            return String(component.dropFirst(4))
+                        }
+                        return String(component)
+                    }
+                }
+            }
+            index = topic.index(after: index)
+        }
+
+        // If we end while inside the 9th component
+        if inComponent, componentCount == 9, let start = componentStart {
+            let component = topic[start..<topic.endIndex]
+            if component.hasPrefix("HSL:") {
+                return String(component.dropFirst(4))
+            }
+            return String(component)
+        }
+
+        return nil
     }
 
     // MARK: - Search
