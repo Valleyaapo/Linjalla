@@ -230,6 +230,35 @@ struct DigitransitServiceTests {
         }
     }
 
+    @Test
+    func searchRoutesSanitizesInput() async throws {
+        let (service, _) = makeService()
+
+        // 1. Whitespace only -> returns empty array without request
+        let emptyResult = try await service.searchRoutes(query: "   \n  ", transportMode: .bus)
+        #expect(emptyResult.isEmpty)
+
+        // 2. Long input -> truncated to 50 chars
+        DigitransitServiceTestURLProtocol.requestHandler = { request in
+            let body = try requestBodyData(request)
+            let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+            let variables = try #require(json["variables"] as? [String: Any])
+            let name = try #require(variables["name"] as? String)
+
+            #expect(name.count == 50)
+            #expect(name == String(String(repeating: "a", count: 100).prefix(50)))
+
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = """
+            { "data": { "routes": [] } }
+            """.data(using: .utf8)
+            return (response, data)
+        }
+
+        let longQuery = String(repeating: "a", count: 100)
+        _ = try await service.searchRoutes(query: longQuery, transportMode: .bus)
+    }
+
     private func makeService() -> (DigitransitService, String) {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [DigitransitServiceTestURLProtocol.self]
