@@ -64,6 +64,9 @@ class BaseVehicleManager {
     // Shared decoder to reduce allocation overhead in high-frequency updates
     @ObservationIgnored private let decoder = JSONDecoder()
 
+    // Parser for offloading MQTT work
+    @ObservationIgnored private let parser = VehicleParser()
+
     // MARK: - Dependencies
 
     @ObservationIgnored private let graphQLService: DigitransitService
@@ -230,8 +233,13 @@ class BaseVehicleManager {
                         var buffer = publishInfo.payload
                         guard let data = buffer.readData(length: buffer.readableBytes) else { return }
                         let topic = publishInfo.topicName
-                        Task { @MainActor in
-                            self.processMessage(topicName: topic, payload: data)
+
+                        let parser = self.parser
+                        let vehicleType = self.vehicleType
+
+                        Task.detached { [weak self] in
+                            guard let vehicle = await parser.parse(topic: topic, payload: data, vehicleType: vehicleType) else { return }
+                            await self?.yieldVehicle(vehicle)
                         }
                     }
                 }
@@ -362,45 +370,8 @@ class BaseVehicleManager {
     // MARK: - Message Handling
 
     @MainActor
-    func processMessage(topicName: String, payload: Data) {
-        let topicRouteIdIndex = 8
-        struct LocalVP: Decodable {
-            let veh: Int
-            let desi: String?
-            let lat: Double?
-            let long: Double?
-            let hdg: Int?
-            let tsi: TimeInterval?
-        }
-        struct LocalResponse: Decodable {
-            let VP: LocalVP
-        }
-
-        // Extract routeId from topic (support multiple HFP layouts)
-        let parts = topicName.split(separator: "/")
-        let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
-        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
-
-        do {
-            let response = try decoder.decode(LocalResponse.self, from: payload)
-            let vp = response.VP
-
-            if let lat = vp.lat, let long = vp.long, let desi = vp.desi {
-                let vehicle = BusModel(
-                    id: vp.veh,
-                    lineName: desi,
-                    routeId: normalizedRouteId,
-                    latitude: lat,
-                    longitude: long,
-                    heading: vp.hdg,
-                    timestamp: vp.tsi ?? Date().timeIntervalSince1970,
-                    type: vehicleType
-                )
-                vehicleUpdateContinuation?.yield(vehicle)
-            }
-        } catch {
-            Logger.busManager.error("\(String(describing: Self.self)): Failed to decode MQTT payload: \(error)")
-        }
+    func yieldVehicle(_ vehicle: BusModel) {
+        vehicleUpdateContinuation?.yield(vehicle)
     }
 
     // MARK: - Search
@@ -557,6 +528,28 @@ class BaseVehicleManager {
         init(_ client: MQTTClient) { self.client = client }
         deinit {
             try? client.syncShutdownGracefully()
+        }
+    }
+}
+
+// MARK: - Vehicle Parser Actor
+
+private actor VehicleParser {
+    private let decoder = JSONDecoder()
+    private let topicRouteIdIndex = 8
+
+    func parse(topic: String, payload: Data, vehicleType: BusModel.VehicleType) -> BusModel? {
+        // Extract routeId from topic (support multiple HFP layouts)
+        let parts = topic.split(separator: "/")
+        let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
+        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
+
+        do {
+            let response = try decoder.decode(HSLResponse.self, from: payload)
+            return response.VP.toBusModel(routeId: normalizedRouteId, type: vehicleType)
+        } catch {
+            Logger.busManager.error("VehicleParser: Failed to decode MQTT payload: \(error)")
+            return nil
         }
     }
 }
