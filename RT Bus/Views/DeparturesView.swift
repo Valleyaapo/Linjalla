@@ -75,6 +75,7 @@ struct DeparturesView: View {
                     ProgressView()
                         .frame(maxWidth: .infinity, alignment: .center)
                         .listRowBackground(Color.clear)
+                        .accessibilityLabel(Text(NSLocalizedString("ui.loading", comment: "")))
                 } else if departures.isEmpty && !viewState.isLoading {
                     Text("ui.departures.noneFound")
                         .foregroundStyle(.secondary)
