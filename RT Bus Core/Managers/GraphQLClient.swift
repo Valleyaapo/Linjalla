@@ -23,11 +23,16 @@ actor GraphQLClient {
     private let apiKey: String
     private let endpoint: URL
     private let retryPolicy: RetryPolicy
+    // ⚡ Bolt: Reuse decoder/encoder to avoid allocation overhead per request
+    private let decoder: JSONDecoder
+    private let encoder: JSONEncoder
 
     init(session: URLSession, apiKey: String, endpoint: String) {
         self.session = session
         self.apiKey = apiKey
         self.retryPolicy = .default
+        self.decoder = JSONDecoder()
+        self.encoder = JSONEncoder()
         guard let url = URL(string: endpoint) else {
             preconditionFailure("Invalid GraphQL endpoint")
         }
@@ -58,7 +63,6 @@ actor GraphQLClient {
 
                 try throwIfGraphQLErrors(in: data)
 
-                let decoder = JSONDecoder()
                 return try decoder.decode(T.self, from: data)
 
             } catch {
@@ -88,7 +92,6 @@ actor GraphQLClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "digitransit-subscription-key")
         do {
-            let encoder = JSONEncoder()
             let body = RequestBody(query: query, variables: variables)
             request.httpBody = try encoder.encode(body)
         } catch {
@@ -99,7 +102,6 @@ actor GraphQLClient {
     }
 
     private func throwIfGraphQLErrors(in data: Data) throws {
-        let decoder = JSONDecoder()
         guard let probe = try? decoder.decode(ErrorProbe.self, from: data),
               let errors = probe.errors,
               !errors.isEmpty else {
