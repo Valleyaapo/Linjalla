@@ -1003,6 +1003,38 @@
         }
       }
     },
+    "ui.time.minute.accessible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 minute"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 minuutti"
+          }
+        }
+      }
+    },
+    "ui.time.minutes.accessible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d minutes"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d minuuttia"
+          }
+        }
+      }
+    },
     "ui.time.now" : {
       "localizations" : {
         "en" : {
