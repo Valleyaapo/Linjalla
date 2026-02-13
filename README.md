@@ -31,6 +31,20 @@ Repository: https://github.com/Valleyaapo/Linjalla
 - Privacy Policy: [`docs/privacy.md`](docs/privacy.md)
 - Landing Page: [`docs/landing.html`](docs/landing.html)
 
+## Security & Configuration
+
+This project uses `Secrets.xcconfig` to manage sensitive configuration (API keys, endpoints) securely.
+
+1. Copy the example configuration:
+   ```bash
+   cp Secrets-Example.xcconfig Secrets.xcconfig
+   ```
+2. Open `Secrets.xcconfig` and add your credentials:
+   - `DIGITRANSIT_API_KEY`: Your API key from Digitransit.
+   - `MQTT_HOST`, `MQTT_PORT`, `MQTT_USERNAME`: MQTT broker details.
+
+> **Note:** `Secrets.xcconfig` is git-ignored to prevent accidental exposure of secrets. Do not commit it.
+
 ## Contributing
 Pull requests are welcome. For larger changes, consider opening an issue first to discuss what you’d like to add or change.
 

@@ -14,16 +14,33 @@ enum Secrets {
         if let key, !key.isEmpty {
             return key
         }
-        assertionFailure("Missing DIGITRANSIT_API_KEY in Info.plist")
-        return ""
+        fatalError("Missing DIGITRANSIT_API_KEY in Info.plist. check Secrets.xcconfig")
     }()
     
     /// HSL MQTT Username
-    static let mqttUsername = "digitransit"
+    static let mqttUsername: String = {
+        guard let username = Bundle.main.object(forInfoDictionaryKey: "MQTT_USERNAME") as? String,
+              !username.isEmpty else {
+            fatalError("Missing MQTT_USERNAME in Info.plist. check Secrets.xcconfig")
+        }
+        return username
+    }()
     
     /// HSL MQTT Host
-    static let mqttHost = "mqtt.hsl.fi"
+    static let mqttHost: String = {
+        guard let host = Bundle.main.object(forInfoDictionaryKey: "MQTT_HOST") as? String,
+              !host.isEmpty else {
+            fatalError("Missing MQTT_HOST in Info.plist. check Secrets.xcconfig")
+        }
+        return host
+    }()
     
     /// HSL MQTT Port
-    static let mqttPort = 8883
+    static let mqttPort: Int = {
+        guard let portString = Bundle.main.object(forInfoDictionaryKey: "MQTT_PORT") as? String,
+              let port = Int(portString) else {
+            fatalError("Missing or invalid MQTT_PORT in Info.plist. check Secrets.xcconfig")
+        }
+        return port
+    }()
 }
