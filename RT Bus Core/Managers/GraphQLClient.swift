@@ -19,6 +19,9 @@ actor GraphQLClient {
         case httpStatus(Int)
     }
 
+    private let decoder = JSONDecoder()
+    private let encoder = JSONEncoder()
+
     private let session: URLSession
     private let apiKey: String
     private let endpoint: URL
@@ -58,7 +61,6 @@ actor GraphQLClient {
 
                 try throwIfGraphQLErrors(in: data)
 
-                let decoder = JSONDecoder()
                 return try decoder.decode(T.self, from: data)
 
             } catch {
@@ -88,7 +90,6 @@ actor GraphQLClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "digitransit-subscription-key")
         do {
-            let encoder = JSONEncoder()
             let body = RequestBody(query: query, variables: variables)
             request.httpBody = try encoder.encode(body)
         } catch {
@@ -99,7 +100,6 @@ actor GraphQLClient {
     }
 
     private func throwIfGraphQLErrors(in data: Data) throws {
-        let decoder = JSONDecoder()
         guard let probe = try? decoder.decode(ErrorProbe.self, from: data),
               let errors = probe.errors,
               !errors.isEmpty else {
