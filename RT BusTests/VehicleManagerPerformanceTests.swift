@@ -32,7 +32,7 @@ struct VehicleManagerPerformanceTests {
             for chunkStart in stride(from: 0, to: payloads.count, by: batchSize) {
                 let chunkEnd = min(chunkStart + batchSize, payloads.count)
                 for payload in payloads[chunkStart..<chunkEnd] {
-                    manager.processMessage(topicName: "/hfp/v2/journey/ongoing/vp/bus/HSL/1/10/1001/1", payload: payload)
+                    await manager.processMessage(topicName: "/hfp/v2/journey/ongoing/vp/bus/HSL/1/10/1001/1", payload: payload)
                 }
                 await Task.yield()
                 let drained = await manager.stream.drain()

@@ -61,8 +61,8 @@ class BaseVehicleManager {
     @ObservationIgnored private var consumerTask: Task<Void, Never>?
     @ObservationIgnored var vehicleUpdateBufferLimit = 1_000
 
-    // Shared decoder to reduce allocation overhead in high-frequency updates
-    @ObservationIgnored private let decoder = JSONDecoder()
+    // Offload parsing to a separate actor to prevent MainActor blocking
+    let parser = VehicleParser()
 
     // MARK: - Dependencies
 
@@ -230,8 +230,10 @@ class BaseVehicleManager {
                         var buffer = publishInfo.payload
                         guard let data = buffer.readData(length: buffer.readableBytes) else { return }
                         let topic = publishInfo.topicName
-                        Task { @MainActor in
-                            self.processMessage(topicName: topic, payload: data)
+
+                        // Offload parsing to background actor
+                        Task {
+                            await self.processMessage(topicName: topic, payload: data)
                         }
                     }
                 }
@@ -362,44 +364,10 @@ class BaseVehicleManager {
     // MARK: - Message Handling
 
     @MainActor
-    func processMessage(topicName: String, payload: Data) {
-        let topicRouteIdIndex = 8
-        struct LocalVP: Decodable {
-            let veh: Int
-            let desi: String?
-            let lat: Double?
-            let long: Double?
-            let hdg: Int?
-            let tsi: TimeInterval?
-        }
-        struct LocalResponse: Decodable {
-            let VP: LocalVP
-        }
-
-        // Extract routeId from topic (support multiple HFP layouts)
-        let parts = topicName.split(separator: "/")
-        let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
-        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
-
-        do {
-            let response = try decoder.decode(LocalResponse.self, from: payload)
-            let vp = response.VP
-
-            if let lat = vp.lat, let long = vp.long, let desi = vp.desi {
-                let vehicle = BusModel(
-                    id: vp.veh,
-                    lineName: desi,
-                    routeId: normalizedRouteId,
-                    latitude: lat,
-                    longitude: long,
-                    heading: vp.hdg,
-                    timestamp: vp.tsi ?? Date().timeIntervalSince1970,
-                    type: vehicleType
-                )
-                vehicleUpdateContinuation?.yield(vehicle)
-            }
-        } catch {
-            Logger.busManager.error("\(String(describing: Self.self)): Failed to decode MQTT payload: \(error)")
+    func processMessage(topicName: String, payload: Data) async {
+        let type = self.vehicleType
+        if let vehicle = await parser.parse(topicName: topicName, payload: payload, type: type) {
+            vehicleUpdateContinuation?.yield(vehicle)
         }
     }
 
@@ -432,7 +400,7 @@ class BaseVehicleManager {
 
     private func loadFavorites() {
         if let data = UserDefaults.standard.data(forKey: favoritesKey),
-           let decoded = try? decoder.decode([BusLine].self, from: data) {
+           let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
             self.favoriteLines = decoded
         } else {
             self.favoriteLines = defaultFavorites
