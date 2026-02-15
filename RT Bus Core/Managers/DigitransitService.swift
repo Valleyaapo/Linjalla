@@ -154,7 +154,10 @@ public actor DigitransitService {
             guard let route = stoptime.trip?.route,
                   let lineName = route.shortName else { return nil }
 
+            // Use stable ID to prevent unnecessary UI re-renders on data refresh
+            let id = "\(route.gtfsId ?? lineName)_\(stoptime.serviceDay)_\(stoptime.scheduledDeparture)"
             return Departure(
+                id: id,
                 lineName: lineName,
                 routeId: route.gtfsId,
                 headsign: stoptime.headsign ?? "Unknown",
@@ -185,7 +188,10 @@ public actor DigitransitService {
             guard let route = stoptime.trip?.route,
                   let lineName = route.shortName else { return nil }
 
+            // Use stable ID to prevent unnecessary UI re-renders on data refresh
+            let id = "\(route.gtfsId ?? lineName)_\(stoptime.serviceDay)_\(stoptime.scheduledDeparture)"
             return Departure(
+                id: id,
                 lineName: lineName,
                 routeId: route.gtfsId,
                 headsign: stoptime.headsign ?? "Unknown",
