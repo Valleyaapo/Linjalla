@@ -132,6 +132,7 @@ final class TrainManager {
             let departure = secondsSinceMidnight + 300
             return [
                 Departure(
+                    id: "train_I_HKI_\(departure)",
                     lineName: "I",
                     routeId: nil,
                     headsign: "via Tikkurila",
@@ -211,7 +212,10 @@ final class TrainManager {
             }
         }
         
+        // Use stable ID to prevent unnecessary UI re-renders on data refresh
+        let id = "train_\(train.trainNumber)_\(stationCode)_\(Int(departureRow.scheduledTime.timeIntervalSince1970))"
         return Departure(
+            id: id,
             lineName: lineId,
             routeId: nil,
             headsign: destination,

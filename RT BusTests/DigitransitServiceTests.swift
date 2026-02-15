@@ -155,7 +155,7 @@ struct DigitransitServiceTests {
                       "headsign": "Destination",
                       "pickupType": "SCHEDULED",
                       "stop": { "platformCode": "1" },
-                      "trip": { "route": { "shortName": "550" } }
+                      "trip": { "route": { "shortName": "550", "gtfsId": "HSL:550" } }
                     }
                   ]
                 }

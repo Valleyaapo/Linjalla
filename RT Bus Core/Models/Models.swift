@@ -30,7 +30,7 @@ public struct BusStop: Identifiable, Hashable, Sendable {
 
 // MARK: - Departure Model
 public struct Departure: Identifiable, Sendable {
-    public let id: UUID
+    public let id: String
     public let lineName: String
     public let routeId: String?
     public let headsign: String
@@ -40,7 +40,7 @@ public struct Departure: Identifiable, Sendable {
     public let platform: String?
 
     public init(
-        id: UUID = UUID(),
+        id: String = UUID().uuidString,
         lineName: String,
         routeId: String?,
         headsign: String,
