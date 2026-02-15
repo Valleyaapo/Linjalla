@@ -209,7 +209,8 @@ class BaseVehicleManager {
                 let client = MQTTClient(
                     host: Secrets.mqttHost,
                     port: Secrets.mqttPort,
-                    identifier: "HSL-App-\(String(describing: Self.self))-\(Int.random(in: 0...10000))",
+                    // Use a stronger random identifier to prevent collisions (DoS)
+                    identifier: "HSL-App-\(String(describing: Self.self))-\(String(UUID().uuidString.prefix(16)))",
                     eventLoopGroupProvider: .shared(NIOTSEventLoopGroup.singleton),
                     configuration: MQTTClient.Configuration(
                         userName: Secrets.mqttUsername,
