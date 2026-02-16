@@ -19,11 +19,31 @@ enum Secrets {
     }()
     
     /// HSL MQTT Username
-    static let mqttUsername = "digitransit"
+    static let mqttUsername: String = {
+        if let username = Bundle.main.object(forInfoDictionaryKey: "MQTT_USERNAME") as? String,
+           !username.isEmpty,
+           !username.hasPrefix("$(") {
+            return username
+        }
+        return "digitransit"
+    }()
     
     /// HSL MQTT Host
-    static let mqttHost = "mqtt.hsl.fi"
+    static let mqttHost: String = {
+        if let host = Bundle.main.object(forInfoDictionaryKey: "MQTT_HOST") as? String,
+           !host.isEmpty,
+           !host.hasPrefix("$(") {
+            return host
+        }
+        return "mqtt.hsl.fi"
+    }()
     
     /// HSL MQTT Port
-    static let mqttPort = 8883
+    static let mqttPort: Int = {
+        if let portString = Bundle.main.object(forInfoDictionaryKey: "MQTT_PORT") as? String,
+           let port = Int(portString) {
+            return port
+        }
+        return 8883
+    }()
 }
