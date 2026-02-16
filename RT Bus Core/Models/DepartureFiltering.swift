@@ -5,10 +5,27 @@ public struct DepartureFilterInput: Sendable {
     public let lineNames: Set<String>
     public let includePast: Bool
 
+    // Optimized set for O(1) lookups of line names and their base variants
+    fileprivate let matchingLineNames: Set<String>
+
     public init(routeIds: Set<String>, lineNames: Set<String>, includePast: Bool) {
         self.routeIds = routeIds
         self.lineNames = lineNames
         self.includePast = includePast
+
+        var matches = lineNames
+        for id in routeIds {
+            var s = id
+            if s.hasPrefix("HSL:") {
+                s = String(s.dropFirst(4))
+            }
+            matches.insert(s)
+
+            if s.hasSuffix("N") || s.hasSuffix("B") || s.hasSuffix("K") {
+                matches.insert(String(s.dropLast()))
+            }
+        }
+        self.matchingLineNames = matches
     }
 
     public var isEmpty: Bool {
@@ -44,29 +61,24 @@ enum DepartureFiltering {
     }
 
     private static func matches(_ departure: Departure, filter: DepartureFilterInput) -> Bool {
+        // 1. Exact routeId match (fastest)
         if let routeId = departure.routeId {
             if filter.routeIds.contains(routeId) {
                 return true
             }
-            let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-            if filter.lineNames.contains(normalized) {
+
+            // 2. Normalized routeId check
+            // Use substring slicing to avoid full string replacement if possible
+            let normalized = routeId.hasPrefix("HSL:") ? String(routeId.dropFirst(4)) : routeId
+            if filter.matchingLineNames.contains(normalized) {
                 return true
             }
         }
 
-        if filter.lineNames.contains(departure.lineName) {
-            return true
-        }
-
-        let base = "HSL:\(departure.lineName)"
-        if filter.routeIds.contains(base) ||
-            filter.routeIds.contains(base + "N") ||
-            filter.routeIds.contains(base + "B") ||
-            filter.routeIds.contains(base + "K") {
-            return true
-        }
-
-        return false
+        // 3. Line name check
+        // This covers exact line name matches AND base variant matches
+        // because matchingLineNames includes base names derived from filter routeIds.
+        return filter.matchingLineNames.contains(departure.lineName)
     }
 
     private static func departureTimestamp(_ departure: Departure) -> TimeInterval {
