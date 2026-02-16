@@ -1003,6 +1003,38 @@
         }
       }
     },
+    "ui.time.minute.accessible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d minute"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d minuutti"
+          }
+        }
+      }
+    },
+    "ui.time.minutes.accessible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d minutes"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d minuuttia"
+          }
+        }
+      }
+    },
     "ui.time.now" : {
       "localizations" : {
         "en" : {
@@ -1015,6 +1047,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nyt"
+          }
+        }
+      }
+    },
+    "ui.time.now.accessible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Departing now"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lähtee nyt"
           }
         }
       }
