@@ -206,10 +206,12 @@ class BaseVehicleManager {
             }
 
             do {
+                // Use a UUID prefix to ensure global uniqueness and prevent session collisions (DoS risk)
+                let uniqueId = UUID().uuidString.prefix(16)
                 let client = MQTTClient(
                     host: Secrets.mqttHost,
                     port: Secrets.mqttPort,
-                    identifier: "HSL-App-\(String(describing: Self.self))-\(Int.random(in: 0...10000))",
+                    identifier: "HSL-App-\(String(describing: Self.self))-\(uniqueId)",
                     eventLoopGroupProvider: .shared(NIOTSEventLoopGroup.singleton),
                     configuration: MQTTClient.Configuration(
                         userName: Secrets.mqttUsername,
