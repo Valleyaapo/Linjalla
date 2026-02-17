@@ -104,8 +104,8 @@ struct LineSearchSheet: View {
                 }
                 .navigationTitle(searchText.isEmpty ? Text("ui.title.yourLines") : Text("ui.title.search"))
                 .searchable(text: $searchText, isPresented: $isSearchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("ui.placeholder.search"))
-                .keyboardType(.numberPad)
-                .disableAutocorrection(true)
+                .keyboardType(.default)
+                .autocorrectionDisabled(true)
                 .textInputAutocapitalization(.never)
                 .onChange(of: searchText) { _, newValue in
                     performDebouncedSearch(query: newValue)
