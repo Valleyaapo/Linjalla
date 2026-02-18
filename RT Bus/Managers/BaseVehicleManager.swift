@@ -64,6 +64,9 @@ class BaseVehicleManager {
     // Shared decoder to reduce allocation overhead in high-frequency updates
     @ObservationIgnored private let decoder = JSONDecoder()
 
+    // Offload high-frequency parsing to a background actor
+    @ObservationIgnored private nonisolated let parser = VehicleParser()
+
     // MARK: - Dependencies
 
     @ObservationIgnored private let graphQLService: DigitransitService
@@ -230,9 +233,9 @@ class BaseVehicleManager {
                         var buffer = publishInfo.payload
                         guard let data = buffer.readData(length: buffer.readableBytes) else { return }
                         let topic = publishInfo.topicName
-                        Task { @MainActor in
-                            self.processMessage(topicName: topic, payload: data)
-                        }
+
+                        // Delegate to processMessage which handles background parsing
+                        self.processMessage(topicName: topic, payload: data)
                     }
                 }
 
@@ -362,44 +365,16 @@ class BaseVehicleManager {
     // MARK: - Message Handling
 
     @MainActor
-    func processMessage(topicName: String, payload: Data) {
-        let topicRouteIdIndex = 8
-        struct LocalVP: Decodable {
-            let veh: Int
-            let desi: String?
-            let lat: Double?
-            let long: Double?
-            let hdg: Int?
-            let tsi: TimeInterval?
-        }
-        struct LocalResponse: Decodable {
-            let VP: LocalVP
-        }
+    private func dispatchVehicle(_ vehicle: BusModel) {
+        vehicleUpdateContinuation?.yield(vehicle)
+    }
 
-        // Extract routeId from topic (support multiple HFP layouts)
-        let parts = topicName.split(separator: "/")
-        let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
-        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
-
-        do {
-            let response = try decoder.decode(LocalResponse.self, from: payload)
-            let vp = response.VP
-
-            if let lat = vp.lat, let long = vp.long, let desi = vp.desi {
-                let vehicle = BusModel(
-                    id: vp.veh,
-                    lineName: desi,
-                    routeId: normalizedRouteId,
-                    latitude: lat,
-                    longitude: long,
-                    heading: vp.hdg,
-                    timestamp: vp.tsi ?? Date().timeIntervalSince1970,
-                    type: vehicleType
-                )
-                vehicleUpdateContinuation?.yield(vehicle)
+    nonisolated func processMessage(topicName: String, payload: Data) {
+        Task.detached { [weak self] in
+            guard let self else { return }
+            if let vehicle = await self.parser.parse(topicName: topicName, payload: payload, vehicleType: self.vehicleType) {
+                await self.dispatchVehicle(vehicle)
             }
-        } catch {
-            Logger.busManager.error("\(String(describing: Self.self)): Failed to decode MQTT payload: \(error)")
         }
     }
 
