@@ -52,10 +52,18 @@ struct DepartureRowView: View {
                 .foregroundStyle(.green)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign). \(DepartureFormatting.timeUntil(departure.departureDate))"
-        )
+        .accessibilityLabel(accessibilityLabelString)
         .accessibilityIdentifier("DepartureRow_\(departure.lineName)")
+    }
+
+    private var accessibilityLabelString: String {
+        var label = "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign)."
+        if let platform = departure.platform {
+            let platformStr = String(format: NSLocalizedString("ui.label.platform", comment: ""), platform)
+            label += " \(platformStr)."
+        }
+        label += " \(DepartureFormatting.timeUntilAccessible(departure.departureDate))"
+        return label
     }
 }
 
@@ -77,5 +85,16 @@ enum DepartureFormatting {
             return NSLocalizedString("ui.time.now", comment: "")
         }
         return String(format: NSLocalizedString("ui.time.min", comment: ""), diff)
+    }
+
+    static func timeUntilAccessible(_ date: Date) -> String {
+        let diff = Int(date.timeIntervalSinceNow / 60)
+        if diff <= 0 {
+            return NSLocalizedString("ui.time.now", comment: "")
+        }
+        if diff == 1 {
+            return String(format: NSLocalizedString("ui.time.minute.accessible", comment: ""), diff)
+        }
+        return String(format: NSLocalizedString("ui.time.minutes.accessible", comment: ""), diff)
     }
 }
