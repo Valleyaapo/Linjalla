@@ -11,6 +11,20 @@ import RTBusCore
 struct DepartureRowView: View {
     let departure: Departure
     
+    var accessibilityLabelString: String {
+        var components = [
+            "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign)"
+        ]
+
+        if let platform = departure.platform {
+            components.append(String(format: NSLocalizedString("ui.label.platform", comment: ""), platform))
+        }
+
+        components.append(DepartureFormatting.timeUntilAccessible(departure.departureDate))
+
+        return components.joined(separator: ". ")
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Text(departure.lineName)
@@ -52,9 +66,7 @@ struct DepartureRowView: View {
                 .foregroundStyle(.green)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign). \(DepartureFormatting.timeUntil(departure.departureDate))"
-        )
+        .accessibilityLabel(accessibilityLabelString)
         .accessibilityIdentifier("DepartureRow_\(departure.lineName)")
     }
 }
@@ -77,5 +89,16 @@ enum DepartureFormatting {
             return NSLocalizedString("ui.time.now", comment: "")
         }
         return String(format: NSLocalizedString("ui.time.min", comment: ""), diff)
+    }
+
+    static func timeUntilAccessible(_ date: Date) -> String {
+        let diff = Int(date.timeIntervalSinceNow / 60)
+        if diff <= 0 {
+            return NSLocalizedString("ui.time.now", comment: "")
+        }
+        if diff == 1 {
+            return String(format: NSLocalizedString("ui.time.minute.accessible.one", comment: ""), diff)
+        }
+        return String(format: NSLocalizedString("ui.time.minute.accessible.other", comment: ""), diff)
     }
 }
