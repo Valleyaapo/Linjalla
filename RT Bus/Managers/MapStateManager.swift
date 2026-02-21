@@ -11,41 +11,21 @@ import QuartzCore
 import RTBusCore
 
 /// Central state manager that aggregates data from BusManager, TramManager, and StopManager
-/// into a single, atomically-updated mapItems array. This eliminates race conditions
+/// into optimized lists for BusMapView. This eliminates race conditions
 /// caused by independent updates triggering separate view re-renders.
 @MainActor
 @Observable
 final class MapStateManager {
-    /// The source of truth for dynamic vehicle annotations (Buses & Trams).
-    /// Updated via CADisplayLink to ensure atomic rendering synced with display.
-    /// The atomically-updated list of all items (Stops, then Vehicles)
-    /// This ensures they are rendered in the correct order every frame.
-    private(set) var mapItems: [MapItem] = []
-    
     /// Vehicles only (buses and trams) for use by BusMapView
-    var vehicles: [MapItem] {
-        mapItems.filter {
-            switch $0 {
-            case .bus, .tram: return true
-            case .stop: return false
-            }
-        }
-    }
+    private(set) var vehicles: [MapItem] = []
 
     /// Stops only for use by BusMapView
-    var stopsList: [BusStop] {
-        mapItems.compactMap {
-            switch $0 {
-            case .stop(let stop): return stop
-            case .bus, .tram: return nil
-            }
-        }
-    }
+    private(set) var stopsList: [BusStop] = []
     
-    // Internal caches
-    @ObservationIgnored private var buses: [Int: BusModel] = [:]
-    @ObservationIgnored private var trams: [Int: BusModel] = [:]
-    @ObservationIgnored private var stops: [String: BusStop] = [:]
+    // Internal caches - stored as Arrays to preserve order from Managers and avoid Dictionary overhead
+    @ObservationIgnored private var buses: [BusModel] = []
+    @ObservationIgnored private var trams: [BusModel] = []
+    @ObservationIgnored private var stops: [BusStop] = []
     
     // CADisplayLink for display-synced coalescing
     @ObservationIgnored private var displayLink: CADisplayLink?
@@ -56,40 +36,28 @@ final class MapStateManager {
     // MARK: - Public Update Methods
     
     /// Updates stops. Usually called when line selection changes.
+    /// - Parameter list: A list of BusStop objects, expected to be sorted by ID.
     func updateStops(_ list: [BusStop]) {
-        var newStops: [String: BusStop] = [:]
-        for stop in list {
-            newStops[stop.id] = stop
-        }
-
-        if newStops != stops {
-            stops = newStops
+        if list != stops {
+            stops = list
             scheduleRebuild()
         }
     }
     
     /// Updates the bus list.
+    /// - Parameter list: A list of BusModel objects, expected to be sorted by ID.
     func updateBuses(_ list: [BusModel]) {
-        var newBuses: [Int: BusModel] = [:]
-        for bus in list {
-            newBuses[bus.id] = bus
-        }
-        
-        if newBuses != buses {
-            buses = newBuses
+        if list != buses {
+            buses = list
             scheduleRebuild()
         }
     }
     
     /// Updates the tram list.
+    /// - Parameter list: A list of BusModel objects, expected to be sorted by ID.
     func updateTrams(_ list: [BusModel]) {
-        var newTrams: [Int: BusModel] = [:]
-        for tram in list {
-            newTrams[tram.id] = tram
-        }
-        
-        if newTrams != trams {
-            trams = newTrams
+        if list != trams {
+            trams = list
             scheduleRebuild()
         }
     }
@@ -122,23 +90,30 @@ final class MapStateManager {
     }
     
     private func rebuildItems() {
-        var items: [MapItem] = []
+        // 1. VEHICLES
+        // Buses and Trams are already sorted by ID from Managers.
+        // We map them to MapItem and concatenate.
+        // Since BusMapView separates them anyway, we just provide the list.
+        var newVehicles: [MapItem] = []
+        newVehicles.reserveCapacity(buses.count + trams.count)
         
-        // 1. BUSES
-        let sortedBuses = buses.values.sorted { $0.id < $1.id }
-        items.append(contentsOf: sortedBuses.map { .bus($0) })
+        // Append buses (sorted by ID)
+        newVehicles.append(contentsOf: buses.map { .bus($0) })
         
-        // 2. TRAMS
-        let sortedTrams = trams.values.sorted { $0.id < $1.id }
-        items.append(contentsOf: sortedTrams.map { .tram($0) })
+        // Append trams (sorted by ID)
+        newVehicles.append(contentsOf: trams.map { .tram($0) })
         
-        // 3. STOPS (Rendered last = at the bottom visually)
-        let sortedStops = stops.values.sorted { $0.id < $1.id }
-        items.append(contentsOf: sortedStops.map { .stop($0) })
+        // 2. STOPS
+        // Stops are already sorted by ID from StopManager.
+        let newStops = stops
         
         // Atomic update
-        if items != mapItems {
-            mapItems = items
+        if newVehicles != vehicles {
+            vehicles = newVehicles
+        }
+
+        if newStops != stopsList {
+            stopsList = newStops
         }
     }
 }
