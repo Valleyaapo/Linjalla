@@ -92,7 +92,7 @@ actor GraphQLClient {
             let body = RequestBody(query: query, variables: variables)
             request.httpBody = try encoder.encode(body)
         } catch {
-            Logger.digitransit.error("GraphQL encode failed error=\(String(describing: error), privacy: .public)")
+            Logger.digitransit.error("GraphQL encode failed error=\(String(describing: error), privacy: .private)")
             throw AppError.networkError(error.localizedDescription)
         }
         return request
@@ -106,7 +106,7 @@ actor GraphQLClient {
             return
         }
         let message = errors.map(\.message).joined(separator: "\n")
-        Logger.digitransit.error("GraphQL errors: \(message, privacy: .public)")
+        Logger.digitransit.error("GraphQL errors: \(message, privacy: .private)")
         throw AppError.apiError(message)
     }
 
