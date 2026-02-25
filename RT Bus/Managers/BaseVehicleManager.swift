@@ -53,7 +53,15 @@ class BaseVehicleManager {
     // MARK: - Internal State
     
     @ObservationIgnored var vehicles: [Int: BusModel] = [:]
-    @ObservationIgnored var activeLines: [BusLine] = []
+    @ObservationIgnored var activeLines: [BusLine] = [] {
+        didSet {
+            cachedActiveRouteIds = Set(activeLines.map { $0.routeId })
+            cachedActiveLineNames = Set(activeLines.map { $0.shortName })
+        }
+    }
+    @ObservationIgnored private var cachedActiveRouteIds: Set<String> = []
+    @ObservationIgnored private var cachedActiveLineNames: Set<String> = []
+
     @ObservationIgnored var currentSubscriptions: Set<String> = []
 
     @ObservationIgnored private var vehicleUpdateStream: AsyncStream<BusModel>?
@@ -343,15 +351,11 @@ class BaseVehicleManager {
                 self.currentSubscriptions = newTopics
 
                 // Cleanup vehicles not in selected lines
-                let selectedIds = Set(selectedLines.map { $0.routeId })
-                let selectedNames = Set(selectedLines.map { $0.shortName })
-
                 self.vehicles = self.vehicles.filter { vehicle in
                     if let routeId = vehicle.value.routeId {
-                        let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                        return selectedIds.contains(normalized)
+                        return self.cachedActiveRouteIds.contains(routeId)
                     } else {
-                        return selectedNames.contains(vehicle.value.lineName)
+                        return self.cachedActiveLineNames.contains(vehicle.value.lineName)
                     }
                 }
                 self.vehicleList = self.vehicles.values.sorted { $0.id < $1.id }
@@ -479,16 +483,15 @@ class BaseVehicleManager {
         let now = Date().timeIntervalSince1970
         var hasChanges = false
 
-        let selectedIds = Set(activeLines.map { $0.routeId })
-        let selectedNames = Set(activeLines.map { $0.shortName })
+        // Optimization: Use cached sets to avoid redundant allocations and loop overhead
+        // Optimization: BusModel.routeId is already normalized in processMessage, so we skip redundant normalization
 
         for (id, newVehicle) in updates {
             let isActive: Bool
             if let routeId = newVehicle.routeId {
-                let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                isActive = selectedIds.contains(normalized)
+                isActive = cachedActiveRouteIds.contains(routeId)
             } else {
-                isActive = selectedNames.contains(newVehicle.lineName)
+                isActive = cachedActiveLineNames.contains(newVehicle.lineName)
             }
 
             guard isActive else { continue }
