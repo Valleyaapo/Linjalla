@@ -52,10 +52,17 @@ struct DepartureRowView: View {
                 .foregroundStyle(.green)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign). \(DepartureFormatting.timeUntil(departure.departureDate))"
-        )
+        .accessibilityLabel(accessibilityLabelString)
         .accessibilityIdentifier("DepartureRow_\(departure.lineName)")
+    }
+
+    private var accessibilityLabelString: String {
+        var label = "\(departure.lineName) \(NSLocalizedString("to", comment: "")) \(departure.headsign)."
+        if let platform = departure.platform {
+            label += " \(String(format: NSLocalizedString("ui.label.platform", comment: ""), platform))."
+        }
+        label += " \(DepartureFormatting.timeUntilAccessible(departure.departureDate))"
+        return label
     }
 }
 
@@ -67,6 +74,12 @@ enum DepartureFormatting {
         return formatter
     }()
     
+    fileprivate static let relativeFormatter: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter
+    }()
+
     static func formatTime(_ date: Date) -> String {
         timeFormatter.string(from: date)
     }
@@ -77,5 +90,13 @@ enum DepartureFormatting {
             return NSLocalizedString("ui.time.now", comment: "")
         }
         return String(format: NSLocalizedString("ui.time.min", comment: ""), diff)
+    }
+
+    static func timeUntilAccessible(_ date: Date) -> String {
+        let diff = Int(date.timeIntervalSinceNow / 60)
+        if diff <= 0 {
+            return NSLocalizedString("ui.time.now", comment: "")
+        }
+        return relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 }
