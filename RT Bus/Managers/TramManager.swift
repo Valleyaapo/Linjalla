@@ -49,7 +49,7 @@ final class TramManager: BaseVehicleManager {
             let tram4 = BusModel(
                 id: 8004,
                 lineName: "4",
-                routeId: "HSL:1004",
+                routeId: "1004",
                 latitude: centerLat + Double.random(in: -0.002...0.002),
                 longitude: centerLon + Double.random(in: -0.002...0.002),
                 heading: Int.random(in: 0...360),

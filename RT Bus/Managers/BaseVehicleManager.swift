@@ -53,7 +53,15 @@ class BaseVehicleManager {
     // MARK: - Internal State
     
     @ObservationIgnored var vehicles: [Int: BusModel] = [:]
-    @ObservationIgnored var activeLines: [BusLine] = []
+    @ObservationIgnored var activeLines: [BusLine] = [] {
+        didSet {
+            cachedActiveRouteIds = Set(activeLines.map { $0.routeId })
+            cachedActiveLineNames = Set(activeLines.map { $0.shortName })
+        }
+    }
+    @ObservationIgnored private var cachedActiveRouteIds: Set<String> = []
+    @ObservationIgnored private var cachedActiveLineNames: Set<String> = []
+
     @ObservationIgnored var currentSubscriptions: Set<String> = []
 
     @ObservationIgnored private var vehicleUpdateStream: AsyncStream<BusModel>?
@@ -479,16 +487,13 @@ class BaseVehicleManager {
         let now = Date().timeIntervalSince1970
         var hasChanges = false
 
-        let selectedIds = Set(activeLines.map { $0.routeId })
-        let selectedNames = Set(activeLines.map { $0.shortName })
-
         for (id, newVehicle) in updates {
             let isActive: Bool
             if let routeId = newVehicle.routeId {
-                let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                isActive = selectedIds.contains(normalized)
+                // Optimization: routeId is already normalized in processMessage
+                isActive = cachedActiveRouteIds.contains(routeId)
             } else {
-                isActive = selectedNames.contains(newVehicle.lineName)
+                isActive = cachedActiveLineNames.contains(newVehicle.lineName)
             }
 
             guard isActive else { continue }
