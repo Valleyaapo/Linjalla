@@ -56,14 +56,6 @@ class BaseVehicleManager {
     @ObservationIgnored var activeLines: [BusLine] = []
     @ObservationIgnored var currentSubscriptions: Set<String> = []
 
-    @ObservationIgnored private var vehicleUpdateStream: AsyncStream<BusModel>?
-    @ObservationIgnored private var vehicleUpdateContinuation: AsyncStream<BusModel>.Continuation?
-    @ObservationIgnored private var consumerTask: Task<Void, Never>?
-    @ObservationIgnored var vehicleUpdateBufferLimit = 1_000
-
-    // Shared decoder to reduce allocation overhead in high-frequency updates
-    @ObservationIgnored private let decoder = JSONDecoder()
-
     // MARK: - Dependencies
 
     @ObservationIgnored private let graphQLService: DigitransitService
@@ -81,7 +73,7 @@ class BaseVehicleManager {
         }
     }
 
-    @ObservationIgnored let stream = VehicleStream()
+    @ObservationIgnored nonisolated let stream = VehicleStream()
     @ObservationIgnored private var updateLoopTask: Task<Void, Never>?
     @ObservationIgnored private var cleanupLoopTask: Task<Void, Never>?
     @ObservationIgnored private var mockSimulationTimer: Timer?
@@ -116,20 +108,12 @@ class BaseVehicleManager {
         mockSimulationTimer?.invalidate()
         subscriptionTask?.cancel()
         reconnectTask?.cancel()
-        consumerTask?.cancel()
-        vehicleUpdateContinuation?.finish()
-        consumerTask = nil
-        vehicleUpdateContinuation = nil
-        vehicleUpdateStream = nil
         updateLoopTask = nil
         cleanupLoopTask = nil
     }
 
     func setup() {
         loadFavorites()
-        if vehicleUpdateContinuation == nil {
-            setupVehicleUpdateStream()
-        }
         if isMQTTDisabled {
         } else if connectOnStart {
             setupConnection()
@@ -144,9 +128,6 @@ class BaseVehicleManager {
         guard !isConnected else { return }
         guard !isMQTTDisabled else {
             return
-        }
-        if vehicleUpdateContinuation == nil {
-            setupVehicleUpdateStream()
         }
         startCleanupLoop()
         startUpdateLoop()
@@ -166,22 +147,6 @@ class BaseVehicleManager {
                 self.isConnected = false
                 self.currentSubscriptions.removeAll()
                 self.isConnecting = false
-            }
-        }
-    }
-
-    private func setupVehicleUpdateStream() {
-        let (updateStream, continuation) = AsyncStream.makeStream(
-            of: BusModel.self,
-            bufferingPolicy: .bufferingNewest(vehicleUpdateBufferLimit)
-        )
-        self.vehicleUpdateStream = updateStream
-        self.vehicleUpdateContinuation = continuation
-
-        let bufferStream = stream
-        self.consumerTask = Task {
-            for await vehicle in updateStream {
-                await bufferStream.buffer(vehicle)
             }
         }
     }
@@ -230,8 +195,8 @@ class BaseVehicleManager {
                         var buffer = publishInfo.payload
                         guard let data = buffer.readData(length: buffer.readableBytes) else { return }
                         let topic = publishInfo.topicName
-                        Task { @MainActor in
-                            self.processMessage(topicName: topic, payload: data)
+                        Task {
+                            await self.processMessage(topicName: topic, payload: data)
                         }
                     }
                 }
@@ -361,8 +326,7 @@ class BaseVehicleManager {
 
     // MARK: - Message Handling
 
-    @MainActor
-    func processMessage(topicName: String, payload: Data) {
+    nonisolated func processMessage(topicName: String, payload: Data) async {
         let topicRouteIdIndex = 8
         struct LocalVP: Decodable {
             let veh: Int
@@ -382,6 +346,7 @@ class BaseVehicleManager {
         let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
 
         do {
+            let decoder = JSONDecoder()
             let response = try decoder.decode(LocalResponse.self, from: payload)
             let vp = response.VP
 
@@ -396,7 +361,7 @@ class BaseVehicleManager {
                     timestamp: vp.tsi ?? Date().timeIntervalSince1970,
                     type: vehicleType
                 )
-                vehicleUpdateContinuation?.yield(vehicle)
+                await stream.buffer(vehicle)
             }
         } catch {
             Logger.busManager.error("\(String(describing: Self.self)): Failed to decode MQTT payload: \(error)")
@@ -432,7 +397,7 @@ class BaseVehicleManager {
 
     private func loadFavorites() {
         if let data = UserDefaults.standard.data(forKey: favoritesKey),
-           let decoded = try? decoder.decode([BusLine].self, from: data) {
+           let decoded = try? JSONDecoder().decode([BusLine].self, from: data) {
             self.favoriteLines = decoded
         } else {
             self.favoriteLines = defaultFavorites
