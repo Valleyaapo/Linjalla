@@ -62,6 +62,7 @@ struct LineSearchSheet: View {
                             HStack {
                                 Spacer()
                                 ProgressView()
+                                    .accessibilityLabel(Text("ui.loading"))
                                 Spacer()
                             }
                             .listRowSeparator(.hidden)
