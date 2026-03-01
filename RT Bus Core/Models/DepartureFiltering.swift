@@ -48,7 +48,7 @@ enum DepartureFiltering {
             if filter.routeIds.contains(routeId) {
                 return true
             }
-            let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
+            let normalized = routeId.hasPrefix("HSL:") ? String(routeId.dropFirst(4)) : routeId
             if filter.lineNames.contains(normalized) {
                 return true
             }

@@ -18,5 +18,5 @@ public struct BusLine: Identifiable, Hashable, Codable, Sendable {
         self.longName = longName
     }
 
-    public var routeId: String { id.replacingOccurrences(of: "HSL:", with: "") }
+    public var routeId: String { id.hasPrefix("HSL:") ? String(id.dropFirst(4)) : id }
 }

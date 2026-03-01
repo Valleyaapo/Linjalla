@@ -31,7 +31,8 @@ actor VehicleStream {
         subscriptionGeneration += 1
 
         let routeTopics = selections.flatMap { selection in
-            let routeIds = Set([selection.routeId, selection.id, selection.id.replacingOccurrences(of: "HSL:", with: "")])
+            let normalizedId = selection.id.hasPrefix("HSL:") ? String(selection.id.dropFirst(4)) : selection.id
+            let routeIds = Set([selection.routeId, selection.id, normalizedId])
             return routeIds.flatMap { routeId in
                 [
                     "/hfp/v2/journey/ongoing/vp/\(topicPrefix)/+/+/\(routeId)/#",
