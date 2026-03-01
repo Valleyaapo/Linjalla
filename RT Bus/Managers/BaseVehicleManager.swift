@@ -53,7 +53,14 @@ class BaseVehicleManager {
     // MARK: - Internal State
     
     @ObservationIgnored var vehicles: [Int: BusModel] = [:]
-    @ObservationIgnored var activeLines: [BusLine] = []
+    @ObservationIgnored var activeLines: [BusLine] = [] {
+        didSet {
+            cachedActiveRouteIds = Set(activeLines.map { $0.routeId })
+            cachedActiveLineNames = Set(activeLines.map { $0.shortName })
+        }
+    }
+    @ObservationIgnored var cachedActiveRouteIds: Set<String> = []
+    @ObservationIgnored var cachedActiveLineNames: Set<String> = []
     @ObservationIgnored var currentSubscriptions: Set<String> = []
 
     @ObservationIgnored private var vehicleUpdateStream: AsyncStream<BusModel>?
@@ -348,7 +355,7 @@ class BaseVehicleManager {
 
                 self.vehicles = self.vehicles.filter { vehicle in
                     if let routeId = vehicle.value.routeId {
-                        let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
+                        let normalized = routeId.hasPrefix("HSL:") ? String(routeId.dropFirst(4)) : routeId
                         return selectedIds.contains(normalized)
                     } else {
                         return selectedNames.contains(vehicle.value.lineName)
@@ -379,7 +386,7 @@ class BaseVehicleManager {
         // Extract routeId from topic (support multiple HFP layouts)
         let parts = topicName.split(separator: "/")
         let routeId: String? = parts.count > topicRouteIdIndex ? String(parts[topicRouteIdIndex]) : nil
-        let normalizedRouteId = routeId?.replacingOccurrences(of: "HSL:", with: "")
+        let normalizedRouteId = routeId?.hasPrefix("HSL:") == true ? String(routeId!.dropFirst(4)) : routeId
 
         do {
             let response = try decoder.decode(LocalResponse.self, from: payload)
@@ -479,13 +486,13 @@ class BaseVehicleManager {
         let now = Date().timeIntervalSince1970
         var hasChanges = false
 
-        let selectedIds = Set(activeLines.map { $0.routeId })
-        let selectedNames = Set(activeLines.map { $0.shortName })
+        let selectedIds = cachedActiveRouteIds
+        let selectedNames = cachedActiveLineNames
 
         for (id, newVehicle) in updates {
             let isActive: Bool
             if let routeId = newVehicle.routeId {
-                let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
+                let normalized = routeId.hasPrefix("HSL:") ? String(routeId.dropFirst(4)) : routeId
                 isActive = selectedIds.contains(normalized)
             } else {
                 isActive = selectedNames.contains(newVehicle.lineName)
