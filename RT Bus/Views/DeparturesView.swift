@@ -73,6 +73,7 @@ struct DeparturesView: View {
                     .listRowBackground(Color.clear)
                 } else if viewState.isLoading && departures.isEmpty {
                     ProgressView()
+                        .accessibilityLabel(Text("ui.loading"))
                         .frame(maxWidth: .infinity, alignment: .center)
                         .listRowBackground(Color.clear)
                 } else if departures.isEmpty && !viewState.isLoading {

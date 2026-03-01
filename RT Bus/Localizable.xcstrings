@@ -875,6 +875,22 @@
         }
       }
     },
+    "ui.loading" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ladataan"
+          }
+        }
+      }
+    },
     "ui.location.rautatientori" : {
       "localizations" : {
         "en" : {

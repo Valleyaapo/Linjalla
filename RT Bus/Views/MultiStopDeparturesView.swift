@@ -116,6 +116,7 @@ struct MultiStopDeparturesView: View {
                 .listRowBackground(Color.clear)
             } else if viewState.isLoading && allDepartures.isEmpty {
                 ProgressView()
+                    .accessibilityLabel(Text("ui.loading"))
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color.clear)
             } else if allDepartures.isEmpty && !viewState.isLoading {
