@@ -107,7 +107,8 @@ actor GraphQLClient {
         }
         let message = errors.map(\.message).joined(separator: "\n")
         Logger.digitransit.error("GraphQL errors: \(message, privacy: .public)")
-        throw AppError.apiError(message)
+        // Sentinel Security Fix: Prevent leaking raw server error details to the UI
+        throw AppError.apiError("Invalid request or server error")
     }
 
     private func shouldRetry(error: Error) -> Bool {
