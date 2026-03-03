@@ -53,7 +53,14 @@ class BaseVehicleManager {
     // MARK: - Internal State
     
     @ObservationIgnored var vehicles: [Int: BusModel] = [:]
-    @ObservationIgnored var activeLines: [BusLine] = []
+    @ObservationIgnored var activeLines: [BusLine] = [] {
+        didSet {
+            cachedActiveRouteIds = Set(activeLines.map { $0.routeId })
+            cachedActiveLineNames = Set(activeLines.map { $0.shortName })
+        }
+    }
+    @ObservationIgnored var cachedActiveRouteIds: Set<String> = []
+    @ObservationIgnored var cachedActiveLineNames: Set<String> = []
     @ObservationIgnored var currentSubscriptions: Set<String> = []
 
     @ObservationIgnored private var vehicleUpdateStream: AsyncStream<BusModel>?
@@ -348,8 +355,7 @@ class BaseVehicleManager {
 
                 self.vehicles = self.vehicles.filter { vehicle in
                     if let routeId = vehicle.value.routeId {
-                        let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                        return selectedIds.contains(normalized)
+                        return selectedIds.contains(routeId)
                     } else {
                         return selectedNames.contains(vehicle.value.lineName)
                     }
@@ -479,14 +485,14 @@ class BaseVehicleManager {
         let now = Date().timeIntervalSince1970
         var hasChanges = false
 
-        let selectedIds = Set(activeLines.map { $0.routeId })
-        let selectedNames = Set(activeLines.map { $0.shortName })
+        // Cache sets are already computed when activeLines is updated.
+        let selectedIds = self.cachedActiveRouteIds
+        let selectedNames = self.cachedActiveLineNames
 
         for (id, newVehicle) in updates {
             let isActive: Bool
             if let routeId = newVehicle.routeId {
-                let normalized = routeId.replacingOccurrences(of: "HSL:", with: "")
-                isActive = selectedIds.contains(normalized)
+                isActive = selectedIds.contains(routeId)
             } else {
                 isActive = selectedNames.contains(newVehicle.lineName)
             }
