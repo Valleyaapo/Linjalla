@@ -107,7 +107,7 @@ actor GraphQLClient {
         }
         let message = errors.map(\.message).joined(separator: "\n")
         Logger.digitransit.error("GraphQL errors: \(message, privacy: .public)")
-        throw AppError.apiError(message)
+        throw AppError.apiError("Invalid request or server error")
     }
 
     private func shouldRetry(error: Error) -> Bool {
