@@ -23,24 +23,12 @@ final class MapStateManager {
     private(set) var mapItems: [MapItem] = []
     
     /// Vehicles only (buses and trams) for use by BusMapView
-    var vehicles: [MapItem] {
-        mapItems.filter {
-            switch $0 {
-            case .bus, .tram: return true
-            case .stop: return false
-            }
-        }
-    }
+    /// Cached to avoid O(N) filtering during high-frequency UI access.
+    private(set) var vehicles: [MapItem] = []
 
     /// Stops only for use by BusMapView
-    var stopsList: [BusStop] {
-        mapItems.compactMap {
-            switch $0 {
-            case .stop(let stop): return stop
-            case .bus, .tram: return nil
-            }
-        }
-    }
+    /// Cached to avoid O(N) compactMapping during high-frequency UI access.
+    private(set) var stopsList: [BusStop] = []
     
     // Internal caches
     @ObservationIgnored private var buses: [Int: BusModel] = [:]
@@ -123,22 +111,30 @@ final class MapStateManager {
     
     private func rebuildItems() {
         var items: [MapItem] = []
+        var vehicleItems: [MapItem] = []
         
         // 1. BUSES
         let sortedBuses = buses.values.sorted { $0.id < $1.id }
-        items.append(contentsOf: sortedBuses.map { .bus($0) })
+        let busItems = sortedBuses.map { MapItem.bus($0) }
+        items.append(contentsOf: busItems)
+        vehicleItems.append(contentsOf: busItems)
         
         // 2. TRAMS
         let sortedTrams = trams.values.sorted { $0.id < $1.id }
-        items.append(contentsOf: sortedTrams.map { .tram($0) })
+        let tramItems = sortedTrams.map { MapItem.tram($0) }
+        items.append(contentsOf: tramItems)
+        vehicleItems.append(contentsOf: tramItems)
         
         // 3. STOPS (Rendered last = at the bottom visually)
         let sortedStops = stops.values.sorted { $0.id < $1.id }
-        items.append(contentsOf: sortedStops.map { .stop($0) })
+        let stopItems = sortedStops.map { MapItem.stop($0) }
+        items.append(contentsOf: stopItems)
         
         // Atomic update
         if items != mapItems {
             mapItems = items
+            vehicles = vehicleItems
+            stopsList = sortedStops
         }
     }
 }
